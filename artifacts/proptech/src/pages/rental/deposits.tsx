@@ -1,0 +1,220 @@
+import { useState } from "react";
+import {
+  useListDeposits,
+  useCreateDeposit,
+  useListLeaseContracts,
+  getListDepositsQueryKey,
+} from "@workspace/api-client-react";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+
+const statusColors: Record<string, string> = {
+  held: "bg-blue-100 text-blue-800",
+  partially_returned: "bg-yellow-100 text-yellow-800",
+  returned: "bg-green-100 text-green-800",
+  forfeited: "bg-red-100 text-red-800",
+};
+
+const statusLabels: Record<string, string> = {
+  held: "Удерживается",
+  partially_returned: "Частично возвращён",
+  returned: "Возвращён",
+  forfeited: "Удержан",
+};
+
+function formatCurrency(amount: number, currency: string) {
+  return new Intl.NumberFormat("ru-KZ", { style: "currency", currency }).format(amount);
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("ru-KZ");
+}
+
+interface DepositDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function DepositDialog({ open, onClose }: DepositDialogProps) {
+  const createMutation = useCreateDeposit();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { data: leases } = useListLeaseContracts();
+
+  const [formData, setFormData] = useState({
+    leaseContractId: "",
+    amount: "",
+    currency: "KZT",
+    receivedDate: new Date().toISOString().split("T")[0],
+    note: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createMutation.mutateAsync({
+        data: {
+          leaseContractId: parseInt(formData.leaseContractId),
+          amount: parseFloat(formData.amount),
+          currency: formData.currency,
+          receivedDate: formData.receivedDate,
+          note: formData.note || null,
+        },
+      });
+      toast({ title: "Депозит зарегистрирован" });
+      queryClient.invalidateQueries({ queryKey: getListDepositsQueryKey() });
+      onClose();
+    } catch {
+      toast({ title: "Ошибка", description: "Не удалось зарегистрировать депозит", variant: "destructive" });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Зарегистрировать депозит</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Договор аренды *</Label>
+            <Select value={formData.leaseContractId} onValueChange={(v) => setFormData({ ...formData, leaseContractId: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите договор" />
+              </SelectTrigger>
+              <SelectContent>
+                {(leases || []).map((l) => (
+                  <SelectItem key={l.id} value={String(l.id)}>
+                    {l.contractNumber} — {l.tenantName || `#${l.tenantId}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <Label>Сумма *</Label>
+              <Input
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="300000"
+                required
+              />
+            </div>
+            <div>
+              <Label>Валюта</Label>
+              <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="KZT">KZT</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label>Дата получения *</Label>
+            <Input
+              type="date"
+              value={formData.receivedDate}
+              onChange={(e) => setFormData({ ...formData, receivedDate: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <Label>Примечание</Label>
+            <Input
+              value={formData.note}
+              onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
+            <Button type="submit" disabled={createMutation.isPending}>
+              {createMutation.isPending ? "Сохранение..." : "Сохранить"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export default function Deposits() {
+  const { data: deposits, isLoading } = useListDeposits();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Депозиты</h1>
+          <p className="text-muted-foreground text-sm">Учёт залоговых депозитов арендаторов</p>
+        </div>
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Добавить
+        </Button>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Договор</TableHead>
+              <TableHead>Получен</TableHead>
+              <TableHead>Сумма</TableHead>
+              <TableHead>Возвращено</TableHead>
+              <TableHead>Статус</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : !deposits?.length ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  Депозиты не найдены
+                </TableCell>
+              </TableRow>
+            ) : (
+              deposits.map((deposit) => (
+                <TableRow key={deposit.id}>
+                  <TableCell>Договор #{deposit.leaseContractId}</TableCell>
+                  <TableCell>{formatDate(deposit.receivedDate)}</TableCell>
+                  <TableCell className="font-medium">{formatCurrency(deposit.amount, deposit.currency)}</TableCell>
+                  <TableCell>
+                    {deposit.returnedAmount ? formatCurrency(deposit.returnedAmount, deposit.currency) : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[deposit.status]} variant="secondary">
+                      {statusLabels[deposit.status] || deposit.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <DepositDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+    </div>
+  );
+}
