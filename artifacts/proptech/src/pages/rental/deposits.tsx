@@ -31,12 +31,14 @@ const statusLabels: Record<string, string> = {
   forfeited: "Удержан",
 };
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("ru-KZ", { style: "currency", currency }).format(amount);
+function formatCurrency(amount: number | string, currency: string) {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  const cur = currency === "KGS" ? "KGS" : currency === "USD" ? "USD" : "KGS";
+  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: cur }).format(num);
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("ru-KZ");
+  return new Date(date).toLocaleDateString("ru-KG");
 }
 
 interface DepositDialogProps {
@@ -53,7 +55,7 @@ function DepositDialog({ open, onClose }: DepositDialogProps) {
   const [formData, setFormData] = useState({
     leaseContractId: "",
     amount: "",
-    currency: "KZT",
+    currency: "KGS",
     receivedDate: new Date().toISOString().split("T")[0],
     note: "",
   });
@@ -116,8 +118,8 @@ function DepositDialog({ open, onClose }: DepositDialogProps) {
               <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="KZT">KZT</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="KGS">Сом (KGS)</SelectItem>
+                  <SelectItem value="USD">Доллар (USD)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

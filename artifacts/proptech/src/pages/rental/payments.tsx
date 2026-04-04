@@ -23,12 +23,14 @@ const methodLabels: Record<string, string> = {
   other: "Другое",
 };
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("ru-KZ", { style: "currency", currency }).format(amount);
+function formatCurrency(amount: number | string, currency: string) {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  const cur = currency === "KGS" ? "KGS" : currency === "USD" ? "USD" : "KGS";
+  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: cur }).format(num);
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("ru-KZ");
+  return new Date(date).toLocaleDateString("ru-KG");
 }
 
 interface PaymentDialogProps {
@@ -45,7 +47,7 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
   const [formData, setFormData] = useState({
     leaseContractId: "",
     amount: "",
-    currency: "KZT",
+    currency: "KGS",
     paymentDate: new Date().toISOString().split("T")[0],
     paymentMethod: "bank_transfer",
     note: "",
@@ -110,8 +112,8 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
               <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="KZT">KZT</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="KGS">Сом (KGS)</SelectItem>
+                  <SelectItem value="USD">Доллар (USD)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

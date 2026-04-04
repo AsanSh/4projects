@@ -26,12 +26,14 @@ const categoryLabels: Record<string, string> = {
   other: "Прочее",
 };
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("ru-KZ", { style: "currency", currency }).format(amount);
+function formatCurrency(amount: number | string, currency: string) {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  const cur = currency === "KGS" ? "KGS" : currency === "USD" ? "USD" : "KGS";
+  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: cur }).format(num);
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("ru-KZ");
+  return new Date(date).toLocaleDateString("ru-KG");
 }
 
 interface ExpenseDialogProps {
@@ -49,7 +51,7 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
     propertyId: "",
     category: "maintenance" as CreateExpenseBodyCategory,
     amount: "",
-    currency: "KZT",
+    currency: "KGS",
     expenseDate: new Date().toISOString().split("T")[0],
     description: "",
   });
@@ -124,8 +126,8 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
               <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="KZT">KZT</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="KGS">Сом (KGS)</SelectItem>
+                  <SelectItem value="USD">Доллар (USD)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

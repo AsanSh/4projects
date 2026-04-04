@@ -72,6 +72,30 @@ router.post("/rental/contracts", async (req, res): Promise<void> => {
   // Update property rental status
   await db.update(propertiesTable).set({ rentalStatus: "rented" }).where(eq(propertiesTable.id, propertyId));
 
+  // Auto-generate accruals for the lease period
+  if (status === "active" || status === "draft") {
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : new Date(start.getFullYear(), start.getMonth() + 12, 1);
+    const current = new Date(start.getFullYear(), start.getMonth(), 1);
+    const dueDay = accrualDay || 1;
+    while (current <= end) {
+      const yr = current.getFullYear();
+      const mo = String(current.getMonth() + 1).padStart(2, "0");
+      const day = String(Math.min(dueDay, new Date(yr, current.getMonth() + 1, 0).getDate())).padStart(2, "0");
+      await db.insert(accrualsTable).values({
+        leaseContractId: row.id,
+        period: `${yr}-${mo}`,
+        amount: String(rentAmount),
+        currency,
+        dueDate: `${yr}-${mo}-${day}`,
+        paidAmount: "0",
+        balance: String(rentAmount),
+        status: "pending",
+      });
+      current.setMonth(current.getMonth() + 1);
+    }
+  }
+
   const [t] = await db.select().from(tenantsTable).where(eq(tenantsTable.id, tenantId));
   const [p] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, propertyId));
   res.status(201).json({ ...row, tenantName: t?.fullName ?? null, propertyUnitNumber: p?.unitNumber ?? null });
@@ -144,6 +168,16 @@ router.post("/rental/accruals/recalculate", async (req, res): Promise<void> => {
   }
 
   res.json(insertedAccruals);
+});
+
+// Update individual accrual status (approve / cancel / etc.)
+router.patch("/rental/accruals/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const { status } = req.body;
+  if (!status) { res.status(400).json({ error: "status required" }); return; }
+  const [row] = await db.update(accrualsTable).set({ status }).where(eq(accrualsTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(row);
 });
 
 // PAYMENTS

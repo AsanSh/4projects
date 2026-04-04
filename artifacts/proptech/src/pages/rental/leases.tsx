@@ -34,12 +34,14 @@ const statusLabels: Record<string, string> = {
   terminated: "Расторгнут",
 };
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("ru-KZ", { style: "currency", currency }).format(amount);
+function formatCurrency(amount: number | string, currency: string) {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  const cur = currency === "KGS" ? "KGS" : currency === "USD" ? "USD" : "KGS";
+  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: cur }).format(num);
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("ru-KZ");
+  return new Date(date).toLocaleDateString("ru-KG");
 }
 
 interface LeaseDialogProps {
@@ -61,7 +63,7 @@ function LeaseDialog({ open, onClose }: LeaseDialogProps) {
     startDate: "",
     endDate: "",
     rentAmount: "",
-    currency: "KZT",
+    currency: "KGS",
     depositAmount: "",
     accrualDay: "1",
     status: "active" as CreateLeaseContractBodyStatus,
@@ -179,9 +181,8 @@ function LeaseDialog({ open, onClose }: LeaseDialogProps) {
               <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="KZT">KZT</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="KGS">Сом (KGS)</SelectItem>
+                  <SelectItem value="USD">Доллар (USD)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

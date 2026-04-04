@@ -9,8 +9,8 @@ export default function Dashboard() {
   const { data: activity, isLoading: isActivityLoading } = useGetDashboardActivity({ query: { enabled: true } });
 
   const formatCurrency = (amount: number | undefined) => {
-    if (amount === undefined) return "0 ₸";
-    return new Intl.NumberFormat('kk-KZ', { style: 'currency', currency: 'KZT', maximumFractionDigits: 0 }).format(amount);
+    if (amount === undefined) return "0 с";
+    return new Intl.NumberFormat('ru-KG', { style: 'currency', currency: 'KGS', maximumFractionDigits: 0 }).format(amount);
   };
 
   return (
