@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Tag, AlertTriangle } from "lucide-react";
+import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -194,6 +194,7 @@ export default function Accruals() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [discountAccrual, setDiscountAccrual] = useState<Accrual | null>(null);
+  const [recalcLoading, setRecalcLoading] = useState(false);
 
   const { data: accruals, isLoading } = useQuery<Accrual[]>({
     queryKey: ["accruals"],
@@ -230,6 +231,32 @@ export default function Accruals() {
   const pendingCount = (accruals || []).filter((a) => a.status === "pending").length;
   const totalBalance = (accruals || []).reduce((s, a) => s + parseFloat(a.balance), 0);
 
+  const handleRecalculate = async () => {
+    if (leaseFilter === "all") return;
+    setRecalcLoading(true);
+    try {
+      const res = await fetch(`${BASE}/api/rental/accruals/recalculate`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ leaseContractId: parseInt(leaseFilter) }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Ошибка пересчёта");
+      }
+      const data = await res.json();
+      toast({
+        title: "Начисления пересчитаны",
+        description: `Добавлено ${data.inserted} новых начислений с учётом пропорций`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["accruals"] });
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err?.message, variant: "destructive" });
+    } finally {
+      setRecalcLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex justify-between items-start flex-wrap gap-3">
@@ -248,7 +275,7 @@ export default function Accruals() {
         )}
       </div>
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
         <Select value={leaseFilter} onValueChange={setLeaseFilter}>
           <SelectTrigger className="w-72">
             <SelectValue placeholder="Все договоры" />
@@ -277,6 +304,19 @@ export default function Accruals() {
             <SelectItem value="cancelled">Отменено</SelectItem>
           </SelectContent>
         </Select>
+
+        {leaseFilter !== "all" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRecalculate}
+            disabled={recalcLoading}
+            className="gap-2 text-blue-700 border-blue-300 hover:bg-blue-50"
+          >
+            <RefreshCw className={cn("w-4 h-4", recalcLoading && "animate-spin")} />
+            {recalcLoading ? "Пересчёт..." : "Пересчитать начисления"}
+          </Button>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

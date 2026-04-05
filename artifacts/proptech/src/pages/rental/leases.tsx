@@ -278,21 +278,21 @@ function LeaseFormFields({
       </div>
 
       {/* Три ключевые даты */}
-      <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Даты договора</p>
-        <div className="grid grid-cols-3 gap-3">
+      <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Даты договора</p>
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">Дата подписания</Label>
-            <Input type="date" value={form.signDate} onChange={f("signDate")} />
+            <Label className="text-sm">Начало начислений <span className="text-destructive">*</span></Label>
+            <Input type="date" value={form.startDate} onChange={f("startDate")} required className="mt-1" />
           </div>
           <div>
-            <Label className="text-xs">Дата начала начисления *</Label>
-            <Input type="date" value={form.startDate} onChange={f("startDate")} required />
+            <Label className="text-sm text-muted-foreground">Завершение договора</Label>
+            <Input type="date" value={form.endDate} onChange={f("endDate")} className="mt-1" />
           </div>
-          <div>
-            <Label className="text-xs">Дата завершения договора</Label>
-            <Input type="date" value={form.endDate} onChange={f("endDate")} />
-          </div>
+        </div>
+        <div className="w-1/2 pr-1.5">
+          <Label className="text-sm text-muted-foreground">Дата подписания</Label>
+          <Input type="date" value={form.signDate} onChange={f("signDate")} className="mt-1" />
         </div>
       </div>
 
