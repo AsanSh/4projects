@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const importJobsTable = pgTable("import_jobs", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id"),
   type: text("type").notNull(),
   status: text("status").notNull().default("pending"),
   totalRows: integer("total_rows").notNull().default(0),

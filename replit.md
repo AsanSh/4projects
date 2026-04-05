@@ -63,34 +63,41 @@ pnpm --filter @workspace/api-server run build
 - `owner_statements` — Owner financial statements
 - `activity_log` — System activity log
 
-## Authentication
+## Authentication & Multi-Tenancy (SaaS)
 
-- Session-based authentication using in-memory Map
+- **Registration**: `POST /auth/register` creates company + admin user atomically; returns JWT token
+- Session-based auth using in-memory Map; token → userId → companyId
 - Passwords hashed with SHA-256 + "proptech_salt"
 - Default admin: `admin@buildflow.kz` / `admin123`
+- **Middleware**: `requireAuth` — validates token, sets req.userId/companyId/userRole; `requireRole("admin")` — role guard
+- **Tenant isolation**: ALL data routes filter by `companyId` from session; users can only see their own org's data
+- **Roles**: admin (full CRUD + user management), manager/staff (read + limited write)
 
 ## API Routes
 
+All routes require `Authorization: Bearer <token>` (via `requireAuth` middleware).
 Registered under `artifacts/api-server/src/routes/`:
-- `auth.ts` — Login, logout, current user
-- `companies.ts` — CRUD companies
-- `users.ts` — CRUD users
-- `counterparties.ts` — CRUD counterparties
-- `properties.ts` — CRUD properties
-- `contracts.ts` — CRUD contracts
-- `documents.ts` — CRUD documents
-- `import.ts` — Excel import (preview + commit)
-- `rental.ts` — Tenants, leases, accruals, payments, deposits, expenses, statements, rental-properties
-- `dashboard.ts` — Summary stats, activity feed, rental overview
-- `activity.ts` — Activity log (GET /api/activity, POST /api/activity)
+- `auth.ts` — Login, logout, register (create org+admin), /auth/me
+- `companies.ts` — GET/PATCH /companies/my (org settings); cross-tenant access forbidden
+- `users.ts` — Org-scoped user management; admin-only create/update/delete
+- `counterparties.ts` — CRUD, filtered by companyId
+- `properties.ts` — CRUD, filtered by companyId
+- `contracts.ts` — CRUD, filtered by companyId
+- `documents.ts` — CRUD, filtered by companyId
+- `import.ts` — Excel import (preview + commit), filtered by companyId
+- `rental.ts` — Tenants, leases, accruals, payments, deposits, expenses, statements, rental-properties — all filtered by companyId
+- `dashboard.ts` — Summary stats, activity feed, rental overview — filtered by companyId
+- `activity.ts` — Activity log (GET/POST), filtered by companyId
 
 ## Frontend Pages
 
 Under `artifacts/proptech/src/pages/`:
-- `login.tsx` — Authentication
+- `login.tsx` — Authentication (with "Зарегистрировать компанию" link)
+- `register.tsx` — 2-step SaaS registration (org data → admin data)
+- `settings.tsx` — Org settings (admin: edit company; any user: view profile)
 - `dashboard.tsx` — Main analytics dashboard (KPI + AI recommendations + recent ops)
 - `companies.tsx` — Company management
-- `users.tsx` — User management
+- `users.tsx` — User management (admin-only create/edit/delete)
 - `properties.tsx` — Property management (реестр объектов)
 - `counterparties.tsx` — Counterparty/client management (full CRUD)
 - `import-center.tsx` — Excel Import Center (XLSX upload, preview, validate, commit, history)

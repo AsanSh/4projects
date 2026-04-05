@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const accrualsTable = pgTable("accruals", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id"),
   leaseContractId: integer("lease_contract_id").notNull(),
   period: text("period").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),

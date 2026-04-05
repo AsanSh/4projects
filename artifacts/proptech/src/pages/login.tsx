@@ -98,6 +98,7 @@ export default function Login() {
               <p className="text-gray-500 text-sm mt-1">Войдите в свой аккаунт BuildFlow</p>
             </div>
 
+
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -138,6 +139,15 @@ export default function Login() {
                 {loginMutation.isPending ? "Вход..." : "Войти"}
               </Button>
             </form>
+            <p className="text-center text-sm text-gray-500 mt-5">
+              Нет аккаунта?{" "}
+              <a
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/register`}
+                className="text-blue-600 font-medium hover:underline"
+              >
+                Зарегистрировать компанию
+              </a>
+            </p>
           </div>
         </div>
       </div>

@@ -1,35 +1,85 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, companiesTable } from "@workspace/db";
 import { createHash } from "crypto";
 
 const router: ReturnType<typeof Router> = Router();
 
-function hashPassword(password: string): string {
+export function hashPassword(password: string): string {
   return createHash("sha256").update(password + "proptech_salt").digest("hex");
 }
 
-const sessions = new Map<string, number>();
+export const sessions = new Map<string, number>();
 
 function generateToken(): string {
   return createHash("sha256").update(Math.random().toString() + Date.now().toString()).digest("hex");
 }
 
+// POST /auth/register — создание организации + admin пользователя
+router.post("/auth/register", async (req, res): Promise<void> => {
+  const { companyName, legalName, bin, phone, email, address, firstName, lastName, password } = req.body;
+
+  if (!companyName || !email || !password || !firstName || !lastName) {
+    res.status(400).json({ error: "Заполните все обязательные поля" });
+    return;
+  }
+
+  if (password.length < 6) {
+    res.status(400).json({ error: "Пароль должен быть не менее 6 символов" });
+    return;
+  }
+
+  const [existingUser] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (existingUser) {
+    res.status(409).json({ error: "Пользователь с таким email уже зарегистрирован" });
+    return;
+  }
+
+  // Создаём организацию
+  const [company] = await db.insert(companiesTable).values({
+    name: companyName,
+    legalName: legalName || null,
+    bin: bin || null,
+    phone: phone || null,
+    email,
+    address: address || null,
+    isActive: true,
+  }).returning();
+
+  // Создаём admin пользователя организации
+  const [user] = await db.insert(usersTable).values({
+    companyId: company.id,
+    email,
+    passwordHash: hashPassword(password),
+    firstName,
+    lastName,
+    role: "admin",
+    isActive: true,
+  }).returning();
+
+  const token = generateToken();
+  sessions.set(token, user.id);
+
+  const { passwordHash: _ph, ...safeUser } = user;
+  res.status(201).json({ token, user: safeUser, company });
+});
+
+// POST /auth/login
 router.post("/auth/login", async (req, res): Promise<void> => {
   const { email, password } = req.body;
   if (!email || !password) {
-    res.status(400).json({ error: "Email and password required" });
+    res.status(400).json({ error: "Email и пароль обязательны" });
     return;
   }
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (!user || user.passwordHash !== hashPassword(password)) {
-    res.status(401).json({ error: "Invalid credentials" });
+    res.status(401).json({ error: "Неверный email или пароль" });
     return;
   }
 
   if (!user.isActive) {
-    res.status(401).json({ error: "Account is disabled" });
+    res.status(401).json({ error: "Аккаунт заблокирован. Обратитесь к администратору." });
     return;
   }
 
@@ -40,6 +90,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   res.json({ token, user: safeUser });
 });
 
+// POST /auth/logout
 router.post("/auth/logout", async (req, res): Promise<void> => {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
@@ -49,6 +100,7 @@ router.post("/auth/logout", async (req, res): Promise<void> => {
   res.json({ message: "Logged out" });
 });
 
+// GET /auth/me
 router.get("/auth/me", async (req, res): Promise<void> => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -66,9 +118,15 @@ router.get("/auth/me", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Not authenticated" });
     return;
   }
+
+  let company = null;
+  if (user.companyId) {
+    const [comp] = await db.select().from(companiesTable).where(eq(companiesTable.id, user.companyId));
+    company = comp || null;
+  }
+
   const { passwordHash: _ph, ...safeUser } = user;
-  res.json(safeUser);
+  res.json({ ...safeUser, company });
 });
 
-export { sessions, hashPassword };
 export default router;

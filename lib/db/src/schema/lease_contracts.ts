@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const leaseContractsTable = pgTable("lease_contracts", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id"),
   propertyId: integer("property_id").notNull(),
   tenantId: integer("tenant_id").notNull(),
   contractNumber: text("contract_number").notNull(),

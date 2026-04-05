@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and, SQL } from "drizzle-orm";
 import { db, importJobsTable, counterpartiesTable, propertiesTable, contractsTable } from "@workspace/db";
+import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();
 
@@ -28,19 +29,25 @@ function validateContract(row: Record<string, unknown>, index: number) {
   return errors;
 }
 
-router.get("/import/jobs", async (_req, res): Promise<void> => {
-  const rows = await db.select().from(importJobsTable).orderBy(importJobsTable.createdAt);
+router.get("/import/jobs", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const conditions: SQL[] = [];
+  if (req.companyId) conditions.push(eq(importJobsTable.companyId, req.companyId));
+  const rows = await db.select().from(importJobsTable)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(importJobsTable.createdAt);
   res.json(rows);
 });
 
-router.get("/import/jobs/:id", async (req, res): Promise<void> => {
+router.get("/import/jobs/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  const [row] = await db.select().from(importJobsTable).where(eq(importJobsTable.id, id));
+  const conditions: SQL[] = [eq(importJobsTable.id, id)];
+  if (req.companyId) conditions.push(eq(importJobsTable.companyId, req.companyId));
+  const [row] = await db.select().from(importJobsTable).where(and(...conditions));
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   res.json(row);
 });
 
-router.post("/import/preview", async (req, res): Promise<void> => {
+router.post("/import/preview", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const { type, data } = req.body;
   if (!type || !Array.isArray(data)) {
     res.status(400).json({ error: "type and data[] required" });
@@ -66,13 +73,14 @@ router.post("/import/preview", async (req, res): Promise<void> => {
   });
 });
 
-router.post("/import/commit", async (req, res): Promise<void> => {
+router.post("/import/commit", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const { type, data, onlyValid } = req.body;
   if (!type || !Array.isArray(data)) {
     res.status(400).json({ error: "type and data[] required" });
     return;
   }
 
+  const companyId = req.companyId;
   let successRows = 0;
   let errorRows = 0;
   const jobErrors: string[] = [];
@@ -84,6 +92,7 @@ router.post("/import/commit", async (req, res): Promise<void> => {
         const errs = validateCounterparty(row, i + 1);
         if (errs.length > 0 && onlyValid) { errorRows++; continue; }
         await db.insert(counterpartiesTable).values({
+          companyId,
           type: row.type || "individual",
           fullName: row.fullName || row.full_name || "",
           iin: row.iin || null,
@@ -97,6 +106,7 @@ router.post("/import/commit", async (req, res): Promise<void> => {
         const errs = validateProperty(row, i + 1);
         if (errs.length > 0 && onlyValid) { errorRows++; continue; }
         await db.insert(propertiesTable).values({
+          companyId,
           projectName: row.projectName || row.project_name || "",
           block: row.block || null,
           floor: row.floor ? Number(row.floor) : null,
@@ -112,11 +122,12 @@ router.post("/import/commit", async (req, res): Promise<void> => {
         const errs = validateContract(row, i + 1);
         if (errs.length > 0 && onlyValid) { errorRows++; continue; }
         await db.insert(contractsTable).values({
+          companyId,
           contractNumber: row.contractNumber || row.contract_number || "",
           contractDate: row.contractDate || row.contract_date || null,
           type: row.type || "sale",
           amount: row.amount ? String(row.amount) : null,
-          currency: row.currency || "KZT",
+          currency: row.currency || "KGS",
           startDate: row.startDate || row.start_date || null,
           endDate: row.endDate || row.end_date || null,
           deposit: row.deposit ? String(row.deposit) : null,
@@ -133,6 +144,7 @@ router.post("/import/commit", async (req, res): Promise<void> => {
 
   const status = errorRows === 0 ? "completed" : successRows === 0 ? "failed" : "partial";
   const [job] = await db.insert(importJobsTable).values({
+    companyId,
     type,
     status,
     totalRows: data.length,
