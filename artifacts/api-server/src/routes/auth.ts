@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, companiesTable } from "@workspace/db";
+import { db, usersTable, companiesTable, sessionsTable } from "@workspace/db";
 import { createHash } from "crypto";
 
 const router: ReturnType<typeof Router> = Router();
@@ -9,10 +9,24 @@ export function hashPassword(password: string): string {
   return createHash("sha256").update(password + "proptech_salt").digest("hex");
 }
 
+/** Для обратной совместимости — middleware auth.ts по-прежнему может читать sessions */
 export const sessions = new Map<string, number>();
 
 function generateToken(): string {
   return createHash("sha256").update(Math.random().toString() + Date.now().toString()).digest("hex");
+}
+
+/** Создаёт сессию в БД и возвращает токен */
+async function createSession(userId: number): Promise<string> {
+  const token = generateToken();
+  await db.insert(sessionsTable).values({ token, userId });
+  return token;
+}
+
+/** Ищет userId по токену в БД */
+export async function getSessionUserId(token: string): Promise<number | null> {
+  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.token, token));
+  return session?.userId ?? null;
 }
 
 // POST /auth/register — создание организации + admin пользователя
@@ -57,8 +71,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     isActive: true,
   }).returning();
 
-  const token = generateToken();
-  sessions.set(token, user.id);
+  const token = await createSession(user.id);
 
   const { passwordHash: _ph, ...safeUser } = user;
   res.status(201).json({ token, user: safeUser, company });
@@ -83,8 +96,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const token = generateToken();
-  sessions.set(token, user.id);
+  const token = await createSession(user.id);
 
   const { passwordHash: _ph, ...safeUser } = user;
   res.json({ token, user: safeUser });
@@ -95,7 +107,7 @@ router.post("/auth/logout", async (req, res): Promise<void> => {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
-    sessions.delete(token);
+    await db.delete(sessionsTable).where(eq(sessionsTable.token, token));
   }
   res.json({ message: "Logged out" });
 });
@@ -108,7 +120,7 @@ router.get("/auth/me", async (req, res): Promise<void> => {
     return;
   }
   const token = authHeader.slice(7);
-  const userId = sessions.get(token);
+  const userId = await getSessionUserId(token);
   if (!userId) {
     res.status(401).json({ error: "Not authenticated" });
     return;

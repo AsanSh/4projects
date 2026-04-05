@@ -15,3 +15,4 @@ export * from "./expenses";
 export * from "./owner_statements";
 export * from "./activity_log";
 export * from "./module_settings";
+export * from "./sessions";
