@@ -1,24 +1,39 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useListLeaseContracts,
   useCreateLeaseContract,
+  useUpdateLeaseContract,
+  useListTenants,
+  useListProperties,
   LeaseContract,
-  LeaseContractStatus,
   CreateLeaseContractBodyStatus,
 } from "@workspace/api-client-react";
-import { useListTenants, useListProperties } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Plus, Pencil, RefreshCw, ChevronDown, Info,
+} from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListLeaseContractsQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-800",
@@ -26,7 +41,6 @@ const statusColors: Record<string, string> = {
   expired: "bg-yellow-100 text-yellow-800",
   terminated: "bg-red-100 text-red-800",
 };
-
 const statusLabels: Record<string, string> = {
   draft: "Черновик",
   active: "Активный",
@@ -34,194 +48,378 @@ const statusLabels: Record<string, string> = {
   terminated: "Расторгнут",
 };
 
-function formatCurrency(amount: number | string, currency: string) {
+function fmt(amount: number | string, currency = "KGS") {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  const cur = currency === "KGS" ? "KGS" : currency === "USD" ? "USD" : "KGS";
-  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: cur }).format(num);
+  if (isNaN(num)) return "—";
+  try {
+    return new Intl.NumberFormat("ru-KG", { style: "currency", currency }).format(num);
+  } catch {
+    return `${num.toLocaleString("ru-KG")} ${currency}`;
+  }
 }
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("ru-KG");
+function fmtDate(date: string) {
+  return new Date(date).toLocaleDateString("ru-RU");
 }
 
-interface LeaseDialogProps {
-  open: boolean;
-  onClose: () => void;
+/**
+ * Рассчитывает сумму первого и последнего месяца с пропорцией по фактическим дням.
+ * Возвращает массив строк для отображения в подсказке.
+ */
+function computeProratePreview(
+  startDate: string,
+  endDate: string,
+  rentAmount: number,
+): { firstMonth: { label: string; amount: number; isProrated: boolean } | null;
+    lastMonth: { label: string; amount: number; isProrated: boolean } | null } | null {
+  if (!startDate || isNaN(rentAmount) || rentAmount <= 0) return null;
+
+  const start = new Date(startDate);
+  if (isNaN(start.getTime())) return null;
+
+  const MONTHS_RU = [
+    "Январь","Февраль","Март","Апрель","Май","Июнь",
+    "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь",
+  ];
+
+  // Первый месяц
+  const firstDim = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+  const firstDay = start.getDate();
+  const firstIsProrated = firstDay > 1;
+  const firstAmount = firstIsProrated
+    ? Math.round((rentAmount / firstDim) * (firstDim - firstDay + 1) * 100) / 100
+    : rentAmount;
+  const firstLabel = `${MONTHS_RU[start.getMonth()]} ${start.getFullYear()}`;
+
+  let lastMonthResult: { label: string; amount: number; isProrated: boolean } | null = null;
+
+  if (endDate) {
+    const end = new Date(endDate);
+    if (!isNaN(end.getTime())) {
+      const lastDim = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
+      const lastDay = end.getDate();
+      const isSameMonth =
+        start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
+      const lastIsProrated = !isSameMonth && lastDay < lastDim;
+      const lastAmount = isSameMonth
+        ? Math.round((rentAmount / lastDim) * (lastDay - firstDay + 1) * 100) / 100
+        : lastIsProrated
+          ? Math.round((rentAmount / lastDim) * lastDay * 100) / 100
+          : rentAmount;
+      const lastLabel = `${MONTHS_RU[end.getMonth()]} ${end.getFullYear()}`;
+      if (lastIsProrated || isSameMonth) {
+        lastMonthResult = { label: lastLabel, amount: lastAmount, isProrated: true };
+      }
+    }
+  }
+
+  return {
+    firstMonth: { label: firstLabel, amount: firstAmount, isProrated: firstIsProrated },
+    lastMonth: lastMonthResult,
+  };
 }
 
-function LeaseDialog({ open, onClose }: LeaseDialogProps) {
-  const createMutation = useCreateLeaseContract();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+// ── ProrationPreview component ───────────────────────────────────────────────
+
+function ProrationPreview({
+  startDate, endDate, rentAmount, currency,
+}: { startDate: string; endDate: string; rentAmount: string; currency: string }) {
+  const amount = parseFloat(rentAmount);
+  const preview = useMemo(
+    () => computeProratePreview(startDate, endDate, amount),
+    [startDate, endDate, amount],
+  );
+
+  if (!preview) return null;
+  const { firstMonth, lastMonth } = preview;
+
+  // Ничего показывать, если нет пропорции
+  if (!firstMonth?.isProrated && !lastMonth?.isProrated) return null;
+
+  return (
+    <Alert className="border-blue-200 bg-blue-50 text-blue-900 text-sm">
+      <Info className="h-4 w-4 text-blue-600" />
+      <AlertDescription className="space-y-1">
+        <div className="font-semibold text-blue-800 mb-1">Пропорциональный расчёт</div>
+        {firstMonth?.isProrated && (
+          <div>
+            <span className="text-blue-600">{firstMonth.label}:</span>{" "}
+            <span className="font-semibold">{fmt(firstMonth.amount, currency)}</span>
+            {" "}
+            <span className="text-blue-500">
+              (с {new Date(startDate).toLocaleDateString("ru-RU")} до конца месяца)
+            </span>
+          </div>
+        )}
+        {lastMonth?.isProrated && (
+          <div>
+            <span className="text-blue-600">{lastMonth.label}:</span>{" "}
+            <span className="font-semibold">{fmt(lastMonth.amount, currency)}</span>
+            {" "}
+            <span className="text-blue-500">(до {new Date(endDate).toLocaleDateString("ru-RU")})</span>
+          </div>
+        )}
+        <div className="text-blue-500 text-xs mt-1">
+          Остальные месяцы — {fmt(amount, currency)}
+        </div>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+// ── Form fields shared between Create & Edit ─────────────────────────────────
+
+type FormState = {
+  propertyId: string;
+  tenantId: string;
+  contractNumber: string;
+  startDate: string;
+  endDate: string;
+  rentAmount: string;
+  currency: string;
+  depositAmount: string;
+  accrualDay: string;
+  status: CreateLeaseContractBodyStatus;
+  comment: string;
+};
+
+const EMPTY_FORM: FormState = {
+  propertyId: "",
+  tenantId: "",
+  contractNumber: "",
+  startDate: "",
+  endDate: "",
+  rentAmount: "",
+  currency: "KGS",
+  depositAmount: "",
+  accrualDay: "1",
+  status: "active",
+  comment: "",
+};
+
+function LeaseFormFields({
+  form, setForm, mode,
+}: {
+  form: FormState;
+  setForm: (f: FormState) => void;
+  mode: "create" | "edit";
+}) {
   const { data: tenants } = useListTenants();
   const { data: properties } = useListProperties();
 
-  const [formData, setFormData] = useState({
-    propertyId: "",
-    tenantId: "",
-    contractNumber: "",
-    startDate: "",
-    endDate: "",
-    rentAmount: "",
-    currency: "KGS",
-    depositAmount: "",
-    accrualDay: "1",
-    status: "active" as CreateLeaseContractBodyStatus,
-    comment: "",
-  });
+  const availableProperties = mode === "create"
+    ? (properties?.filter((p) => p.status === "available") ?? [])
+    : (properties ?? []);
+
+  const f = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [field]: e.target.value });
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Объект {mode === "create" && "*"}</Label>
+          <Select
+            value={form.propertyId}
+            onValueChange={(v) => setForm({ ...form, propertyId: v })}
+            disabled={mode === "edit"}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Выберите объект" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableProperties.map((p) => (
+                <SelectItem key={p.id} value={String(p.id)}>
+                  {p.projectName} {p.unitNumber}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Арендатор {mode === "create" && "*"}</Label>
+          <Select
+            value={form.tenantId}
+            onValueChange={(v) => setForm({ ...form, tenantId: v })}
+            disabled={mode === "edit"}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Выберите арендатора" />
+            </SelectTrigger>
+            <SelectContent>
+              {(tenants ?? []).map((t) => (
+                <SelectItem key={t.id} value={String(t.id)}>
+                  {t.fullName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label>Номер договора *</Label>
+        <Input
+          value={form.contractNumber}
+          onChange={f("contractNumber")}
+          placeholder="ДА-2026-001"
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Дата начала *</Label>
+          <Input type="date" value={form.startDate} onChange={f("startDate")} required />
+        </div>
+        <div>
+          <Label>Дата окончания</Label>
+          <Input type="date" value={form.endDate} onChange={f("endDate")} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2">
+          <Label>Сумма аренды в месяц *</Label>
+          <Input
+            type="number"
+            value={form.rentAmount}
+            onChange={f("rentAmount")}
+            placeholder="150 000"
+            required
+            min={0}
+          />
+        </div>
+        <div>
+          <Label>Валюта</Label>
+          <Select
+            value={form.currency}
+            onValueChange={(v) => setForm({ ...form, currency: v })}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="KGS">Сом (KGS)</SelectItem>
+              <SelectItem value="USD">Доллар (USD)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Превью пропорции */}
+      <ProrationPreview
+        startDate={form.startDate}
+        endDate={form.endDate}
+        rentAmount={form.rentAmount}
+        currency={form.currency}
+      />
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Депозит</Label>
+          <Input
+            type="number"
+            value={form.depositAmount}
+            onChange={f("depositAmount")}
+            placeholder="300 000"
+          />
+        </div>
+        <div>
+          <Label>
+            День начисления
+            <span className="text-muted-foreground text-xs ml-1">(1–31)</span>
+          </Label>
+          <Input
+            type="number"
+            min={1}
+            max={31}
+            value={form.accrualDay}
+            onChange={f("accrualDay")}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label>Статус</Label>
+        <Select
+          value={form.status}
+          onValueChange={(v) => setForm({ ...form, status: v as CreateLeaseContractBodyStatus })}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Черновик</SelectItem>
+            <SelectItem value="active">Активный</SelectItem>
+            <SelectItem value="expired">Истёк</SelectItem>
+            <SelectItem value="terminated">Расторгнут</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Комментарий</Label>
+        <Input
+          value={form.comment}
+          onChange={f("comment")}
+          placeholder="Дополнительные условия..."
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Create dialog ─────────────────────────────────────────────────────────────
+
+function CreateLeaseDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const createMutation = useCreateLeaseContract();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await createMutation.mutateAsync({
         data: {
-          propertyId: parseInt(formData.propertyId),
-          tenantId: parseInt(formData.tenantId),
-          contractNumber: formData.contractNumber,
-          startDate: formData.startDate,
-          endDate: formData.endDate || null,
-          rentAmount: parseFloat(formData.rentAmount),
-          currency: formData.currency,
-          depositAmount: formData.depositAmount ? parseFloat(formData.depositAmount) : null,
-          accrualDay: formData.accrualDay ? parseInt(formData.accrualDay) : null,
-          status: formData.status,
-          comment: formData.comment || null,
+          propertyId: parseInt(form.propertyId),
+          tenantId: parseInt(form.tenantId),
+          contractNumber: form.contractNumber,
+          startDate: form.startDate,
+          endDate: form.endDate || null,
+          rentAmount: parseFloat(form.rentAmount),
+          currency: form.currency,
+          depositAmount: form.depositAmount ? parseFloat(form.depositAmount) : null,
+          accrualDay: form.accrualDay ? parseInt(form.accrualDay) : null,
+          status: form.status,
+          comment: form.comment || null,
         },
       });
       toast({ title: "Договор аренды создан" });
       queryClient.invalidateQueries({ queryKey: getListLeaseContractsQueryKey() });
+      setForm(EMPTY_FORM);
       onClose();
-    } catch {
-      toast({ title: "Ошибка", description: "Не удалось создать договор", variant: "destructive" });
+    } catch (err: any) {
+      toast({
+        title: "Ошибка",
+        description: err?.message || "Не удалось создать договор",
+        variant: "destructive",
+      });
     }
   };
 
-  const availableProperties = properties?.filter((p) => p.status === "available") || [];
-
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Новый договор аренды</DialogTitle>
+          <DialogDescription>
+            Если дата начала не 1-е число, первый месяц будет рассчитан пропорционально.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Объект *</Label>
-              <Select value={formData.propertyId} onValueChange={(v) => setFormData({ ...formData, propertyId: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите объект" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableProperties.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.projectName} {p.unitNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Арендатор *</Label>
-              <Select value={formData.tenantId} onValueChange={(v) => setFormData({ ...formData, tenantId: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите арендатора" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(tenants || []).map((t) => (
-                    <SelectItem key={t.id} value={String(t.id)}>
-                      {t.fullName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <Label>Номер договора *</Label>
-            <Input
-              value={formData.contractNumber}
-              onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })}
-              placeholder="ДА-2026-001"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Дата начала *</Label>
-              <Input
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <Label>Дата окончания</Label>
-              <Input
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <Label>Сумма аренды *</Label>
-              <Input
-                type="number"
-                value={formData.rentAmount}
-                onChange={(e) => setFormData({ ...formData, rentAmount: e.target.value })}
-                placeholder="150000"
-                required
-              />
-            </div>
-            <div>
-              <Label>Валюта</Label>
-              <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="KGS">Сом (KGS)</SelectItem>
-                  <SelectItem value="USD">Доллар (USD)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Депозит</Label>
-              <Input
-                type="number"
-                value={formData.depositAmount}
-                onChange={(e) => setFormData({ ...formData, depositAmount: e.target.value })}
-                placeholder="300000"
-              />
-            </div>
-            <div>
-              <Label>День начисления</Label>
-              <Input
-                type="number"
-                min={1}
-                max={31}
-                value={formData.accrualDay}
-                onChange={(e) => setFormData({ ...formData, accrualDay: e.target.value })}
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Статус</Label>
-            <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as CreateLeaseContractBodyStatus })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Черновик</SelectItem>
-                <SelectItem value="active">Активный</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <LeaseFormFields form={form} setForm={setForm} mode="create" />
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Создание..." : "Создать"}
+              {createMutation.isPending ? "Создание..." : "Создать договор"}
             </Button>
           </div>
         </form>
@@ -230,18 +428,231 @@ function LeaseDialog({ open, onClose }: LeaseDialogProps) {
   );
 }
 
+// ── Edit dialog ───────────────────────────────────────────────────────────────
+
+function EditLeaseDialog({
+  lease,
+  open,
+  onClose,
+}: { lease: LeaseContract; open: boolean; onClose: () => void }) {
+  const updateMutation = useUpdateLeaseContract();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [recalcConfirm, setRecalcConfirm] = useState(false);
+  const [recalcLoading, setRecalcLoading] = useState(false);
+
+  const [form, setForm] = useState<FormState>({
+    propertyId: String(lease.propertyId),
+    tenantId: String(lease.tenantId),
+    contractNumber: lease.contractNumber,
+    startDate: lease.startDate,
+    endDate: lease.endDate ?? "",
+    rentAmount: String(lease.rentAmount),
+    currency: lease.currency,
+    depositAmount: lease.depositAmount ? String(lease.depositAmount) : "",
+    accrualDay: lease.accrualDay ? String(lease.accrualDay) : "1",
+    status: lease.status as CreateLeaseContractBodyStatus,
+    comment: lease.comment ?? "",
+  });
+
+  // Проверяем, изменились ли ключевые поля (которые влияют на начисления)
+  const keyFieldsChanged =
+    form.startDate !== lease.startDate ||
+    form.endDate !== (lease.endDate ?? "") ||
+    form.rentAmount !== String(lease.rentAmount) ||
+    form.accrualDay !== String(lease.accrualDay ?? 1);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateMutation.mutateAsync({
+        id: lease.id,
+        data: {
+          startDate: form.startDate,
+          endDate: form.endDate || null,
+          rentAmount: parseFloat(form.rentAmount),
+          currency: form.currency,
+          depositAmount: form.depositAmount ? parseFloat(form.depositAmount) : null,
+          accrualDay: form.accrualDay ? parseInt(form.accrualDay) : null,
+          status: form.status,
+          comment: form.comment || null,
+        },
+      });
+      toast({ title: "Договор обновлён" });
+      queryClient.invalidateQueries({ queryKey: getListLeaseContractsQueryKey() });
+
+      // Если изменились ключевые поля — предлагаем пересчитать
+      if (keyFieldsChanged) {
+        setRecalcConfirm(true);
+      } else {
+        onClose();
+      }
+    } catch (err: any) {
+      toast({
+        title: "Ошибка",
+        description: err?.message || "Не удалось обновить договор",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRecalculate = async () => {
+    setRecalcLoading(true);
+    try {
+      const res = await fetch(`/api/rental/accruals/recalculate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ leaseContractId: lease.id }),
+      });
+      if (!res.ok) throw new Error("Ошибка пересчёта");
+      const data = await res.json();
+      toast({
+        title: "Начисления пересчитаны",
+        description: `Добавлено ${data.inserted} начислений`,
+      });
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err?.message, variant: "destructive" });
+    } finally {
+      setRecalcLoading(false);
+      setRecalcConfirm(false);
+      onClose();
+    }
+  };
+
+  // После сохранения — диалог подтверждения пересчёта
+  if (recalcConfirm) {
+    return (
+      <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Пересчитать начисления?</DialogTitle>
+            <DialogDescription>
+              Условия договора изменились (даты, сумма или день начисления). Хотите пересчитать
+              будущие начисления с учётом пропорционального расчёта первого месяца?
+              <br />
+              <span className="text-amber-600 font-medium">
+                Оплаченные и частично оплаченные начисления сохранятся.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={onClose} disabled={recalcLoading}>
+              Не пересчитывать
+            </Button>
+            <Button onClick={handleRecalculate} disabled={recalcLoading}>
+              {recalcLoading ? "Пересчёт..." : "Пересчитать начисления"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Редактировать договор</DialogTitle>
+          <DialogDescription>
+            Договор <strong>{lease.contractNumber}</strong>. При изменении ставки или дат —
+            предложим пересчитать начисления.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <LeaseFormFields form={form} setForm={setForm} mode="edit" />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
+            <Button type="submit" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? "Сохранение..." : "Сохранить изменения"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Recalculate confirmation dialog ─────────────────────────────────────────
+
+function RecalcDialog({
+  lease, open, onClose,
+}: { lease: LeaseContract; open: boolean; onClose: () => void }) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleRecalculate = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/rental/accruals/recalculate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ leaseContractId: lease.id }),
+      });
+      if (!res.ok) throw new Error("Ошибка пересчёта");
+      const data = await res.json();
+      toast({
+        title: "Начисления пересчитаны",
+        description: `Добавлено ${data.inserted} новых начислений.`,
+      });
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err?.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Пересчитать начисления</DialogTitle>
+          <DialogDescription>
+            Договор <strong>{lease.contractNumber}</strong>. Будут пересозданы неоплаченные
+            начисления с пропорциональным расчётом первого и последнего месяца.
+            <br />
+            <span className="text-amber-600 font-medium">
+              Оплаченные начисления не затронуты.
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-2 text-sm text-muted-foreground space-y-1">
+          <div>Дата начала: <strong>{fmtDate(lease.startDate)}</strong></div>
+          {lease.endDate && <div>Дата окончания: <strong>{fmtDate(lease.endDate)}</strong></div>}
+          <div>Ставка аренды: <strong>{fmt(lease.rentAmount, lease.currency)}</strong>/мес.</div>
+        </div>
+        <DialogFooter className="flex gap-2">
+          <Button variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
+          <Button onClick={handleRecalculate} disabled={loading}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {loading ? "Пересчёт..." : "Пересчитать"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function RentalContracts() {
   const { data: leases, isLoading } = useListLeaseContracts();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editLease, setEditLease] = useState<LeaseContract | null>(null);
+  const [recalcLease, setRecalcLease] = useState<LeaseContract | null>(null);
 
   return (
     <div className="p-6 space-y-4">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Договоры аренды</h1>
-          <p className="text-muted-foreground text-sm">Управление договорами аренды</p>
+          <p className="text-muted-foreground text-sm">
+            Управление договорами · пропорциональный расчёт первого и последнего месяца
+          </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Новый договор
         </Button>
@@ -255,22 +666,23 @@ export default function RentalContracts() {
               <TableHead>Объект</TableHead>
               <TableHead>Арендатор</TableHead>
               <TableHead>Период</TableHead>
-              <TableHead>Аренда</TableHead>
+              <TableHead>Аренда/мес.</TableHead>
               <TableHead>Статус</TableHead>
+              <TableHead className="w-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : !leases?.length ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Договоры аренды не найдены
                 </TableCell>
               </TableRow>
@@ -278,17 +690,36 @@ export default function RentalContracts() {
               leases.map((lease) => (
                 <TableRow key={lease.id}>
                   <TableCell className="font-medium">{lease.contractNumber}</TableCell>
-                  <TableCell>{lease.propertyUnitNumber || `#${lease.propertyId}`}</TableCell>
-                  <TableCell>{lease.tenantName || `#${lease.tenantId}`}</TableCell>
+                  <TableCell>{(lease as any).propertyUnitNumber || `#${lease.propertyId}`}</TableCell>
+                  <TableCell>{(lease as any).tenantName || `#${lease.tenantId}`}</TableCell>
                   <TableCell>
-                    {formatDate(lease.startDate)}
-                    {lease.endDate ? ` — ${formatDate(lease.endDate)}` : " (бессрочный)"}
+                    {fmtDate(lease.startDate)}
+                    {lease.endDate ? ` — ${fmtDate(lease.endDate)}` : " (бессрочный)"}
                   </TableCell>
-                  <TableCell>{formatCurrency(lease.rentAmount, lease.currency)}</TableCell>
+                  <TableCell>{fmt(lease.rentAmount, lease.currency)}</TableCell>
                   <TableCell>
                     <Badge className={statusColors[lease.status]} variant="secondary">
                       {statusLabels[lease.status] || lease.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <ChevronDown className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditLease(lease)}>
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Редактировать
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setRecalcLease(lease)}>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Пересчитать начисления
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -297,7 +728,23 @@ export default function RentalContracts() {
         </Table>
       </div>
 
-      <LeaseDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+      <CreateLeaseDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+
+      {editLease && (
+        <EditLeaseDialog
+          lease={editLease}
+          open={!!editLease}
+          onClose={() => setEditLease(null)}
+        />
+      )}
+
+      {recalcLease && (
+        <RecalcDialog
+          lease={recalcLease}
+          open={!!recalcLease}
+          onClose={() => setRecalcLease(null)}
+        />
+      )}
     </div>
   );
 }

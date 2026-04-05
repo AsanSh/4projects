@@ -9,6 +9,89 @@ import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();
 
+// ---------- HELPERS ----------
+
+/** Количество дней в месяце */
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/**
+ * Строит массив начислений для договора с пропорциональным расчётом
+ * первого и последнего месяца (если начало/конец не совпадают с 1-м / последним днём месяца).
+ */
+function buildAccrualRows(params: {
+  companyId: number;
+  leaseContractId: number;
+  startDate: Date;
+  endDate: Date | null;
+  rentAmount: number;
+  currency: string;
+  accrualDay: number;
+}) {
+  const { companyId, leaseContractId, startDate, endDate, rentAmount, currency, accrualDay } = params;
+  const rows: {
+    companyId: number; leaseContractId: number; period: string; amount: string;
+    currency: string; dueDate: string; paidAmount: string; balance: string; status: string;
+  }[] = [];
+
+  // Граница: если endDate не задана, генерируем 12 месяцев вперёд
+  const end = endDate
+    ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+    : new Date(startDate.getFullYear(), startDate.getMonth() + 12, 0);
+
+  // Итерируем по месяцам, начиная с месяца startDate
+  const current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  let isFirstMonth = true;
+
+  while (current <= end) {
+    const yr = current.getFullYear();
+    const mo = current.getMonth(); // 0-based
+    const dim = daysInMonth(yr, mo);
+    const moStr = String(mo + 1).padStart(2, "0");
+    const period = `${yr}-${moStr}`;
+
+    // День срока оплаты (не превышает кол-во дней в месяце)
+    const dueDay = Math.min(accrualDay || 1, dim);
+    const dueDateStr = `${yr}-${moStr}-${String(dueDay).padStart(2, "0")}`;
+
+    // --- Пропорциональный расчёт ---
+    let amount = rentAmount;
+
+    // Первый месяц: если начало не 1-е число
+    const isLastMonth = endDate
+      && current.getFullYear() === endDate.getFullYear()
+      && current.getMonth() === endDate.getMonth();
+
+    if (isFirstMonth && startDate.getDate() > 1 && !isLastMonth) {
+      // Дней в первом месяце с даты начала
+      const daysRented = dim - startDate.getDate() + 1;
+      amount = Math.round((rentAmount / dim) * daysRented * 100) / 100;
+    } else if (isFirstMonth && isLastMonth) {
+      // Договор начинается и заканчивается в одном месяце
+      const daysRented = endDate!.getDate() - startDate.getDate() + 1;
+      amount = Math.round((rentAmount / dim) * daysRented * 100) / 100;
+    } else if (isLastMonth && endDate && endDate.getDate() < dim) {
+      // Последний месяц: если конец не последнее число
+      amount = Math.round((rentAmount / dim) * endDate.getDate() * 100) / 100;
+    }
+
+    rows.push({
+      companyId, leaseContractId, period,
+      amount: String(amount), currency,
+      dueDate: dueDateStr,
+      paidAmount: "0", balance: String(amount), status: "pending",
+    });
+
+    isFirstMonth = false;
+    current.setMonth(current.getMonth() + 1);
+  }
+
+  return rows;
+}
+
+// ---------- END HELPERS ----------
+
 // TENANTS
 router.get("/rental/tenants", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const { search, status } = req.query as Record<string, string | undefined>;
@@ -94,26 +177,17 @@ router.post("/rental/contracts", requireAuth, async (req: AuthenticatedRequest, 
   await db.update(propertiesTable).set({ rentalStatus: "rented" }).where(eq(propertiesTable.id, propertyId));
 
   if (status === "active" || status === "draft") {
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : new Date(start.getFullYear(), start.getMonth() + 12, 1);
-    const current = new Date(start.getFullYear(), start.getMonth(), 1);
-    const dueDay = accrualDay || 1;
-    while (current <= end) {
-      const yr = current.getFullYear();
-      const mo = String(current.getMonth() + 1).padStart(2, "0");
-      const day = String(Math.min(dueDay, new Date(yr, current.getMonth() + 1, 0).getDate())).padStart(2, "0");
-      await db.insert(accrualsTable).values({
-        companyId: req.companyId,
-        leaseContractId: row.id,
-        period: `${yr}-${mo}`,
-        amount: String(rentAmount),
-        currency,
-        dueDate: `${yr}-${mo}-${day}`,
-        paidAmount: "0",
-        balance: String(rentAmount),
-        status: "pending",
-      });
-      current.setMonth(current.getMonth() + 1);
+    const accrualRows = buildAccrualRows({
+      companyId: req.companyId!,
+      leaseContractId: row.id,
+      startDate: new Date(startDate),
+      endDate: endDate ? new Date(endDate) : null,
+      rentAmount: parseFloat(String(rentAmount)),
+      currency,
+      accrualDay: accrualDay || 1,
+    });
+    for (const ar of accrualRows) {
+      await db.insert(accrualsTable).values(ar);
     }
   }
 
@@ -169,26 +243,37 @@ router.post("/rental/accruals/recalculate", requireAuth, async (req: Authenticat
   const [contract] = await db.select().from(leaseContractsTable).where(and(...conditions));
   if (!contract) { res.status(404).json({ error: "Lease contract not found" }); return; }
 
-  await db.delete(accrualsTable).where(eq(accrualsTable.leaseContractId, leaseContractId));
+  // Удаляем только неоплаченные начисления (paid/partial оставляем)
+  await db.delete(accrualsTable).where(
+    and(
+      eq(accrualsTable.leaseContractId, leaseContractId),
+      eq(accrualsTable.status, "pending")
+    )
+  );
 
-  const start = new Date(contract.startDate);
-  const end = contract.endDate ? new Date(contract.endDate) : new Date(start.getFullYear(), start.getMonth() + 12, 1);
+  const accrualRows = buildAccrualRows({
+    companyId: req.companyId!,
+    leaseContractId,
+    startDate: new Date(contract.startDate),
+    endDate: contract.endDate ? new Date(contract.endDate) : null,
+    rentAmount: parseFloat(contract.rentAmount),
+    currency: contract.currency,
+    accrualDay: contract.accrualDay || 1,
+  });
+
+  // Фильтруем: не добавляем периоды, которые уже есть (частично/полностью оплачены)
+  const existingAccruals = await db.select().from(accrualsTable)
+    .where(eq(accrualsTable.leaseContractId, leaseContractId));
+  const existingPeriods = new Set(existingAccruals.map(a => a.period));
+
   const insertedAccruals = [];
-  const current = new Date(start.getFullYear(), start.getMonth(), 1);
-  while (current <= end) {
-    const period = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}`;
-    const dueDay = contract.accrualDay || 1;
-    const dueDate = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(dueDay).padStart(2, "0")}`;
-    const [accrual] = await db.insert(accrualsTable).values({
-      companyId: req.companyId,
-      leaseContractId,
-      period, amount: contract.rentAmount, currency: contract.currency,
-      dueDate, paidAmount: "0", balance: contract.rentAmount, status: "pending",
-    }).returning();
+  for (const ar of accrualRows) {
+    if (existingPeriods.has(ar.period)) continue; // пропускаем уже оплаченные месяцы
+    const [accrual] = await db.insert(accrualsTable).values(ar).returning();
     insertedAccruals.push(accrual);
-    current.setMonth(current.getMonth() + 1);
   }
-  res.json(insertedAccruals);
+
+  res.json({ inserted: insertedAccruals.length, accruals: insertedAccruals });
 });
 
 router.patch("/rental/accruals/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {

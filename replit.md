@@ -87,7 +87,7 @@ Registered under `artifacts/api-server/src/routes/`:
 - `contracts.ts` — CRUD, filtered by companyId
 - `documents.ts` — CRUD, filtered by companyId
 - `import.ts` — Excel import (preview + commit), filtered by companyId
-- `rental.ts` — Tenants, leases, accruals (with льготы via POST /accruals/:id/discount), payments (with smart auto/manual allocation to accruals), deposits, expenses, statements, rental-properties — all filtered by companyId
+- `rental.ts` — Tenants, leases, accruals (with льготы via POST /accruals/:id/discount), payments (with smart auto/manual allocation to accruals), deposits, expenses, statements, rental-properties — all filtered by companyId. Includes `buildAccrualRows()` helper with proration: first/last month calculated proportionally if startDate/endDate not on 1st/last day.
 - `dashboard.ts` — Summary stats, activity feed, rental overview — filtered by companyId
 - `activity.ts` — Activity log (GET/POST), filtered by companyId
 - `reports.ts` — GET /reports/debt, /reports/rental-summary, /reports/cashflow, /reports/payments, /reports/counterparties — all filtered by companyId
@@ -108,7 +108,7 @@ Under `artifacts/proptech/src/pages/`:
 - `activity-log.tsx` — System activity log (grouped by date, filterable)
 - `rental/rental-dashboard.tsx` — Rental-specific dashboard (KPI + pending accruals + recent payments)
 - `rental/tenants.tsx` — Tenant management (CRUD)
-- `rental/leases.tsx` — Lease contract management
+- `rental/leases.tsx` — Lease contract management: create/edit dialogs, row actions (edit, recalculate), proration preview showing first/last month amounts when dates are mid-month
 - `rental/accruals.tsx` — Monthly accruals (approve/cancel + Льгота button opens discount dialog)
 - `rental/payments.tsx` — Payment registration with auto/manual allocation to open accruals
 - `rental/deposits.tsx` — Deposit management
