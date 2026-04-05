@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,10 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw } from "lucide-react";
+import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw, ChevronsUpDown, Check, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
@@ -187,6 +188,96 @@ function DiscountDialog({ accrual, onClose, onSaved }: DiscountDialogProps) {
   );
 }
 
+// ── Searchable contract combobox ──────────────────────────────────────────────
+function LeaseCombobox({
+  value,
+  onValueChange,
+  leases,
+}: {
+  value: string;
+  onValueChange: (v: string) => void;
+  leases: any[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return leases.filter(
+      (l) =>
+        l.contractNumber?.toLowerCase().includes(q) ||
+        (l.tenantName || "").toLowerCase().includes(q)
+    );
+  }, [leases, search]);
+
+  const selectedLabel = useMemo(() => {
+    if (value === "all") return "Все договоры";
+    const l = leases.find((x) => String(x.id) === value);
+    return l ? `${l.contractNumber} — ${l.tenantName || ""}` : "Все договоры";
+  }, [value, leases]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-72 justify-between font-normal"
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <div className="flex items-center border-b px-3 py-2 gap-2">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          <input
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            placeholder="Поиск по договору или арендатору..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="max-h-64 overflow-y-auto py-1">
+          <button
+            className={cn(
+              "w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-accent",
+              value === "all" && "font-medium"
+            )}
+            onClick={() => { onValueChange("all"); setOpen(false); setSearch(""); }}
+          >
+            <Check className={cn("h-4 w-4", value === "all" ? "opacity-100" : "opacity-0")} />
+            Все договоры
+          </button>
+          {filtered.length === 0 ? (
+            <p className="px-3 py-4 text-sm text-center text-muted-foreground">
+              Ничего не найдено
+            </p>
+          ) : (
+            filtered.map((l: any) => (
+              <button
+                key={l.id}
+                className={cn(
+                  "w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-accent",
+                  String(l.id) === value && "font-medium"
+                )}
+                onClick={() => { onValueChange(String(l.id)); setOpen(false); setSearch(""); }}
+              >
+                <Check className={cn("h-4 w-4", String(l.id) === value ? "opacity-100" : "opacity-0")} />
+                <span>
+                  <span className="font-medium">{l.contractNumber}</span>
+                  {l.tenantName && <span className="text-muted-foreground ml-1">— {l.tenantName}</span>}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function Accruals() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -276,19 +367,11 @@ export default function Accruals() {
       </div>
 
       <div className="flex gap-3 flex-wrap items-center">
-        <Select value={leaseFilter} onValueChange={setLeaseFilter}>
-          <SelectTrigger className="w-72">
-            <SelectValue placeholder="Все договоры" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все договоры</SelectItem>
-            {(leases || []).map((l: any) => (
-              <SelectItem key={l.id} value={String(l.id)}>
-                {l.contractNumber} — {l.tenantName || `#${l.tenantId}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <LeaseCombobox
+          value={leaseFilter}
+          onValueChange={setLeaseFilter}
+          leases={leases || []}
+        />
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-44">

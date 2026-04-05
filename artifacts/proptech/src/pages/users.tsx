@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useListUsers, useCreateUser, useUpdateUser, useDeleteUser, User, UserRole } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit2, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -31,17 +31,24 @@ export default function Users() {
     setIsDialogOpen(true);
   };
 
+  const roleLabels: Record<string, string> = {
+    admin: "Администратор", super_admin: "Супер-Админ",
+    rental_manager: "Менеджер аренды", finance: "Финансы",
+    staff: "Сотрудник", company_admin: "Администратор компании",
+    sales_manager: "Менеджер продаж",
+  };
+
   const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this user?")) {
+    if (confirm("Удалить этого сотрудника?")) {
       deleteMutation.mutate(
         { id },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-            toast({ title: "User deleted" });
+            toast({ title: "Сотрудник удалён" });
           },
           onError: (error: any) => {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Ошибка", description: error.message, variant: "destructive" });
           }
         }
       );
@@ -52,12 +59,12 @@ export default function Users() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Users</h2>
-          <p className="text-muted-foreground mt-2">Manage user accounts and roles.</p>
+          <h2 className="text-2xl font-bold">Сотрудники</h2>
+          <p className="text-muted-foreground text-sm mt-1">Управление пользователями и правами доступа</p>
         </div>
         <Button onClick={handleOpenCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Add User
+          Добавить сотрудника
         </Button>
       </div>
 
@@ -65,11 +72,11 @@ export default function Users() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>ФИО</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Роль</TableHead>
+              <TableHead>Статус</TableHead>
+              <TableHead className="text-right">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -86,27 +93,27 @@ export default function Users() {
             ) : users?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  No users found.
+                  Сотрудники не найдены
                 </TableCell>
               </TableRow>
             ) : (
               users?.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{user.role}</Badge>
+                    <Badge variant="outline">{roleLabels[user.role] || user.role}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.isActive ? "default" : "secondary"}>
-                      {user.isActive ? "Active" : "Inactive"}
+                      {user.isActive ? "Активен" : "Заблокирован"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(user)}>
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(user)} title="Редактировать">
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)} className="text-destructive">
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)} className="text-destructive" title="Удалить">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -182,11 +189,11 @@ function UserDialog({
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-            toast({ title: "User updated" });
+            toast({ title: "Данные сотрудника обновлены" });
             onOpenChange(false);
           },
           onError: (error: any) => {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Ошибка", description: error.message, variant: "destructive" });
           }
         }
       );
@@ -196,11 +203,11 @@ function UserDialog({
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-            toast({ title: "User created" });
+            toast({ title: "Сотрудник создан", description: "Передайте email и пароль сотруднику для входа." });
             onOpenChange(false);
           },
           onError: (error: any) => {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Ошибка", description: error.message, variant: "destructive" });
           }
         }
       );
@@ -208,87 +215,104 @@ function UserDialog({
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit User" : "Add User"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Редактировать сотрудника" : "Добавить сотрудника"}</DialogTitle>
+          {!isEditing && (
+            <DialogDescription>
+              Сотрудник сможет войти в систему с указанным email и паролем.
+            </DialogDescription>
+          )}
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input 
-                  id="firstName" 
-                  required 
-                  value={formData.firstName}
-                  onChange={e => setFormData({...formData, firstName: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input 
-                  id="lastName" 
-                  required 
-                  value={formData.lastName}
-                  onChange={e => setFormData({...formData, lastName: e.target.value})}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input 
-                id="email" 
-                type="email"
-                required={!isEditing}
-                disabled={isEditing}
-                value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Имя *</Label>
+              <Input
+                required
+                value={formData.firstName}
+                onChange={e => setFormData({...formData, firstName: e.target.value})}
+                placeholder="Айбек"
               />
             </div>
-
-            {!isEditing && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <Input 
-                  id="password" 
-                  type="password"
-                  required={!isEditing}
-                  value={formData.password}
-                  onChange={e => setFormData({...formData, password: e.target.value})}
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Role *</Label>
-              <Select 
-                value={formData.role} 
-                onValueChange={(val: any) => setFormData({...formData, role: val})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
-                  <SelectItem value="company_admin">Company Admin</SelectItem>
-                  <SelectItem value="sales_manager">Sales Manager</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
-                  <SelectItem value="rental_manager">Rental Manager</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-1.5">
+              <Label>Фамилия *</Label>
+              <Input
+                required
+                value={formData.lastName}
+                onChange={e => setFormData({...formData, lastName: e.target.value})}
+                placeholder="Осмонов"
+              />
             </div>
           </div>
-          <div className="flex justify-end pt-4">
-            <Button type="button" variant="outline" className="mr-2" onClick={() => onOpenChange(false)}>
-              Cancel
+
+          <div className="space-y-1.5">
+            <Label>Email *</Label>
+            <Input
+              type="email"
+              required={!isEditing}
+              disabled={isEditing}
+              value={formData.email}
+              onChange={e => setFormData({...formData, email: e.target.value})}
+              placeholder="aibek@company.kg"
+            />
+          </div>
+
+          {!isEditing && (
+            <div className="space-y-1.5">
+              <Label>Пароль * <span className="text-xs text-muted-foreground">(минимум 6 символов)</span></Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  value={formData.password}
+                  onChange={e => setFormData({...formData, password: e.target.value})}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Запишите или передайте пароль сотруднику после создания.
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label>Роль *</Label>
+            <Select
+              value={formData.role}
+              onValueChange={(val: any) => setFormData({...formData, role: val})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите роль" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Администратор</SelectItem>
+                <SelectItem value="rental_manager">Менеджер аренды</SelectItem>
+                <SelectItem value="finance">Финансы</SelectItem>
+                <SelectItem value="staff">Сотрудник</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Отмена
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save User"}
+              {isPending ? "Сохранение..." : isEditing ? "Сохранить" : "Создать сотрудника"}
             </Button>
           </div>
         </form>

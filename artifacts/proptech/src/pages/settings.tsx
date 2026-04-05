@@ -58,6 +58,8 @@ export default function Settings() {
   const [org, setOrg] = useState<Company | null>(null);
   const [form, setForm] = useState({ name: "", legalName: "", bin: "", phone: "", email: "", address: "" });
   const [modules, setModules] = useState<Module[]>([]);
+  const [modulesLoading, setModulesLoading] = useState(true);
+  const [modulesError, setModulesError] = useState(false);
   const [togglingModule, setTogglingModule] = useState<string | null>(null);
 
   const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "" });
@@ -73,7 +75,10 @@ export default function Settings() {
       .catch(() => toast({ title: "Ошибка", description: "Не удалось загрузить данные организации", variant: "destructive" }))
       .finally(() => setLoading(false));
 
-    apiFetch("/modules").then(setModules).catch(() => {});
+    apiFetch("/modules")
+      .then((data) => { setModules(data); setModulesError(false); })
+      .catch(() => setModulesError(true))
+      .finally(() => setModulesLoading(false));
   }, []);
 
   useEffect(() => {
@@ -374,10 +379,33 @@ export default function Settings() {
           </div>
           {!isAdmin && (
             <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
-              Управление модулями доступно только администраторам.
+              Управление модулями доступно только администраторам. Ниже отображены текущие настройки.
             </p>
           )}
-          {Object.entries(groupedModules).map(([category, mods]) => (
+          {modulesLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 animate-pulse">
+                  <div className="w-10 h-10 bg-gray-200 rounded-xl flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-32" />
+                    <div className="h-3 bg-gray-100 rounded w-48" />
+                  </div>
+                  <div className="h-6 w-11 bg-gray-200 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : modulesError ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-sm text-red-800">
+              <p className="font-medium">Не удалось загрузить модули</p>
+              <p className="text-red-600 text-xs mt-1">Попробуйте обновить страницу.</p>
+            </div>
+          ) : modules.length === 0 ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-8 text-center text-sm text-gray-500">
+              Модули недоступны
+            </div>
+          ) : null}
+          {!modulesLoading && !modulesError && Object.entries(groupedModules).map(([category, mods]) => (
             <div key={category} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
