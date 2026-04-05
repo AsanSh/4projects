@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw, ChevronsUpDown, Check, Search, Building2, List, ChevronDown } from "lucide-react";
+import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw, ChevronsUpDown, Check, Search, Building2, List, ChevronDown, Banknote } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -278,17 +278,155 @@ function LeaseCombobox({
   );
 }
 
+// ── Quick payment dialog (accept payment directly from accrual row) ───────────
+function QuickPayDialog({
+  accrual,
+  leaseContractId,
+  onClose,
+  onSaved,
+}: {
+  accrual: Accrual | null;
+  leaseContractId: number | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { toast } = useToast();
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Reset form each time a new accrual is opened
+  useEffect(() => {
+    if (accrual) {
+      setAmount("");
+      setNote("");
+      setPaymentDate(new Date().toISOString().split("T")[0]);
+      setPaymentMethod("bank_transfer");
+    }
+  }, [accrual?.id]);
+
+  const balanceStr = accrual ? String(Math.max(0, parseFloat(accrual.balance))) : "0";
+  const effectiveAmount = amount || balanceStr;
+
+  if (!accrual || !leaseContractId) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE}/api/rental/payments`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          leaseContractId,
+          amount: parseFloat(effectiveAmount),
+          currency: "KGS",
+          paymentDate,
+          paymentMethod,
+          note: note || null,
+          allocations: [{ accrualId: accrual.id, amount: parseFloat(effectiveAmount) }],
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Ошибка создания платежа");
+      }
+      toast({
+        title: "Платёж принят",
+        description: `${fmtCurrency(parseFloat(effectiveAmount))} · ${accrual.period}`,
+      });
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!accrual} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Banknote className="w-4 h-4 text-green-600" /> Принять платёж
+          </DialogTitle>
+          <DialogDescription>
+            Период {accrual.period} · Остаток: {fmtCurrency(parseFloat(accrual.balance))}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Сумма (KGS)</Label>
+            <Input
+              type="number" min="0.01" step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={balanceStr}
+              className="mt-1"
+            />
+            <p className="text-xs text-gray-400 mt-1">По умолчанию — полный остаток: {fmtCurrency(parseFloat(balanceStr))}</p>
+          </div>
+          <div>
+            <Label>Дата платежа</Label>
+            <Input
+              type="date"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label>Способ оплаты</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Наличные</SelectItem>
+                <SelectItem value="bank_transfer">Банковский перевод</SelectItem>
+                <SelectItem value="card">Карта</SelectItem>
+                <SelectItem value="online">Онлайн</SelectItem>
+                <SelectItem value="other">Другое</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Примечание</Label>
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Необязательно"
+              className="mt-1"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
+            <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700 text-white">
+              {loading ? "Сохранение..." : "Подтвердить платёж"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Single accrual row ────────────────────────────────────────────────────────
 function AccrualRow({
   accrual,
   label,
   loadingId,
+  onAccept,
   onStatusChange,
   onDiscount,
 }: {
   accrual: Accrual;
   label: string;
   loadingId: number | null;
+  onAccept: (a: Accrual) => void;
   onStatusChange: (id: number, status: string) => void;
   onDiscount: (a: Accrual) => void;
 }) {
@@ -328,7 +466,7 @@ function AccrualRow({
             <Button
               size="sm" variant="outline"
               className="h-7 px-2 text-xs border-green-300 text-green-700 hover:bg-green-50"
-              onClick={() => onStatusChange(accrual.id, "approved")}
+              onClick={() => onAccept(accrual)}
               disabled={isBusy}
             >
               <CheckCircle className="w-3.5 h-3.5 mr-1" /> Принять
@@ -386,6 +524,7 @@ export default function Accruals() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [discountAccrual, setDiscountAccrual] = useState<Accrual | null>(null);
+  const [quickPayAccrual, setQuickPayAccrual] = useState<Accrual | null>(null);
   const [recalcLoading, setRecalcLoading] = useState(false);
   const [groupByObject, setGroupByObject] = useState(true);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -632,6 +771,7 @@ export default function Accruals() {
                             accrual={accrual}
                             label={rowLabel}
                             loadingId={loadingId}
+                            onAccept={setQuickPayAccrual}
                             onStatusChange={handleStatusChange}
                             onDiscount={setDiscountAccrual}
                           />
@@ -656,6 +796,7 @@ export default function Accruals() {
                   accrual={accrual}
                   label={leaseInfoMap[accrual.leaseContractId]?.label || `#${accrual.leaseContractId}`}
                   loadingId={loadingId}
+                  onAccept={setQuickPayAccrual}
                   onStatusChange={handleStatusChange}
                   onDiscount={setDiscountAccrual}
                 />
@@ -669,6 +810,16 @@ export default function Accruals() {
         accrual={discountAccrual}
         onClose={() => setDiscountAccrual(null)}
         onSaved={() => queryClient.invalidateQueries({ queryKey: ["accruals"] })}
+      />
+
+      <QuickPayDialog
+        accrual={quickPayAccrual}
+        leaseContractId={quickPayAccrual?.leaseContractId ?? null}
+        onClose={() => setQuickPayAccrual(null)}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ["accruals"] });
+          queryClient.invalidateQueries({ queryKey: ["payments"] });
+        }}
       />
     </div>
   );
