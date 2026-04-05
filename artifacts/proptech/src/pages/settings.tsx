@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Save, User, Shield, Loader2, LayoutGrid, Home, BarChart3, Bell, Users, Wrench, TrendingUp, FileText, CheckCircle2, XCircle } from "lucide-react";
+import { Building2, Save, User, Shield, Loader2, LayoutGrid, Home, BarChart3, Bell, Users, Wrench, TrendingUp, FileText, CheckCircle2, XCircle, Eye, EyeOff, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -47,8 +48,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<"org" | "profile" | "modules">("org");
   const isAdmin = (user as any)?.role === "admin";
 
@@ -56,6 +59,10 @@ export default function Settings() {
   const [form, setForm] = useState({ name: "", legalName: "", bin: "", phone: "", email: "", address: "" });
   const [modules, setModules] = useState<Module[]>([]);
   const [togglingModule, setTogglingModule] = useState<string | null>(null);
+
+  const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "" });
+  const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
+  const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
     apiFetch("/companies/my")
@@ -68,6 +75,46 @@ export default function Settings() {
 
     apiFetch("/modules").then(setModules).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        firstName: (user as any).firstName || "",
+        lastName: (user as any).lastName || "",
+      });
+    }
+  }, [user]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileForm.firstName.trim() || !profileForm.lastName.trim()) {
+      toast({ title: "Ошибка", description: "Имя и фамилия обязательны", variant: "destructive" });
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      await apiFetch("/auth/me", { method: "PATCH", body: JSON.stringify({ firstName: profileForm.firstName, lastName: profileForm.lastName }) });
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast({ title: "Сохранено", description: "Данные профиля обновлены" });
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally { setSavingProfile(false); }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordForm.next) { toast({ title: "Ошибка", description: "Введите новый пароль", variant: "destructive" }); return; }
+    if (passwordForm.next.length < 6) { toast({ title: "Ошибка", description: "Пароль должен быть не менее 6 символов", variant: "destructive" }); return; }
+    if (passwordForm.next !== passwordForm.confirm) { toast({ title: "Ошибка", description: "Пароли не совпадают", variant: "destructive" }); return; }
+    setSavingProfile(true);
+    try {
+      await apiFetch("/auth/me", { method: "PATCH", body: JSON.stringify({ password: passwordForm.next }) });
+      setPasswordForm({ current: "", next: "", confirm: "" });
+      toast({ title: "Готово", description: "Пароль успешно изменён" });
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally { setSavingProfile(false); }
+  };
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [field]: e.target.value }));
@@ -213,34 +260,108 @@ export default function Settings() {
 
       {/* Profile tab */}
       {activeTab === "profile" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
-            <div className="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center text-xl font-bold text-blue-700">
-              {(user as any)?.firstName?.[0]}{(user as any)?.lastName?.[0]}
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900 text-lg">{(user as any)?.firstName} {(user as any)?.lastName}</p>
-              <p className="text-sm text-gray-500">{(user as any)?.email}</p>
-              <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${isAdmin ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
-                <Shield className="h-3 w-3" />
-                {isAdmin ? "Администратор" : "Сотрудник"}
-              </span>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {[
-              { label: "Email", value: (user as any)?.email },
-              { label: "Имя", value: (user as any)?.firstName },
-              { label: "Фамилия", value: (user as any)?.lastName },
-              { label: "Роль", value: isAdmin ? "Администратор" : "Сотрудник" },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex py-2.5 border-b border-gray-50 last:border-0">
-                <span className="w-36 text-sm text-gray-500 flex-shrink-0">{label}</span>
-                <span className="text-sm text-gray-900 font-medium">{value || "—"}</span>
+        <div className="space-y-5">
+          {/* Header card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-700 flex-shrink-0">
+                {profileForm.firstName?.[0]}{profileForm.lastName?.[0]}
               </div>
-            ))}
+              <div>
+                <p className="font-semibold text-gray-900 text-lg">{profileForm.firstName} {profileForm.lastName}</p>
+                <p className="text-sm text-gray-500">{(user as any)?.email}</p>
+                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${isAdmin ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
+                  <Shield className="h-3 w-3" />
+                  {isAdmin ? "Администратор" : "Сотрудник"}
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-gray-400 pt-4">Для изменения личных данных или пароля обратитесь к администратору.</p>
+
+          {/* Edit profile form */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+              <User className="w-4 h-4 text-blue-500" />
+              Личные данные
+            </h3>
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Email</Label>
+                <Input value={(user as any)?.email || ""} disabled className="mt-1.5 h-11 rounded-xl bg-gray-50 border-gray-200 text-gray-400" />
+                <p className="text-xs text-gray-400 mt-1">Email изменить нельзя</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Имя *</Label>
+                  <Input
+                    value={profileForm.firstName}
+                    onChange={e => setProfileForm(f => ({ ...f, firstName: e.target.value }))}
+                    required
+                    placeholder="Иван"
+                    className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Фамилия *</Label>
+                  <Input
+                    value={profileForm.lastName}
+                    onChange={e => setProfileForm(f => ({ ...f, lastName: e.target.value }))}
+                    required
+                    placeholder="Иванов"
+                    className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
+                  />
+                </div>
+              </div>
+              <div className="pt-1">
+                <Button type="submit" disabled={savingProfile} className="h-11 px-6 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700">
+                  {savingProfile ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Сохранение...</> : <><Save className="h-4 w-4 mr-2" />Сохранить</>}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          {/* Change password form */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-blue-500" />
+              Изменить пароль
+            </h3>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Новый пароль *</Label>
+                <div className="relative mt-1.5">
+                  <Input
+                    type={showPasswords ? "text" : "password"}
+                    value={passwordForm.next}
+                    onChange={e => setPasswordForm(f => ({ ...f, next: e.target.value }))}
+                    placeholder="Минимум 6 символов"
+                    className="h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white pr-10"
+                  />
+                  <button type="button" onClick={() => setShowPasswords(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Подтвердите пароль *</Label>
+                <Input
+                  type={showPasswords ? "text" : "password"}
+                  value={passwordForm.confirm}
+                  onChange={e => setPasswordForm(f => ({ ...f, confirm: e.target.value }))}
+                  placeholder="Повторите новый пароль"
+                  className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
+                />
+                {passwordForm.confirm && passwordForm.next !== passwordForm.confirm && (
+                  <p className="text-xs text-red-500 mt-1">Пароли не совпадают</p>
+                )}
+              </div>
+              <div className="pt-1">
+                <Button type="submit" disabled={savingProfile} variant="outline" className="h-11 px-6 rounded-xl text-sm font-semibold border-gray-200">
+                  {savingProfile ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Сохранение...</> : <><KeyRound className="h-4 w-4 mr-2" />Сменить пароль</>}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

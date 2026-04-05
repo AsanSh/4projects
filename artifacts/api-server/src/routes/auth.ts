@@ -129,4 +129,46 @@ router.get("/auth/me", async (req, res): Promise<void> => {
   res.json({ ...safeUser, company });
 });
 
+// PATCH /auth/me — обновление собственного профиля
+router.patch("/auth/me", async (req, res): Promise<void> => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const token = authHeader.slice(7);
+  const userId = sessions.get(token);
+  if (!userId) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  const { firstName, lastName, password } = req.body;
+  const updates: Record<string, unknown> = {};
+
+  if (firstName !== undefined) {
+    if (!firstName.trim()) { res.status(400).json({ error: "Имя не может быть пустым" }); return; }
+    updates.firstName = firstName.trim();
+  }
+  if (lastName !== undefined) {
+    if (!lastName.trim()) { res.status(400).json({ error: "Фамилия не может быть пустой" }); return; }
+    updates.lastName = lastName.trim();
+  }
+  if (password !== undefined) {
+    if (password.length < 6) { res.status(400).json({ error: "Пароль должен быть не менее 6 символов" }); return; }
+    updates.passwordHash = hashPassword(password);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ error: "Нет данных для обновления" });
+    return;
+  }
+
+  const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
+  if (!user) { res.status(404).json({ error: "Пользователь не найден" }); return; }
+
+  const { passwordHash: _ph, ...safeUser } = user;
+  res.json(safeUser);
+});
+
 export default router;
