@@ -724,6 +724,8 @@ export interface LeaseContract {
   /** @nullable */
   tenantName?: string | null;
   contractNumber: string;
+  /** @nullable */
+  signDate?: string | null;
   startDate: string;
   /** @nullable */
   endDate?: string | null;
@@ -754,6 +756,8 @@ export interface CreateLeaseContractBody {
   propertyId: number;
   tenantId: number;
   contractNumber: string;
+  /** @nullable */
+  signDate?: string | null;
   startDate: string;
   /** @nullable */
   endDate?: string | null;
@@ -779,6 +783,8 @@ export const UpdateLeaseContractBodyStatus = {
 } as const;
 
 export interface UpdateLeaseContractBody {
+  /** @nullable */
+  signDate?: string | null;
   startDate?: string;
   /** @nullable */
   endDate?: string | null;

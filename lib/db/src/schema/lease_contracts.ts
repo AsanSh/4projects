@@ -8,6 +8,7 @@ export const leaseContractsTable = pgTable("lease_contracts", {
   propertyId: integer("property_id").notNull(),
   tenantId: integer("tenant_id").notNull(),
   contractNumber: text("contract_number").notNull(),
+  signDate: text("sign_date"),
   startDate: text("start_date").notNull(),
   endDate: text("end_date"),
   rentAmount: numeric("rent_amount", { precision: 14, scale: 2 }).notNull(),

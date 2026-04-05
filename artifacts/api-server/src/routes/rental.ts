@@ -165,13 +165,13 @@ router.get("/rental/contracts", requireAuth, async (req: AuthenticatedRequest, r
 });
 
 router.post("/rental/contracts", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const { propertyId, tenantId, contractNumber, startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment } = req.body;
+  const { propertyId, tenantId, contractNumber, signDate, startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment } = req.body;
   if (!propertyId || !tenantId || !contractNumber || !startDate || !rentAmount || !currency || !status) {
     res.status(400).json({ error: "Missing required fields" });
     return;
   }
   const [row] = await db.insert(leaseContractsTable).values({
-    companyId: req.companyId, propertyId, tenantId, contractNumber, startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment
+    companyId: req.companyId, propertyId, tenantId, contractNumber, signDate: signDate || null, startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment
   }).returning();
 
   await db.update(propertiesTable).set({ rentalStatus: "rented" }).where(eq(propertiesTable.id, propertyId));
@@ -209,14 +209,17 @@ router.get("/rental/contracts/:id", requireAuth, async (req: AuthenticatedReques
 
 router.patch("/rental/contracts/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  const { startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment } = req.body;
+  const { signDate, startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment } = req.body;
   const conditions: SQL[] = [eq(leaseContractsTable.id, id)];
   if (req.companyId) conditions.push(eq(leaseContractsTable.companyId, req.companyId));
   const [row] = await db.update(leaseContractsTable)
-    .set({ startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment })
+    .set({ signDate: signDate ?? null, startDate, endDate, rentAmount, currency, depositAmount, accrualDay, status, comment })
     .where(and(...conditions)).returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
-  res.json({ ...row, tenantName: null, propertyUnitNumber: null });
+  // Обогащаем ответ именами
+  const [t] = await db.select().from(tenantsTable).where(eq(tenantsTable.id, row.tenantId));
+  const [p] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, row.propertyId));
+  res.json({ ...row, tenantName: t?.fullName ?? null, propertyUnitNumber: p?.unitNumber ?? null });
 });
 
 // ACCRUALS

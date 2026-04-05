@@ -1986,6 +1986,8 @@ components:
           type: ["string", "null"]
         contractNumber:
           type: string
+        signDate:
+          type: ["string", "null"]
         startDate:
           type: string
         endDate:
@@ -2028,6 +2030,8 @@ components:
           type: integer
         contractNumber:
           type: string
+        signDate:
+          type: ["string", "null"]
         startDate:
           type: string
         endDate:
@@ -2057,6 +2061,8 @@ components:
     UpdateLeaseContractBody:
       type: object
       properties:
+        signDate:
+          type: ["string", "null"]
         startDate:
           type: string
         endDate:

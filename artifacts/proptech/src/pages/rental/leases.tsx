@@ -33,6 +33,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// ── Auth helper ───────────────────────────────────────────────────────────────
+
+/** Делает авторизованный fetch с Bearer токеном из localStorage */
+function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = localStorage.getItem("auth_token");
+  return fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 const statusColors: Record<string, string> = {
@@ -58,14 +73,16 @@ function fmt(amount: number | string, currency = "KGS") {
   }
 }
 
-function fmtDate(date: string) {
+function fmtDate(date: string | null | undefined) {
+  if (!date) return "—";
   return new Date(date).toLocaleDateString("ru-RU");
 }
 
-/**
- * Рассчитывает сумму первого и последнего месяца с пропорцией по фактическим дням.
- * Возвращает массив строк для отображения в подсказке.
- */
+const MONTHS_RU = [
+  "Январь","Февраль","Март","Апрель","Май","Июнь",
+  "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь",
+];
+
 function computeProratePreview(
   startDate: string,
   endDate: string,
@@ -73,16 +90,9 @@ function computeProratePreview(
 ): { firstMonth: { label: string; amount: number; isProrated: boolean } | null;
     lastMonth: { label: string; amount: number; isProrated: boolean } | null } | null {
   if (!startDate || isNaN(rentAmount) || rentAmount <= 0) return null;
-
   const start = new Date(startDate);
   if (isNaN(start.getTime())) return null;
 
-  const MONTHS_RU = [
-    "Январь","Февраль","Март","Апрель","Май","Июнь",
-    "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь",
-  ];
-
-  // Первый месяц
   const firstDim = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
   const firstDay = start.getDate();
   const firstIsProrated = firstDay > 1;
@@ -92,7 +102,6 @@ function computeProratePreview(
   const firstLabel = `${MONTHS_RU[start.getMonth()]} ${start.getFullYear()}`;
 
   let lastMonthResult: { label: string; amount: number; isProrated: boolean } | null = null;
-
   if (endDate) {
     const end = new Date(endDate);
     if (!isNaN(end.getTime())) {
@@ -119,7 +128,7 @@ function computeProratePreview(
   };
 }
 
-// ── ProrationPreview component ───────────────────────────────────────────────
+// ── ProrationPreview ──────────────────────────────────────────────────────────
 
 function ProrationPreview({
   startDate, endDate, rentAmount, currency,
@@ -129,11 +138,8 @@ function ProrationPreview({
     () => computeProratePreview(startDate, endDate, amount),
     [startDate, endDate, amount],
   );
-
   if (!preview) return null;
   const { firstMonth, lastMonth } = preview;
-
-  // Ничего показывать, если нет пропорции
   if (!firstMonth?.isProrated && !lastMonth?.isProrated) return null;
 
   return (
@@ -159,20 +165,19 @@ function ProrationPreview({
             <span className="text-blue-500">(до {new Date(endDate).toLocaleDateString("ru-RU")})</span>
           </div>
         )}
-        <div className="text-blue-500 text-xs mt-1">
-          Остальные месяцы — {fmt(amount, currency)}
-        </div>
+        <div className="text-blue-500 text-xs mt-1">Остальные месяцы — {fmt(amount, currency)}</div>
       </AlertDescription>
     </Alert>
   );
 }
 
-// ── Form fields shared between Create & Edit ─────────────────────────────────
+// ── FormState ────────────────────────────────────────────────────────────────
 
 type FormState = {
   propertyId: string;
   tenantId: string;
   contractNumber: string;
+  signDate: string;
   startDate: string;
   endDate: string;
   rentAmount: string;
@@ -187,6 +192,7 @@ const EMPTY_FORM: FormState = {
   propertyId: "",
   tenantId: "",
   contractNumber: "",
+  signDate: "",
   startDate: "",
   endDate: "",
   rentAmount: "",
@@ -196,6 +202,8 @@ const EMPTY_FORM: FormState = {
   status: "active",
   comment: "",
 };
+
+// ── Shared form fields ────────────────────────────────────────────────────────
 
 function LeaseFormFields({
   form, setForm, mode,
@@ -216,6 +224,7 @@ function LeaseFormFields({
 
   return (
     <div className="space-y-3">
+      {/* Объект и Арендатор */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Объект {mode === "create" && "*"}</Label>
@@ -257,6 +266,7 @@ function LeaseFormFields({
         </div>
       </div>
 
+      {/* Номер договора */}
       <div>
         <Label>Номер договора *</Label>
         <Input
@@ -267,17 +277,26 @@ function LeaseFormFields({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Дата начала *</Label>
-          <Input type="date" value={form.startDate} onChange={f("startDate")} required />
-        </div>
-        <div>
-          <Label>Дата окончания</Label>
-          <Input type="date" value={form.endDate} onChange={f("endDate")} />
+      {/* Три ключевые даты */}
+      <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Даты договора</p>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <Label className="text-xs">Дата подписания</Label>
+            <Input type="date" value={form.signDate} onChange={f("signDate")} />
+          </div>
+          <div>
+            <Label className="text-xs">Дата начала начисления *</Label>
+            <Input type="date" value={form.startDate} onChange={f("startDate")} required />
+          </div>
+          <div>
+            <Label className="text-xs">Дата завершения договора</Label>
+            <Input type="date" value={form.endDate} onChange={f("endDate")} />
+          </div>
         </div>
       </div>
 
+      {/* Сумма */}
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-2">
           <Label>Сумма аренды в месяц *</Label>
@@ -382,6 +401,7 @@ function CreateLeaseDialog({ open, onClose }: { open: boolean; onClose: () => vo
           propertyId: parseInt(form.propertyId),
           tenantId: parseInt(form.tenantId),
           contractNumber: form.contractNumber,
+          signDate: form.signDate || null,
           startDate: form.startDate,
           endDate: form.endDate || null,
           rentAmount: parseFloat(form.rentAmount),
@@ -411,7 +431,7 @@ function CreateLeaseDialog({ open, onClose }: { open: boolean; onClose: () => vo
         <DialogHeader>
           <DialogTitle>Новый договор аренды</DialogTitle>
           <DialogDescription>
-            Если дата начала не 1-е число, первый месяц будет рассчитан пропорционально.
+            Если дата начала начисления не 1-е число, первый месяц рассчитывается пропорционально.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -431,9 +451,7 @@ function CreateLeaseDialog({ open, onClose }: { open: boolean; onClose: () => vo
 // ── Edit dialog ───────────────────────────────────────────────────────────────
 
 function EditLeaseDialog({
-  lease,
-  open,
-  onClose,
+  lease, open, onClose,
 }: { lease: LeaseContract; open: boolean; onClose: () => void }) {
   const updateMutation = useUpdateLeaseContract();
   const queryClient = useQueryClient();
@@ -445,6 +463,7 @@ function EditLeaseDialog({
     propertyId: String(lease.propertyId),
     tenantId: String(lease.tenantId),
     contractNumber: lease.contractNumber,
+    signDate: lease.signDate ?? "",
     startDate: lease.startDate,
     endDate: lease.endDate ?? "",
     rentAmount: String(lease.rentAmount),
@@ -455,7 +474,6 @@ function EditLeaseDialog({
     comment: lease.comment ?? "",
   });
 
-  // Проверяем, изменились ли ключевые поля (которые влияют на начисления)
   const keyFieldsChanged =
     form.startDate !== lease.startDate ||
     form.endDate !== (lease.endDate ?? "") ||
@@ -468,6 +486,7 @@ function EditLeaseDialog({
       await updateMutation.mutateAsync({
         id: lease.id,
         data: {
+          signDate: form.signDate || null,
           startDate: form.startDate,
           endDate: form.endDate || null,
           rentAmount: parseFloat(form.rentAmount),
@@ -481,7 +500,6 @@ function EditLeaseDialog({
       toast({ title: "Договор обновлён" });
       queryClient.invalidateQueries({ queryKey: getListLeaseContractsQueryKey() });
 
-      // Если изменились ключевые поля — предлагаем пересчитать
       if (keyFieldsChanged) {
         setRecalcConfirm(true);
       } else {
@@ -499,13 +517,14 @@ function EditLeaseDialog({
   const handleRecalculate = async () => {
     setRecalcLoading(true);
     try {
-      const res = await fetch(`/api/rental/accruals/recalculate`, {
+      const res = await authFetch(`/api/rental/accruals/recalculate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ leaseContractId: lease.id }),
       });
-      if (!res.ok) throw new Error("Ошибка пересчёта");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Ошибка пересчёта");
+      }
       const data = await res.json();
       toast({
         title: "Начисления пересчитаны",
@@ -520,7 +539,6 @@ function EditLeaseDialog({
     }
   };
 
-  // После сохранения — диалог подтверждения пересчёта
   if (recalcConfirm) {
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -528,11 +546,11 @@ function EditLeaseDialog({
           <DialogHeader>
             <DialogTitle>Пересчитать начисления?</DialogTitle>
             <DialogDescription>
-              Условия договора изменились (даты, сумма или день начисления). Хотите пересчитать
-              будущие начисления с учётом пропорционального расчёта первого месяца?
+              Условия договора изменились. Хотите пересчитать будущие начисления с учётом
+              пропорционального расчёта первого месяца?
               <br />
               <span className="text-amber-600 font-medium">
-                Оплаченные и частично оплаченные начисления сохранятся.
+                Оплаченные начисления сохранятся.
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -573,7 +591,7 @@ function EditLeaseDialog({
   );
 }
 
-// ── Recalculate confirmation dialog ─────────────────────────────────────────
+// ── Recalculate dialog ────────────────────────────────────────────────────────
 
 function RecalcDialog({
   lease, open, onClose,
@@ -584,13 +602,14 @@ function RecalcDialog({
   const handleRecalculate = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/rental/accruals/recalculate`, {
+      const res = await authFetch(`/api/rental/accruals/recalculate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ leaseContractId: lease.id }),
       });
-      if (!res.ok) throw new Error("Ошибка пересчёта");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Ошибка пересчёта");
+      }
       const data = await res.json();
       toast({
         title: "Начисления пересчитаны",
@@ -613,14 +632,17 @@ function RecalcDialog({
             Договор <strong>{lease.contractNumber}</strong>. Будут пересозданы неоплаченные
             начисления с пропорциональным расчётом первого и последнего месяца.
             <br />
-            <span className="text-amber-600 font-medium">
-              Оплаченные начисления не затронуты.
-            </span>
+            <span className="text-amber-600 font-medium">Оплаченные начисления не затронуты.</span>
           </DialogDescription>
         </DialogHeader>
         <div className="py-2 text-sm text-muted-foreground space-y-1">
-          <div>Дата начала: <strong>{fmtDate(lease.startDate)}</strong></div>
-          {lease.endDate && <div>Дата окончания: <strong>{fmtDate(lease.endDate)}</strong></div>}
+          {lease.signDate && (
+            <div>Дата подписания: <strong>{fmtDate(lease.signDate)}</strong></div>
+          )}
+          <div>Дата начала начисления: <strong>{fmtDate(lease.startDate)}</strong></div>
+          {lease.endDate && (
+            <div>Дата завершения: <strong>{fmtDate(lease.endDate)}</strong></div>
+          )}
           <div>Ставка аренды: <strong>{fmt(lease.rentAmount, lease.currency)}</strong>/мес.</div>
         </div>
         <DialogFooter className="flex gap-2">
@@ -665,7 +687,9 @@ export default function RentalContracts() {
               <TableHead>Номер</TableHead>
               <TableHead>Объект</TableHead>
               <TableHead>Арендатор</TableHead>
-              <TableHead>Период</TableHead>
+              <TableHead>Подписание</TableHead>
+              <TableHead>Нач. начислений</TableHead>
+              <TableHead>Завершение</TableHead>
               <TableHead>Аренда/мес.</TableHead>
               <TableHead>Статус</TableHead>
               <TableHead className="w-10"></TableHead>
@@ -675,14 +699,14 @@ export default function RentalContracts() {
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 9 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : !leases?.length ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   Договоры аренды не найдены
                 </TableCell>
               </TableRow>
@@ -692,9 +716,12 @@ export default function RentalContracts() {
                   <TableCell className="font-medium">{lease.contractNumber}</TableCell>
                   <TableCell>{(lease as any).propertyUnitNumber || `#${lease.propertyId}`}</TableCell>
                   <TableCell>{(lease as any).tenantName || `#${lease.tenantId}`}</TableCell>
-                  <TableCell>
-                    {fmtDate(lease.startDate)}
-                    {lease.endDate ? ` — ${fmtDate(lease.endDate)}` : " (бессрочный)"}
+                  <TableCell className="text-muted-foreground text-sm">
+                    {fmtDate(lease.signDate)}
+                  </TableCell>
+                  <TableCell>{fmtDate(lease.startDate)}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {lease.endDate ? fmtDate(lease.endDate) : "бессрочный"}
                   </TableCell>
                   <TableCell>{fmt(lease.rentAmount, lease.currency)}</TableCell>
                   <TableCell>
