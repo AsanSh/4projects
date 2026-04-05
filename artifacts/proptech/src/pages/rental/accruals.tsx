@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw, ChevronsUpDown, Check, Search } from "lucide-react";
+import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw, ChevronsUpDown, Check, Search, Building2, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -278,6 +278,107 @@ function LeaseCombobox({
   );
 }
 
+// ── Single accrual row ────────────────────────────────────────────────────────
+function AccrualRow({
+  accrual,
+  label,
+  loadingId,
+  onStatusChange,
+  onDiscount,
+}: {
+  accrual: Accrual;
+  label: string;
+  loadingId: number | null;
+  onStatusChange: (id: number, status: string) => void;
+  onDiscount: (a: Accrual) => void;
+}) {
+  const isBusy = loadingId === accrual.id;
+  const canApprove = accrual.status === "pending" || accrual.status === "overdue";
+  const canCancel = accrual.status === "pending" || accrual.status === "approved";
+  const hasDiscount = parseFloat(accrual.discountAmount || "0") > 0;
+
+  return (
+    <TableRow className="hover:bg-gray-50">
+      <TableCell className="text-sm text-gray-600">{label}</TableCell>
+      <TableCell className="font-medium text-gray-900">{accrual.period}</TableCell>
+      <TableCell>{fmtCurrency(parseFloat(accrual.amount))}</TableCell>
+      <TableCell>
+        {hasDiscount ? (
+          <span className="text-xs text-green-700 font-medium bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
+            -{fmtCurrency(parseFloat(accrual.discountAmount!))}
+          </span>
+        ) : <span className="text-gray-300 text-xs">—</span>}
+      </TableCell>
+      <TableCell className="text-gray-600">{fmtCurrency(parseFloat(accrual.paidAmount))}</TableCell>
+      <TableCell className={cn(
+        "font-medium",
+        parseFloat(accrual.balance) > 0 ? "text-red-600" : "text-green-600"
+      )}>
+        {fmtCurrency(parseFloat(accrual.balance))}
+      </TableCell>
+      <TableCell className="text-gray-500">{formatDate(accrual.dueDate)}</TableCell>
+      <TableCell>
+        <Badge className={statusColors[accrual.status] || ""} variant="secondary">
+          {statusLabels[accrual.status] || accrual.status}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <div className="flex gap-1 justify-center flex-wrap">
+          {canApprove && (
+            <Button
+              size="sm" variant="outline"
+              className="h-7 px-2 text-xs border-green-300 text-green-700 hover:bg-green-50"
+              onClick={() => onStatusChange(accrual.id, "approved")}
+              disabled={isBusy}
+            >
+              <CheckCircle className="w-3.5 h-3.5 mr-1" /> Принять
+            </Button>
+          )}
+          {canCancel && (
+            <Button
+              size="sm" variant="outline"
+              className="h-7 px-2 text-xs border-red-300 text-red-700 hover:bg-red-50"
+              onClick={() => onStatusChange(accrual.id, "cancelled")}
+              disabled={isBusy}
+            >
+              <XCircle className="w-3.5 h-3.5 mr-1" /> Отменить
+            </Button>
+          )}
+          {accrual.status !== "paid" && accrual.status !== "cancelled" && (
+            <Button
+              size="sm" variant="outline"
+              className="h-7 px-2 text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
+              onClick={() => onDiscount(accrual)}
+              disabled={isBusy}
+            >
+              <Tag className="w-3.5 h-3.5 mr-1" /> Льгота
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// ── Table header (shared) ─────────────────────────────────────────────────────
+function AccrualsTableHeader({ label = "Договор" }: { label?: string }) {
+  return (
+    <TableHeader>
+      <TableRow className="bg-gray-50">
+        <TableHead>{label}</TableHead>
+        <TableHead>Период</TableHead>
+        <TableHead>Сумма</TableHead>
+        <TableHead>Скидка</TableHead>
+        <TableHead>Оплачено</TableHead>
+        <TableHead>Остаток</TableHead>
+        <TableHead>Срок оплаты</TableHead>
+        <TableHead>Статус</TableHead>
+        <TableHead className="text-center">Действия</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
+
 export default function Accruals() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -286,6 +387,7 @@ export default function Accruals() {
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [discountAccrual, setDiscountAccrual] = useState<Accrual | null>(null);
   const [recalcLoading, setRecalcLoading] = useState(false);
+  const [groupByObject, setGroupByObject] = useState(true);
 
   const { data: accruals, isLoading } = useQuery<Accrual[]>({
     queryKey: ["accruals"],
@@ -297,15 +399,44 @@ export default function Accruals() {
     queryFn: () => api.get("/rental/contracts").then(r => r.data),
   });
 
-  const leaseMap = Object.fromEntries(
-    (leases || []).map((l: any) => [l.id, `${l.contractNumber} — ${l.tenantName || ""}`.trim()])
-  );
+  // Build a rich lease info map
+  const leaseInfoMap = useMemo(() => {
+    const map: Record<number, {
+      label: string;
+      projectName: string;
+      unitNumber: string;
+      contractNumber: string;
+      tenantName: string;
+    }> = {};
+    for (const l of leases || []) {
+      map[l.id] = {
+        label: `${l.contractNumber} — ${l.tenantName || ""}`.trim(),
+        projectName: l.propertyProjectName || "Без проекта",
+        unitNumber: l.propertyUnitNumber || "",
+        contractNumber: l.contractNumber || "",
+        tenantName: l.tenantName || "",
+      };
+    }
+    return map;
+  }, [leases]);
 
-  const filtered = (accruals || []).filter((a) => {
+  const filtered = useMemo(() => (accruals || []).filter((a) => {
     if (leaseFilter !== "all" && String(a.leaseContractId) !== leaseFilter) return false;
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
     return true;
-  });
+  }), [accruals, leaseFilter, statusFilter]);
+
+  // Group by project name
+  const grouped = useMemo(() => {
+    if (!groupByObject) return null;
+    const map = new Map<string, Accrual[]>();
+    for (const a of filtered) {
+      const key = leaseInfoMap[a.leaseContractId]?.projectName || "Без проекта";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(a);
+    }
+    return map;
+  }, [filtered, leaseInfoMap, groupByObject]);
 
   const handleStatusChange = async (id: number, newStatus: string) => {
     setLoadingId(id);
@@ -316,7 +447,8 @@ export default function Accruals() {
     } catch {
       toast({ title: "Ошибка", description: "Не удалось обновить начисление", variant: "destructive" });
     } finally {
-      setLoadingId(null); }
+      setLoadingId(null);
+    }
   };
 
   const pendingCount = (accruals || []).filter((a) => a.status === "pending").length;
@@ -388,6 +520,20 @@ export default function Accruals() {
           </SelectContent>
         </Select>
 
+        {/* Group toggle */}
+        <Button
+          variant={groupByObject ? "default" : "outline"}
+          size="sm"
+          onClick={() => setGroupByObject(!groupByObject)}
+          className="gap-2"
+        >
+          {groupByObject ? (
+            <><Building2 className="w-4 h-4" /> По объектам</>
+          ) : (
+            <><List className="w-4 h-4" /> Списком</>
+          )}
+        </Button>
+
         {leaseFilter !== "all" && (
           <Button
             variant="outline"
@@ -402,112 +548,100 @@ export default function Accruals() {
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Договор</TableHead>
-              <TableHead>Период</TableHead>
-              <TableHead>Сумма</TableHead>
-              <TableHead>Скидка</TableHead>
-              <TableHead>Оплачено</TableHead>
-              <TableHead>Остаток</TableHead>
-              <TableHead>Срок оплаты</TableHead>
-              <TableHead>Статус</TableHead>
-              <TableHead className="text-center">Действия</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
+      {isLoading ? (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <Table>
+            <AccrualsTableHeader />
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
                   {Array.from({ length: 9 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
-              ))
-            ) : !filtered.length ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center text-gray-400 py-12">
-                  {accruals?.length
-                    ? "Начисления не соответствуют фильтру"
-                    : "Начисления не найдены. Создайте договор аренды — начисления появятся автоматически."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((accrual) => {
-                const isBusy = loadingId === accrual.id;
-                const canApprove = accrual.status === "pending" || accrual.status === "overdue";
-                const canCancel = accrual.status === "pending" || accrual.status === "approved";
-                const hasDiscount = parseFloat(accrual.discountAmount || "0") > 0;
-                return (
-                  <TableRow key={accrual.id} className="hover:bg-gray-50">
-                    <TableCell className="text-sm text-gray-600">
-                      {leaseMap[accrual.leaseContractId] || `#${accrual.leaseContractId}`}
-                    </TableCell>
-                    <TableCell className="font-medium text-gray-900">{accrual.period}</TableCell>
-                    <TableCell>{fmtCurrency(parseFloat(accrual.amount))}</TableCell>
-                    <TableCell>
-                      {hasDiscount ? (
-                        <span className="text-xs text-green-700 font-medium bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
-                          -{fmtCurrency(parseFloat(accrual.discountAmount!))}
-                        </span>
-                      ) : <span className="text-gray-300 text-xs">—</span>}
-                    </TableCell>
-                    <TableCell className="text-gray-600">{fmtCurrency(parseFloat(accrual.paidAmount))}</TableCell>
-                    <TableCell className={cn(
-                      "font-medium",
-                      parseFloat(accrual.balance) > 0 ? "text-red-600" : "text-green-600"
-                    )}>
-                      {fmtCurrency(parseFloat(accrual.balance))}
-                    </TableCell>
-                    <TableCell className="text-gray-500">{formatDate(accrual.dueDate)}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[accrual.status] || ""} variant="secondary">
-                        {statusLabels[accrual.status] || accrual.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 justify-center flex-wrap">
-                        {canApprove && (
-                          <Button
-                            size="sm" variant="outline"
-                            className="h-7 px-2 text-xs border-green-300 text-green-700 hover:bg-green-50"
-                            onClick={() => handleStatusChange(accrual.id, "approved")}
-                            disabled={isBusy}
-                          >
-                            <CheckCircle className="w-3.5 h-3.5 mr-1" /> Принять
-                          </Button>
-                        )}
-                        {canCancel && (
-                          <Button
-                            size="sm" variant="outline"
-                            className="h-7 px-2 text-xs border-red-300 text-red-700 hover:bg-red-50"
-                            onClick={() => handleStatusChange(accrual.id, "cancelled")}
-                            disabled={isBusy}
-                          >
-                            <XCircle className="w-3.5 h-3.5 mr-1" /> Отменить
-                          </Button>
-                        )}
-                        {accrual.status !== "paid" && accrual.status !== "cancelled" && (
-                          <Button
-                            size="sm" variant="outline"
-                            className="h-7 px-2 text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
-                            onClick={() => setDiscountAccrual(accrual)}
-                            disabled={isBusy}
-                          >
-                            <Tag className="w-3.5 h-3.5 mr-1" /> Льгота
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : !filtered.length ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+          {accruals?.length
+            ? "Начисления не соответствуют фильтру"
+            : "Начисления не найдены. Создайте договор аренды — начисления появятся автоматически."}
+        </div>
+      ) : groupByObject && grouped ? (
+        // ── GROUPED VIEW ──────────────────────────────────────────────────────
+        <div className="space-y-4">
+          {Array.from(grouped.entries()).map(([projectName, rows]) => {
+            const groupBalance = rows.reduce((s, a) => s + parseFloat(a.balance), 0);
+            const groupPending = rows.filter(a => a.status === "pending").length;
+            return (
+              <div key={projectName} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                {/* Group header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <span className="font-semibold text-gray-800 text-sm">{projectName}</span>
+                    <span className="text-gray-400 text-xs">· {rows.length} начисл.</span>
+                    {groupPending > 0 && (
+                      <span className="text-xs text-yellow-600 font-medium bg-yellow-50 border border-yellow-200 px-1.5 py-0.5 rounded">
+                        {groupPending} ожидают
+                      </span>
+                    )}
+                  </div>
+                  {groupBalance > 0 && (
+                    <span className="text-sm font-bold text-red-600">
+                      Долг: {fmtCurrency(groupBalance)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Rows table */}
+                <Table>
+                  <AccrualsTableHeader label="Помещение / Договор" />
+                  <TableBody>
+                    {rows.map((accrual) => {
+                      const info = leaseInfoMap[accrual.leaseContractId];
+                      const rowLabel = info
+                        ? `${info.unitNumber ? `кв. ${info.unitNumber}` : ""} ${info.tenantName ? `— ${info.tenantName}` : ""}`.trim() || info.label
+                        : `#${accrual.leaseContractId}`;
+                      return (
+                        <AccrualRow
+                          key={accrual.id}
+                          accrual={accrual}
+                          label={rowLabel}
+                          loadingId={loadingId}
+                          onStatusChange={handleStatusChange}
+                          onDiscount={setDiscountAccrual}
+                        />
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        // ── FLAT VIEW ─────────────────────────────────────────────────────────
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <Table>
+            <AccrualsTableHeader />
+            <TableBody>
+              {filtered.map((accrual) => (
+                <AccrualRow
+                  key={accrual.id}
+                  accrual={accrual}
+                  label={leaseInfoMap[accrual.leaseContractId]?.label || `#${accrual.leaseContractId}`}
+                  loadingId={loadingId}
+                  onStatusChange={handleStatusChange}
+                  onDiscount={setDiscountAccrual}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <DiscountDialog
         accrual={discountAccrual}

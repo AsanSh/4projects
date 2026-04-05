@@ -159,7 +159,12 @@ router.get("/rental/contracts", requireAuth, async (req: AuthenticatedRequest, r
   const enriched = await Promise.all(contracts.map(async (c) => {
     const [t] = await db.select().from(tenantsTable).where(eq(tenantsTable.id, c.tenantId));
     const [p] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, c.propertyId));
-    return { ...c, tenantName: t?.fullName ?? null, propertyUnitNumber: p?.unitNumber ?? null };
+    return {
+      ...c,
+      tenantName: t?.fullName ?? null,
+      propertyUnitNumber: p?.unitNumber ?? null,
+      propertyProjectName: p?.projectName ?? null,
+    };
   }));
   res.json(enriched);
 });
