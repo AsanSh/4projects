@@ -18,6 +18,10 @@ import {
   TrendingUp,
   BarChart3,
   Briefcase,
+  Upload,
+  ClipboardList,
+  Activity,
+  ScrollText,
 } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
@@ -36,12 +40,13 @@ interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     items: [
-      { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
+      { href: "/dashboard", label: "Главный дашборд", icon: LayoutDashboard },
     ],
   },
   {
-    title: "Недвижимость",
+    title: "Аренда",
     items: [
+      { href: "/rental/dashboard", label: "Дашборд аренды", icon: BarChart3 },
       { href: "/rental/properties", label: "Объекты", icon: Building2 },
       { href: "/rental/tenants", label: "Арендаторы", icon: Users },
       { href: "/rental/contracts", label: "Договоры аренды", icon: FileText },
@@ -54,6 +59,7 @@ const navGroups: NavGroup[] = [
       { href: "/rental/payments", label: "Платежи", icon: CreditCard },
       { href: "/rental/deposits", label: "Депозиты", icon: PiggyBank },
       { href: "/rental/expenses", label: "Расходы", icon: Wallet },
+      { href: "/rental/statements", label: "Акты собственников", icon: ScrollText },
     ],
   },
   {
@@ -62,10 +68,14 @@ const navGroups: NavGroup[] = [
       { href: "/counterparties", label: "Контрагенты", icon: Briefcase },
       { href: "/companies", label: "Компании", icon: Home },
       { href: "/users", label: "Сотрудники", icon: UserCircle },
+      { href: "/properties", label: "Объекты (реестр)", icon: Building2 },
     ],
   },
   {
+    title: "Система",
     items: [
+      { href: "/import", label: "Центр импорта", icon: Upload },
+      { href: "/activity", label: "Лог активности", icon: Activity },
       { href: "/settings", label: "Настройки", icon: Settings },
     ],
   },

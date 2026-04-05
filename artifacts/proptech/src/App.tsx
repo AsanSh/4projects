@@ -19,18 +19,20 @@ import Accruals from "@/pages/rental/accruals";
 import Payments from "@/pages/rental/payments";
 import Deposits from "@/pages/rental/deposits";
 import Expenses from "@/pages/rental/expenses";
+import OwnerStatements from "@/pages/rental/statements";
+import RentalDashboard from "@/pages/rental/rental-dashboard";
+import ImportCenter from "@/pages/import-center";
+import ActivityLog from "@/pages/activity-log";
 
 const queryClient = new QueryClient();
 
-const Contracts = () => <div className="p-8">Contracts Content</div>;
-const ImportData = () => <div className="p-8">Import Data Content</div>;
-const Statements = () => <div className="p-8">Statements Content</div>;
-const Settings = () => <div className="p-8">Settings Content</div>;
+const Contracts = () => <div className="p-8 text-gray-500">Модуль договоров купли-продажи (в разработке)</div>;
+const Settings = () => <div className="p-8 text-gray-500">Настройки системы (в разработке)</div>;
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
   if (!isAuthenticated) return <Redirect to="/login" />;
 
   return (
@@ -53,7 +55,9 @@ function Router() {
       <Route path="/counterparties"><ProtectedRoute component={Counterparties} /></Route>
       <Route path="/properties"><ProtectedRoute component={Properties} /></Route>
       <Route path="/contracts"><ProtectedRoute component={Contracts} /></Route>
-      <Route path="/import"><ProtectedRoute component={ImportData} /></Route>
+      <Route path="/import"><ProtectedRoute component={ImportCenter} /></Route>
+      <Route path="/activity"><ProtectedRoute component={ActivityLog} /></Route>
+      <Route path="/rental/dashboard"><ProtectedRoute component={RentalDashboard} /></Route>
       <Route path="/rental/properties"><ProtectedRoute component={RentalProperties} /></Route>
       <Route path="/rental/tenants"><ProtectedRoute component={RentalTenants} /></Route>
       <Route path="/rental/contracts"><ProtectedRoute component={RentalContracts} /></Route>
@@ -61,7 +65,7 @@ function Router() {
       <Route path="/rental/payments"><ProtectedRoute component={Payments} /></Route>
       <Route path="/rental/deposits"><ProtectedRoute component={Deposits} /></Route>
       <Route path="/rental/expenses"><ProtectedRoute component={Expenses} /></Route>
-      <Route path="/rental/statements"><ProtectedRoute component={Statements} /></Route>
+      <Route path="/rental/statements"><ProtectedRoute component={OwnerStatements} /></Route>
       <Route path="/settings"><ProtectedRoute component={Settings} /></Route>
       <Route component={NotFound} />
     </Switch>

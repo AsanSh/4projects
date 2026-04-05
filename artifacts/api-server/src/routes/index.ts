@@ -10,6 +10,7 @@ import documentsRouter from "./documents";
 import importRouter from "./import";
 import rentalRouter from "./rental";
 import dashboardRouter from "./dashboard";
+import activityRouter from "./activity";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(documentsRouter);
 router.use(importRouter);
 router.use(rentalRouter);
 router.use(dashboardRouter);
+router.use(activityRouter);
 
 export default router;

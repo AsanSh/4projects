@@ -82,23 +82,36 @@ Registered under `artifacts/api-server/src/routes/`:
 - `import.ts` — Excel import (preview + commit)
 - `rental.ts` — Tenants, leases, accruals, payments, deposits, expenses, statements, rental-properties
 - `dashboard.ts` — Summary stats, activity feed, rental overview
+- `activity.ts` — Activity log (GET /api/activity, POST /api/activity)
 
 ## Frontend Pages
 
 Under `artifacts/proptech/src/pages/`:
 - `login.tsx` — Authentication
-- `dashboard.tsx` — Analytics dashboard
+- `dashboard.tsx` — Main analytics dashboard (KPI + AI recommendations + recent ops)
 - `companies.tsx` — Company management
 - `users.tsx` — User management
-- `properties.tsx` — Property management
-- `counterparties.tsx` — Counterparty/client management
+- `properties.tsx` — Property management (реестр объектов)
+- `counterparties.tsx` — Counterparty/client management (full CRUD)
+- `import-center.tsx` — Excel Import Center (XLSX upload, preview, validate, commit, history)
+- `activity-log.tsx` — System activity log (grouped by date, filterable)
+- `rental/rental-dashboard.tsx` — Rental-specific dashboard (KPI + pending accruals + recent payments)
 - `rental/tenants.tsx` — Tenant management (CRUD)
 - `rental/leases.tsx` — Lease contract management
-- `rental/accruals.tsx` — Monthly accruals view
+- `rental/accruals.tsx` — Monthly accruals (approve/cancel)
 - `rental/payments.tsx` — Payment registration
 - `rental/deposits.tsx` — Deposit management
 - `rental/expenses.tsx` — Property expense tracking
 - `rental/rental-properties.tsx` — Rental property overview
+- `rental/statements.tsx` — Owner statements (generate + list)
+
+## Sidebar Navigation Groups
+
+- (ungrouped): Главный дашборд
+- Аренда: Дашборд аренды, Объекты, Арендаторы, Договоры аренды
+- Финансы: Начисления, Платежи, Депозиты, Расходы, Акты собственников
+- Справочники: Контрагенты, Компании, Сотрудники, Объекты (реестр)
+- Система: Центр импорта, Лог активности, Настройки
 
 ## Seeded Data
 
@@ -111,6 +124,6 @@ Under `artifacts/proptech/src/pages/`:
 ## Notes
 
 - All numeric DB fields use `numeric()` type, returned as strings — parse with `parseFloat()` in routes
-- Default currency: KZT (Kazakhstan Tenge)
+- Default currency: KGS (Kyrgyz Som) — formatCurrency uses ru-KG locale
 - Frontend uses `wouter` for routing with `import.meta.env.BASE_URL` base path
 - API server listens on port 8080 (set via `PORT` env var)
