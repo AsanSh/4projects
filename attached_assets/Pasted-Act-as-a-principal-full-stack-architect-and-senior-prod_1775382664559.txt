@@ -1,0 +1,711 @@
+Act as a principal full-stack architect and senior product engineer.
+
+Build a production-structured MVP called:
+
+"PropTech Foundation + Rental Management"
+
+Important: do NOT overbuild. Only implement:
+1. Foundation Core
+2. Excel Import Center
+3. Rental Management
+
+Do NOT implement yet:
+- construction management
+- cost management
+- procurement
+- wholesale materials marketplace
+- investor portal
+- marketing campaigns
+- complex AI features
+- live external API integrations
+
+However, the system must be API-ready for future expansion.
+
+==================================================
+1. PRODUCT CONTEXT
+==================================================
+
+This product is the future foundation of a modular platform for construction companies.
+
+In the future, separate modules will be added:
+- construction management
+- cost management
+- procurement
+- wholesale materials marketplace
+- client communications
+- rental management
+- analytics
+- other integrations
+
+But right now, only these parts must be built:
+
+A. Foundation Core
+B. Excel Import Center
+C. Rental Management
+
+Current data entry mode:
+- counterparties are uploaded manually by Excel
+- properties are uploaded manually by Excel
+- contracts are uploaded manually by Excel
+
+In the future, Excel import may be replaced or supplemented by API integrations.
+So the architecture must be import-first, API-ready.
+
+==================================================
+2. CORE ARCHITECTURAL PRINCIPLE
+==================================================
+
+All business logic must be built around a stable internal domain model.
+
+Current input pipeline:
+Excel -> Import Layer -> Core Domain -> Module Logic -> REST API -> UI
+
+Future input pipeline:
+External API -> Integration Layer -> Core Domain -> Module Logic -> REST API -> UI
+
+Do NOT build the system in a way that is tightly coupled to Excel.
+Excel is only the first input channel.
+
+Every major domain entity should support future sync metadata:
+- source_type
+- external_id
+- sync_status
+- last_synced_at
+
+==================================================
+3. REQUIRED STACK
+==================================================
+
+Use this stack:
+
+Backend:
+- Python
+- Django
+- Django REST Framework
+- PostgreSQL
+
+Frontend:
+- React
+- TypeScript
+- Tailwind CSS
+
+Import:
+- pandas and/or openpyxl
+
+Auth:
+- token or JWT-based auth
+
+General requirements:
+- modular monorepo or well-structured multi-folder repo
+- clean separation of backend and frontend
+- typed DTOs/interfaces where relevant
+- reusable service layer on backend
+- reusable API layer on frontend
+
+==================================================
+4. MODULE 1 — FOUNDATION CORE
+==================================================
+
+Implement these domain areas:
+
+4.1 Company / Organization
+Models:
+- Company
+- CompanySettings
+- ModuleAccess
+- FeatureFlag
+
+Company fields:
+- id
+- name
+- slug
+- is_active
+- settings (json)
+- created_at
+- updated_at
+
+4.2 Users / Roles / Permissions
+Models:
+- User
+- Role
+- Permission
+- UserRole or direct role relation
+
+Roles to support:
+- SuperAdmin
+- CompanyAdmin
+- SalesManager
+- FinanceManager
+- RentalManager
+- Staff
+- OwnerClient
+
+Need:
+- login
+- logout
+- me
+- role-based access
+- company scoping
+
+4.3 Counterparties
+Build a generic counterparty registry first.
+Later roles can extend it.
+
+Model:
+- Counterparty
+
+Fields:
+- id
+- company
+- type (owner / client / tenant / supplier / contractor / other)
+- full_name or company_name
+- tax_id
+- phone
+- email
+- address
+- comment
+- source_type
+- external_id
+- sync_status
+- last_synced_at
+- created_at
+- updated_at
+
+4.4 Properties
+Models:
+- PropertyProject
+- PropertyUnit
+- OwnershipLink
+
+PropertyUnit fields:
+- project
+- company
+- unit_type
+- block
+- floor
+- unit_number
+- area_total
+- status
+- address
+- comment
+- source_type
+- external_id
+- sync_status
+- last_synced_at
+
+OwnershipLink:
+- owner counterparty
+- property unit
+- ownership status
+- start date
+- notes
+
+4.5 Base Contracts
+Model:
+- BaseContract
+
+Fields:
+- company
+- contract_type
+- contract_number
+- contract_date
+- counterparty
+- property
+- amount
+- currency
+- start_date
+- end_date
+- accrual_start_date
+- deposit_amount
+- comment
+- source_type
+- external_id
+- sync_status
+- last_synced_at
+
+Supported contract types for now:
+- ownership
+- sale
+- installment
+- rental_lease
+- service
+
+4.6 Documents
+Model:
+- Document
+
+Fields:
+- company
+- related entity type
+- related entity id
+- file
+- document type
+- title
+- uploaded by
+- created_at
+
+4.7 Activity Log
+Model:
+- ActivityLog
+
+Fields:
+- company
+- actor
+- action_type
+- entity_type
+- entity_id
+- payload
+- created_at
+
+==================================================
+5. MODULE 2 — EXCEL IMPORT CENTER
+==================================================
+
+Build a complete import subsystem, not just a file upload button.
+
+Models:
+- ImportJob
+- ImportRowError
+- ImportTemplate
+
+Import types:
+- counterparties
+- properties
+- contracts
+
+Required flow:
+1. user uploads xlsx file
+2. backend validates file structure
+3. system previews parsed rows
+4. system shows row-level errors
+5. user confirms import
+6. valid rows are persisted
+7. import job and errors are saved in history
+
+Import job fields:
+- company
+- import_type
+- filename
+- status
+- total_rows
+- valid_rows
+- invalid_rows
+- created_by
+- created_at
+- finished_at
+
+Import row error fields:
+- import_job
+- row_number
+- field_name
+- error_message
+- raw_payload
+
+Need downloadable templates for:
+- counterparties
+- properties
+- contracts
+
+Required validations:
+
+Counterparties import:
+- required name
+- required type
+- valid phone/email format where present
+
+Properties import:
+- required project or project creation logic
+- required unit number
+- required status
+- numeric area validation
+
+Contracts import:
+- required contract number
+- required contract type
+- required counterparty reference
+- required property reference
+- valid dates
+- numeric amount
+- optional deposit
+
+Need duplicate handling strategy:
+- detect duplicates by configurable key
+- allow skip/update/create-new strategy where feasible
+
+==================================================
+6. MODULE 3 — RENTAL MANAGEMENT
+==================================================
+
+This is the first real operational module.
+
+Business chain:
+Property -> Tenant -> Lease Contract -> Accruals -> Payments -> Expenses -> Owner Statement
+
+Models:
+- RentalProfile
+- TenantProfile
+- LeaseContract
+- RentalAccrual
+- RentalPayment
+- RentalDeposit
+- RentalExpense
+- OwnerStatement
+- OwnerPayout
+- MaintenanceRequest
+
+6.1 RentalProfile
+Represents that a property is managed in rental mode.
+
+Fields:
+- company
+- property
+- owner
+- management_status
+- management_start_date
+- commission_type
+- commission_value
+- payout_day
+- notes
+
+6.2 TenantProfile
+Tenant in rental module.
+
+Fields:
+- company
+- counterparty
+- id_document
+- emergency_contact
+- notes
+
+6.3 LeaseContract
+Fields:
+- company
+- property
+- tenant
+- owner
+- contract_number
+- start_date
+- end_date
+- monthly_rent
+- currency
+- billing_day
+- deposit_amount
+- utilities_mode
+- grace_period_days
+- status
+- notes
+
+6.4 RentalAccrual
+Fields:
+- company
+- lease_contract
+- accrual_type (rent / utilities / service / penalty / other)
+- period_start
+- period_end
+- due_date
+- amount
+- status
+- notes
+
+6.5 RentalPayment
+Fields:
+- company
+- lease_contract
+- payment_date
+- amount
+- currency
+- payment_method
+- reference
+- notes
+
+Need allocation logic:
+- payment can be partially allocated
+- unpaid balance must remain visible
+- oldest due accruals should be closed first by default
+
+6.6 RentalDeposit
+Fields:
+- company
+- lease_contract
+- deposit_amount
+- received_date
+- status (held / partially_returned / returned / withheld)
+- withheld_amount
+- returned_amount
+- notes
+
+6.7 RentalExpense
+Fields:
+- company
+- property
+- lease_contract nullable
+- expense_date
+- category
+- amount
+- vendor
+- comment
+
+Categories:
+- repair
+- utilities
+- cleaning
+- management
+- maintenance
+- tax
+- other
+
+6.8 OwnerStatement
+Generate owner statement by month.
+
+Statement must show:
+- opening balance
+- accrued rent
+- collected payments
+- arrears
+- expenses
+- management commission
+- net amount to owner
+- notes
+
+==================================================
+7. REQUIRED BUSINESS RULES
+==================================================
+
+1. Sales/ownership data and rental data must not be mixed into one flat table.
+2. BaseContract and LeaseContract are related concepts but different operational layers.
+3. A property can exist without rental mode.
+4. Rental mode can be activated only when owner exists.
+5. Lease contract can be active only for a property in rental mode.
+6. Rental accruals should be generated monthly.
+7. Payments can be partial.
+8. Deposit handling must support hold/return/withhold.
+9. Expenses reduce owner result.
+10. Owner statement is calculated, not manually edited.
+
+==================================================
+8. REQUIRED SCREENS
+==================================================
+
+Frontend pages to implement:
+
+Core:
+- LoginPage
+- DashboardPage
+- CompaniesPage
+- UsersPage
+- CounterpartiesPage
+- PropertiesPage
+- PropertyDetailPage
+- ContractsPage
+- ContractDetailPage
+- ImportCenterPage
+- ImportHistoryPage
+- DocumentsPage
+- SettingsPage
+
+Rental:
+- RentalDashboardPage
+- RentalPropertiesPage
+- RentalPropertyDetailPage
+- TenantsPage
+- TenantDetailPage
+- LeaseContractsPage
+- LeaseContractDetailPage
+- RentalAccrualsPage
+- RentalPaymentsPage
+- RentalDepositsPage
+- RentalExpensesPage
+- OwnerStatementsPage
+
+==================================================
+9. UI / UX REQUIREMENTS
+==================================================
+
+Use a clean white fintech-style UI.
+
+Must support:
+- desktop sidebar + topbar
+- mobile topbar + bottom navigation
+- responsive tables on desktop
+- card list presentation on mobile
+- search and filters
+- empty states
+- error states
+- loading skeletons
+- success toasts
+
+For finance pages:
+- sticky summary cards
+- readable money formatting
+- clear status badges
+
+Keep UI modular and reusable.
+Do not generate dead components that are never used.
+
+==================================================
+10. REST API
+==================================================
+
+Implement REST endpoints for all required pages.
+
+Auth:
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/auth/me
+
+Company / Users:
+- GET /api/companies
+- POST /api/companies
+- GET /api/users
+- POST /api/users
+
+Counterparties:
+- GET /api/counterparties
+- POST /api/counterparties
+- GET /api/counterparties/:id
+- PATCH /api/counterparties/:id
+
+Properties:
+- GET /api/properties
+- POST /api/properties
+- GET /api/properties/:id
+- PATCH /api/properties/:id
+
+Contracts:
+- GET /api/contracts
+- POST /api/contracts
+- GET /api/contracts/:id
+- PATCH /api/contracts/:id
+
+Import:
+- POST /api/import/preview
+- POST /api/import/commit
+- GET /api/import/jobs
+- GET /api/import/jobs/:id
+- GET /api/import/templates/:type
+
+Rental:
+- GET /api/rental/properties
+- POST /api/rental/properties/:id/activate
+- GET /api/rental/tenants
+- POST /api/rental/tenants
+- GET /api/rental/contracts
+- POST /api/rental/contracts
+- GET /api/rental/accruals
+- POST /api/rental/accruals/generate
+- GET /api/rental/payments
+- POST /api/rental/payments
+- GET /api/rental/deposits
+- POST /api/rental/deposits
+- GET /api/rental/expenses
+- POST /api/rental/expenses
+- GET /api/rental/statements
+- GET /api/rental/statements/:id
+
+==================================================
+11. REPO STRUCTURE
+==================================================
+
+Create a clean repo structure like this:
+
+/backend
+  /config
+  /apps
+    /core
+    /companies
+    /counterparties
+    /properties
+    /contracts
+    /documents
+    /imports
+    /rental
+    /notifications
+/common or shared utils if needed
+
+/frontend
+  /src
+    /api
+    /components
+    /features
+    /hooks
+    /layouts
+    /pages
+    /types
+    /utils
+
+==================================================
+12. IMPLEMENTATION STYLE
+==================================================
+
+Backend:
+- fat service layer, thin views/viewsets
+- explicit serializers
+- validation at serializer/service layer
+- clear model relationships
+- clean migrations
+- no placeholder code
+- no print-debugging in final business paths
+
+Frontend:
+- route-based pages
+- reusable data table / mobile card patterns
+- dedicated api files
+- no giant monolithic page components
+- proper form validation
+- proper loading/error/empty states
+
+==================================================
+13. OUTPUT FORMAT
+==================================================
+
+Work in this order:
+
+STEP 1
+Create the folder/file architecture.
+
+STEP 2
+Create models and migrations.
+
+STEP 3
+Create serializers, services, viewsets, urls.
+
+STEP 4
+Create Excel import templates, parsers, preview and commit flow.
+
+STEP 5
+Create frontend API clients.
+
+STEP 6
+Create frontend layouts and pages.
+
+STEP 7
+Wire navigation and permissions.
+
+STEP 8
+Seed demo data and provide sample Excel files.
+
+STEP 9
+Provide run instructions.
+
+==================================================
+14. QUALITY BAR
+==================================================
+
+The MVP is complete only if:
+- company can be created
+- users/roles work
+- counterparties can be imported
+- properties can be imported
+- contracts can be imported
+- rental can be activated on property
+- tenant can be created
+- lease contract can be created
+- accruals can be generated
+- rental payment can be recorded
+- rental deposit can be recorded
+- rental expense can be recorded
+- owner statement can be generated
+- code is modular and readable
+- future API fields exist in the core entities
+
+Now begin implementing this MVP in a clean, production-structured way.

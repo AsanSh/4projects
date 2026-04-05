@@ -5,11 +5,15 @@ import { z } from "zod/v4";
 export const counterpartiesTable = pgTable("counterparties", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id"),
+  // type: юридическое лицо / физическое лицо
   type: text("type").notNull().default("individual"),
+  // category: роль контрагента в системе
+  category: text("category").notNull().default("other"),
   fullName: text("full_name").notNull(),
   iin: text("iin"),
   phone: text("phone"),
   email: text("email"),
+  address: text("address"),
   additionalContact: text("additional_contact"),
   comment: text("comment"),
   externalId: text("external_id"),

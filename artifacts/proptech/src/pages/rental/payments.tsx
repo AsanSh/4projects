@@ -1,36 +1,40 @@
 import { useState } from "react";
-import {
-  useListPayments,
-  useCreatePayment,
-  useListLeaseContracts,
-  getListPaymentsQueryKey,
-} from "@workspace/api-client-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, CreditCard, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const methodLabels: Record<string, string> = {
-  cash: "Наличные",
-  bank_transfer: "Банковский перевод",
-  card: "Карта",
-  other: "Другое",
+  cash: "Наличные", bank_transfer: "Перевод", card: "Карта",
+  online: "Онлайн", other: "Другое",
 };
 
-function formatCurrency(amount: number | string, currency: string) {
+function fmtCurrency(amount: number | string) {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  const cur = currency === "KGS" ? "KGS" : currency === "USD" ? "USD" : "KGS";
-  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: cur }).format(num);
+  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: "KGS", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
 }
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("ru-KG");
+}
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+const authHeaders = () => {
+  const token = localStorage.getItem("auth_token");
+  return { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
+
+interface OpenAccrual {
+  id: number; period: string; amount: string; balance: string; dueDate: string;
 }
 
 interface PaymentDialogProps {
@@ -39,10 +43,13 @@ interface PaymentDialogProps {
 }
 
 function PaymentDialog({ open, onClose }: PaymentDialogProps) {
-  const createMutation = useCreatePayment();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data: leases } = useListLeaseContracts();
+
+  const { data: leases } = useQuery<any[]>({
+    queryKey: ["leases"],
+    queryFn: () => api.get("/rental/contracts").then(r => r.data),
+  });
 
   const [formData, setFormData] = useState({
     leaseContractId: "",
@@ -53,42 +60,95 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
     note: "",
   });
 
+  const [allocationMode, setAllocationMode] = useState<"auto" | "manual">("auto");
+  const [manualAllocations, setManualAllocations] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(false);
+
+  // Load open accruals for selected contract
+  const { data: openAccruals = [] } = useQuery<OpenAccrual[]>({
+    queryKey: ["accruals-open", formData.leaseContractId],
+    queryFn: async () => {
+      if (!formData.leaseContractId) return [];
+      const all = await api.get("/rental/accruals").then(r => r.data);
+      return all.filter((a: any) =>
+        String(a.leaseContractId) === formData.leaseContractId &&
+        parseFloat(a.balance) > 0
+      ).sort((a: any, b: any) => a.dueDate.localeCompare(b.dueDate));
+    },
+    enabled: !!formData.leaseContractId,
+  });
+
+  const totalOpen = openAccruals.reduce((s, a) => s + parseFloat(a.balance), 0);
+  const paymentAmount = parseFloat(formData.amount) || 0;
+
+  const manualTotal = Object.values(manualAllocations).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  const unallocated = paymentAmount - manualTotal;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.leaseContractId || !formData.amount || !formData.paymentDate) {
+      toast({ title: "Заполните обязательные поля", variant: "destructive" }); return;
+    }
+    setLoading(true);
     try {
-      await createMutation.mutateAsync({
-        data: {
-          leaseContractId: parseInt(formData.leaseContractId),
-          amount: parseFloat(formData.amount),
-          currency: formData.currency,
-          paymentDate: formData.paymentDate,
-          paymentMethod: formData.paymentMethod as any,
-          note: formData.note || null,
-        },
+      let body: any = {
+        leaseContractId: parseInt(formData.leaseContractId),
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        paymentDate: formData.paymentDate,
+        paymentMethod: formData.paymentMethod,
+        note: formData.note || null,
+      };
+
+      if (allocationMode === "manual" && Object.keys(manualAllocations).length > 0) {
+        body.allocations = Object.entries(manualAllocations)
+          .filter(([_, v]) => parseFloat(v) > 0)
+          .map(([id, amount]) => ({ accrualId: parseInt(id), amount: parseFloat(amount) }));
+      }
+
+      const res = await fetch(`${BASE}/api/rental/payments`, {
+        method: "POST", headers: authHeaders(), body: JSON.stringify(body),
       });
-      toast({ title: "Платёж зарегистрирован" });
-      queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey() });
+      if (!res.ok) throw new Error("Ошибка сохранения платежа");
+
+      const result = await res.json();
+      const allocCount = result.allocations?.length ?? 0;
+      const unallocAmt = result.unallocated ?? 0;
+
+      toast({
+        title: "Платёж зарегистрирован",
+        description: `${fmtCurrency(parseFloat(formData.amount))} · распределено по ${allocCount} начислениям${unallocAmt > 0 ? ` · нераспред.: ${fmtCurrency(unallocAmt)}` : ""}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["accruals"] });
       onClose();
-    } catch {
-      toast({ title: "Ошибка", description: "Не удалось сохранить платёж", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Регистрация платежа</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-blue-600" /> Регистрация платежа
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Договор аренды *</Label>
-            <Select value={formData.leaseContractId} onValueChange={(v) => setFormData({ ...formData, leaseContractId: v })}>
-              <SelectTrigger>
+            <Select value={formData.leaseContractId} onValueChange={(v) => {
+              setFormData({ ...formData, leaseContractId: v });
+              setManualAllocations({});
+            }}>
+              <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Выберите договор" />
               </SelectTrigger>
               <SelectContent>
-                {(leases || []).map((l) => (
+                {(leases || []).map((l: any) => (
                   <SelectItem key={l.id} value={String(l.id)}>
                     {l.contractNumber} — {l.tenantName || `Арендатор #${l.tenantId}`}
                   </SelectItem>
@@ -96,61 +156,158 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {openAccruals.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-semibold text-amber-700 mb-2">
+                Открытые начисления: {openAccruals.length} шт. · долг {fmtCurrency(totalOpen)}
+              </p>
+              <div className="space-y-1">
+                {openAccruals.slice(0, 3).map(a => (
+                  <div key={a.id} className="flex items-center justify-between text-xs text-amber-800">
+                    <span>{a.period}</span>
+                    <span className="font-semibold">{fmtCurrency(parseFloat(a.balance))}</span>
+                  </div>
+                ))}
+                {openAccruals.length > 3 && (
+                  <p className="text-xs text-amber-600">+ ещё {openAccruals.length - 3} начислений</p>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <Label>Сумма *</Label>
               <Input
-                type="number"
+                type="number" step="0.01"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="150000"
-                required
+                placeholder="150000" required className="mt-1"
               />
             </div>
             <div>
               <Label>Валюта</Label>
               <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="KGS">Сом (KGS)</SelectItem>
-                  <SelectItem value="USD">Доллар (USD)</SelectItem>
+                  <SelectItem value="KGS">Сом</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <div>
-            <Label>Дата платежа *</Label>
-            <Input
-              type="date"
-              value={formData.paymentDate}
-              onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-              required
-            />
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Дата платежа *</Label>
+              <Input
+                type="date" value={formData.paymentDate}
+                onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                required className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Способ оплаты</Label>
+              <Select value={formData.paymentMethod} onValueChange={(v) => setFormData({ ...formData, paymentMethod: v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Наличные</SelectItem>
+                  <SelectItem value="bank_transfer">Банковский перевод</SelectItem>
+                  <SelectItem value="card">Карта</SelectItem>
+                  <SelectItem value="online">Онлайн</SelectItem>
+                  <SelectItem value="other">Другое</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div>
-            <Label>Способ оплаты</Label>
-            <Select value={formData.paymentMethod} onValueChange={(v) => setFormData({ ...formData, paymentMethod: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Наличные</SelectItem>
-                <SelectItem value="bank_transfer">Банковский перевод</SelectItem>
-                <SelectItem value="card">Карта</SelectItem>
-                <SelectItem value="other">Другое</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+
+          {/* Allocation mode */}
+          {openAccruals.length > 0 && paymentAmount > 0 && (
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="flex">
+                <button
+                  type="button"
+                  onClick={() => setAllocationMode("auto")}
+                  className={cn("flex-1 py-2 text-xs font-medium transition-colors",
+                    allocationMode === "auto" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  )}
+                >
+                  Авто-аллокация
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAllocationMode("manual")}
+                  className={cn("flex-1 py-2 text-xs font-medium transition-colors border-l border-gray-200",
+                    allocationMode === "manual" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  )}
+                >
+                  Ручная аллокация
+                </button>
+              </div>
+
+              {allocationMode === "auto" && (
+                <div className="px-3 py-2.5 bg-blue-50">
+                  <p className="text-xs text-blue-700">
+                    Платёж {fmtCurrency(paymentAmount)} будет автоматически распределён по старейшим долгам
+                    {paymentAmount < totalOpen && ` (остаток ${fmtCurrency(totalOpen - paymentAmount)})`}
+                    {paymentAmount >= totalOpen && " — покроет весь долг"}
+                  </p>
+                </div>
+              )}
+
+              {allocationMode === "manual" && (
+                <div className="px-3 py-2.5 space-y-2">
+                  {openAccruals.map(a => (
+                    <div key={a.id} className="flex items-center gap-2">
+                      <div className="flex-1 text-xs">
+                        <span className="font-medium">{a.period}</span>
+                        <span className="text-gray-400 ml-2">до {fmtCurrency(parseFloat(a.balance))}</span>
+                      </div>
+                      <Input
+                        type="number" step="0.01" min="0" max={a.balance}
+                        className="w-28 h-7 text-xs"
+                        placeholder="0"
+                        value={manualAllocations[a.id] || ""}
+                        onChange={(e) => setManualAllocations(prev => ({
+                          ...prev, [a.id]: e.target.value
+                        }))}
+                      />
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between pt-1 border-t border-gray-200">
+                    <span className="text-xs text-gray-500">Нераспределено:</span>
+                    <span className={cn("text-xs font-semibold", unallocated < 0 ? "text-red-600" : unallocated > 0 ? "text-amber-600" : "text-green-600")}>
+                      {fmtCurrency(unallocated)}
+                    </span>
+                  </div>
+                  {unallocated < 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-red-600">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      <span>Сумма аллокаций превышает сумму платежа</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <Label>Примечание</Label>
             <Input
               value={formData.note}
               onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-              placeholder="Оплата за апрель 2026"
+              placeholder="Оплата за апрель 2026" className="mt-1"
             />
           </div>
+
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Сохранение..." : "Сохранить"}
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
+            <Button
+              type="submit"
+              disabled={loading || (allocationMode === "manual" && unallocated < 0)}
+            >
+              {loading ? "Сохранение..." : "Зарегистрировать"}
             </Button>
           </div>
         </form>
@@ -160,30 +317,53 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
 }
 
 export default function Payments() {
-  const { data: payments, isLoading } = useListPayments();
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const { data: payments, isLoading } = useQuery<any[]>({
+    queryKey: ["payments"],
+    queryFn: () => api.get("/rental/payments").then(r => r.data),
+  });
+
+  const { data: leases } = useQuery<any[]>({
+    queryKey: ["leases"],
+    queryFn: () => api.get("/rental/contracts").then(r => r.data),
+  });
+
+  const leaseMap = Object.fromEntries(
+    (leases || []).map((l: any) => [l.id, `${l.contractNumber} — ${l.tenantName || ""}`.trim()])
+  );
+
+  const totalPaid = (payments || []).reduce((s, p) => s + parseFloat(p.amount), 0);
+
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="space-y-5">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold">Платежи</h1>
-          <p className="text-muted-foreground text-sm">История поступивших платежей</p>
+          <h1 className="text-2xl font-bold text-gray-900">Платежи</h1>
+          <p className="text-sm text-gray-500 mt-1">История поступивших платежей</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Зарегистрировать
-        </Button>
+        <div className="flex items-center gap-4">
+          {totalPaid > 0 && (
+            <div className="text-right">
+              <p className="text-xs text-gray-400">Всего получено</p>
+              <p className="text-lg font-bold text-green-600">{fmtCurrency(totalPaid)}</p>
+            </div>
+          )}
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Зарегистрировать
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-gray-50">
               <TableHead>Договор</TableHead>
               <TableHead>Дата</TableHead>
               <TableHead>Сумма</TableHead>
               <TableHead>Способ оплаты</TableHead>
+              <TableHead>Аллокации</TableHead>
               <TableHead>Примечание</TableHead>
             </TableRow>
           </TableHeader>
@@ -191,25 +371,35 @@ export default function Payments() {
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 5 }).map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : !payments?.length ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  Платежи не найдены
+                <TableCell colSpan={6} className="text-center text-gray-400 py-12">
+                  <CreditCard className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                  <p>Платежи не найдены</p>
                 </TableCell>
               </TableRow>
             ) : (
               payments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell>Договор #{payment.leaseContractId}</TableCell>
-                  <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-                  <TableCell className="font-medium">{formatCurrency(payment.amount, payment.currency)}</TableCell>
-                  <TableCell>{payment.paymentMethod ? methodLabels[payment.paymentMethod] || payment.paymentMethod : "—"}</TableCell>
-                  <TableCell>{payment.note || "—"}</TableCell>
+                <TableRow key={payment.id} className="hover:bg-gray-50">
+                  <TableCell className="text-sm">
+                    {leaseMap[payment.leaseContractId] || `Договор #${payment.leaseContractId}`}
+                  </TableCell>
+                  <TableCell className="text-gray-600">{formatDate(payment.paymentDate)}</TableCell>
+                  <TableCell className="font-semibold text-green-600">{fmtCurrency(payment.amount)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {payment.paymentMethod ? methodLabels[payment.paymentMethod] || payment.paymentMethod : "—"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-400">
+                    авто
+                  </TableCell>
+                  <TableCell className="text-gray-500 text-sm">{payment.note || "—"}</TableCell>
                 </TableRow>
               ))
             )}

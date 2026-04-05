@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { eq, and, SQL, sql } from "drizzle-orm";
+import { eq, and, SQL, sql, asc } from "drizzle-orm";
 import {
   db, propertiesTable, tenantsTable, leaseContractsTable,
   accrualsTable, paymentsTable, depositsTable, expensesTable,
-  ownerStatementsTable
+  ownerStatementsTable, paymentAllocationsTable
 } from "@workspace/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
@@ -193,12 +193,84 @@ router.post("/rental/accruals/recalculate", requireAuth, async (req: Authenticat
 
 router.patch("/rental/accruals/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  const { status } = req.body;
-  if (!status) { res.status(400).json({ error: "status required" }); return; }
+  const { status, notes, discountType, discountAmount, discountReason, gracePeriodDays, dueDate } = req.body;
   const conditions: SQL[] = [eq(accrualsTable.id, id)];
   if (req.companyId) conditions.push(eq(accrualsTable.companyId, req.companyId));
-  const [row] = await db.update(accrualsTable).set({ status }).where(and(...conditions)).returning();
+
+  const [existing] = await db.select().from(accrualsTable).where(and(...conditions));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+
+  const updates: Record<string, unknown> = {};
+  if (status !== undefined) updates.status = status;
+  if (notes !== undefined) updates.notes = notes;
+  if (dueDate !== undefined) updates.dueDate = dueDate;
+
+  // Льгота / скидка
+  if (discountType !== undefined) updates.discountType = discountType;
+  if (discountReason !== undefined) updates.discountReason = discountReason;
+  if (gracePeriodDays !== undefined) updates.gracePeriodDays = gracePeriodDays;
+
+  if (discountAmount !== undefined) {
+    updates.discountAmount = String(discountAmount);
+    // Пересчитываем баланс с учётом скидки
+    const baseAmount = parseFloat(existing.amount);
+    const discount = parseFloat(String(discountAmount));
+    const effectiveAmount = Math.max(0, baseAmount - discount);
+    const paid = parseFloat(existing.paidAmount);
+    const newBalance = Math.max(0, effectiveAmount - paid);
+    updates.balance = String(newBalance);
+    if (newBalance <= 0) updates.status = "paid";
+    else if (paid > 0) updates.status = "partial";
+  }
+
+  const [row] = await db.update(accrualsTable).set(updates as any).where(and(...conditions)).returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(row);
+});
+
+// POST /rental/accruals/:id/discount — применить льготу к начислению
+router.post("/rental/accruals/:id/discount", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const { discountType, discountValue, reason, gracePeriodDays } = req.body;
+
+  if (!discountType) { res.status(400).json({ error: "discountType required (percent/fixed/grace)" }); return; }
+
+  const conditions: SQL[] = [eq(accrualsTable.id, id)];
+  if (req.companyId) conditions.push(eq(accrualsTable.companyId, req.companyId));
+
+  const [existing] = await db.select().from(accrualsTable).where(and(...conditions));
+  if (!existing) { res.status(404).json({ error: "Начисление не найдено" }); return; }
+
+  const baseAmount = parseFloat(existing.amount);
+  const paid = parseFloat(existing.paidAmount);
+  let discountAmount = 0;
+  let newDueDate = existing.dueDate;
+
+  if (discountType === "percent") {
+    discountAmount = (baseAmount * parseFloat(String(discountValue))) / 100;
+  } else if (discountType === "fixed") {
+    discountAmount = parseFloat(String(discountValue));
+  } else if (discountType === "grace") {
+    const days = parseInt(String(gracePeriodDays || discountValue || 7), 10);
+    const due = new Date(existing.dueDate);
+    due.setDate(due.getDate() + days);
+    newDueDate = due.toISOString().split("T")[0];
+  }
+
+  const effectiveAmount = Math.max(0, baseAmount - discountAmount);
+  const newBalance = Math.max(0, effectiveAmount - paid);
+  const newStatus = newBalance <= 0 ? "paid" : paid > 0 ? "partial" : "pending";
+
+  const [row] = await db.update(accrualsTable).set({
+    discountType,
+    discountAmount: discountAmount > 0 ? String(discountAmount) : existing.discountAmount,
+    discountReason: reason || existing.discountReason,
+    gracePeriodDays: gracePeriodDays ? parseInt(String(gracePeriodDays), 10) : existing.gracePeriodDays,
+    dueDate: newDueDate,
+    balance: String(newBalance),
+    status: newStatus,
+  }).where(and(...conditions)).returning();
+
   res.json(row);
 });
 
@@ -215,27 +287,88 @@ router.get("/rental/payments", requireAuth, async (req: AuthenticatedRequest, re
 });
 
 router.post("/rental/payments", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const { leaseContractId, accrualId, amount, currency, paymentDate, paymentMethod, note } = req.body;
+  const { leaseContractId, amount, currency, paymentDate, paymentMethod, note, allocations } = req.body;
   if (!leaseContractId || !amount || !currency || !paymentDate) {
     res.status(400).json({ error: "leaseContractId, amount, currency, paymentDate required" });
     return;
   }
-  const [row] = await db.insert(paymentsTable).values({
-    companyId: req.companyId, leaseContractId, accrualId, amount, currency, paymentDate, paymentMethod, note
+
+  const paymentAmount = parseFloat(amount);
+
+  // Создаём запись платежа
+  const [payment] = await db.insert(paymentsTable).values({
+    companyId: req.companyId,
+    leaseContractId,
+    amount: String(paymentAmount),
+    currency,
+    paymentDate,
+    paymentMethod: paymentMethod || null,
+    note: note || null,
   }).returning();
 
-  if (accrualId) {
-    const [accrual] = await db.select().from(accrualsTable).where(eq(accrualsTable.id, accrualId));
-    if (accrual) {
-      const newPaid = parseFloat(accrual.paidAmount) + parseFloat(amount);
-      const newBalance = Math.max(0, parseFloat(accrual.amount) - newPaid);
+  let remainingAmount = paymentAmount;
+  const createdAllocations = [];
+
+  if (allocations && Array.isArray(allocations) && allocations.length > 0) {
+    // Явная аллокация от пользователя
+    for (const alloc of allocations) {
+      if (remainingAmount <= 0) break;
+      const allocAmount = Math.min(parseFloat(String(alloc.amount)), remainingAmount);
+      const [accrual] = await db.select().from(accrualsTable).where(eq(accrualsTable.id, alloc.accrualId));
+      if (!accrual) continue;
+
+      const [allocation] = await db.insert(paymentAllocationsTable).values({
+        companyId: req.companyId,
+        paymentId: payment.id,
+        accrualId: alloc.accrualId,
+        amount: String(allocAmount),
+      }).returning();
+      createdAllocations.push(allocation);
+
+      const newPaid = parseFloat(accrual.paidAmount) + allocAmount;
+      const effectiveAmount = parseFloat(accrual.amount) - parseFloat(accrual.discountAmount ?? "0");
+      const newBalance = Math.max(0, effectiveAmount - newPaid);
       const newStatus = newBalance <= 0 ? "paid" : newPaid > 0 ? "partial" : "pending";
       await db.update(accrualsTable).set({
         paidAmount: String(newPaid), balance: String(newBalance), status: newStatus,
-      }).where(eq(accrualsTable.id, accrualId));
+      }).where(eq(accrualsTable.id, alloc.accrualId));
+
+      remainingAmount -= allocAmount;
+    }
+  } else {
+    // Авто-аллокация: самые старые начисления первыми
+    const pendingAccruals = await db.select().from(accrualsTable)
+      .where(and(
+        eq(accrualsTable.leaseContractId, leaseContractId),
+        sql`${accrualsTable.balance} > 0`
+      ))
+      .orderBy(asc(accrualsTable.dueDate));
+
+    for (const accrual of pendingAccruals) {
+      if (remainingAmount <= 0) break;
+      const balance = parseFloat(accrual.balance);
+      const allocAmount = Math.min(balance, remainingAmount);
+
+      const [allocation] = await db.insert(paymentAllocationsTable).values({
+        companyId: req.companyId,
+        paymentId: payment.id,
+        accrualId: accrual.id,
+        amount: String(allocAmount),
+      }).returning();
+      createdAllocations.push(allocation);
+
+      const newPaid = parseFloat(accrual.paidAmount) + allocAmount;
+      const newBalance = Math.max(0, balance - allocAmount);
+      const newStatus = newBalance <= 0 ? "paid" : "partial";
+      await db.update(accrualsTable).set({
+        paidAmount: String(newPaid), balance: String(newBalance), status: newStatus,
+      }).where(eq(accrualsTable.id, accrual.id));
+
+      remainingAmount -= allocAmount;
     }
   }
-  res.status(201).json(row);
+
+  res.status(201).json({ ...payment, allocations: createdAllocations, unallocated: remainingAmount });
 });
 
 // DEPOSITS

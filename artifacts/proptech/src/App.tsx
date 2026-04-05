@@ -25,10 +25,13 @@ import OwnerStatements from "@/pages/rental/statements";
 import RentalDashboard from "@/pages/rental/rental-dashboard";
 import ImportCenter from "@/pages/import-center";
 import ActivityLog from "@/pages/activity-log";
+import ChessBoard from "@/pages/ChessBoard";
+import DebtReport from "@/pages/reports/DebtReport";
+import RentalSummaryReport from "@/pages/reports/RentalSummaryReport";
+import CashflowReport from "@/pages/reports/CashflowReport";
+import PaymentsReport from "@/pages/reports/PaymentsReport";
 
 const queryClient = new QueryClient();
-
-const Contracts = () => <div className="p-8 text-gray-500">Модуль договоров купли-продажи (в разработке)</div>;
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -62,8 +65,8 @@ function Router() {
       <Route path="/companies"><ProtectedRoute component={Companies} /></Route>
       <Route path="/users"><ProtectedRoute component={Users} /></Route>
       <Route path="/counterparties"><ProtectedRoute component={Counterparties} /></Route>
+      <Route path="/properties/chess"><ProtectedRoute component={ChessBoard} /></Route>
       <Route path="/properties"><ProtectedRoute component={Properties} /></Route>
-      <Route path="/contracts"><ProtectedRoute component={Contracts} /></Route>
       <Route path="/import"><ProtectedRoute component={ImportCenter} /></Route>
       <Route path="/activity"><ProtectedRoute component={ActivityLog} /></Route>
       <Route path="/settings"><ProtectedRoute component={Settings} /></Route>
@@ -76,6 +79,10 @@ function Router() {
       <Route path="/rental/deposits"><ProtectedRoute component={Deposits} /></Route>
       <Route path="/rental/expenses"><ProtectedRoute component={Expenses} /></Route>
       <Route path="/rental/statements"><ProtectedRoute component={OwnerStatements} /></Route>
+      <Route path="/reports/debt"><ProtectedRoute component={DebtReport} /></Route>
+      <Route path="/reports/rental"><ProtectedRoute component={RentalSummaryReport} /></Route>
+      <Route path="/reports/cashflow"><ProtectedRoute component={CashflowReport} /></Route>
+      <Route path="/reports/payments"><ProtectedRoute component={PaymentsReport} /></Route>
       <Route component={NotFound} />
     </Switch>
   );

@@ -45,23 +45,25 @@ pnpm --filter @workspace/api-client-react run codegen
 pnpm --filter @workspace/api-server run build
 ```
 
-## Database Schema (15 tables)
+## Database Schema (17 tables)
 
 - `companies` — Construction companies
 - `users` — System users with roles (admin, manager, staff)
-- `counterparties` — Buyers/clients (individual or company)
-- `properties` — Real estate units (apartment, office, commercial, etc.)
+- `counterparties` — Buyers/clients with `category` field (tenant/buyer/supplier/contractor/owner/other)
+- `properties` — Real estate units (apartment, office, commercial, etc.) with floor/block/projectName
 - `contracts` — Sales contracts
 - `documents` — Document attachments
 - `import_jobs` — Excel import batch jobs
 - `tenants` — Rental tenants
-- `lease_contracts` — Rental lease contracts
-- `accruals` — Monthly rental accruals
+- `lease_contracts` — Rental lease contracts with discount/grace period fields
+- `accruals` — Monthly rental accruals with льготы (discountType, discountAmount, discountReason, gracePeriodDays)
 - `payments` — Rent payments
+- `payment_allocations` — Links payments to specific accruals with amounts (partial payment support)
 - `deposits` — Security deposits
 - `expenses` — Property expenses
 - `owner_statements` — Owner financial statements
 - `activity_log` — System activity log
+- `module_settings` — Per-company module enable/disable flags
 
 ## Authentication & Multi-Tenancy (SaaS)
 
@@ -85,9 +87,11 @@ Registered under `artifacts/api-server/src/routes/`:
 - `contracts.ts` — CRUD, filtered by companyId
 - `documents.ts` — CRUD, filtered by companyId
 - `import.ts` — Excel import (preview + commit), filtered by companyId
-- `rental.ts` — Tenants, leases, accruals, payments, deposits, expenses, statements, rental-properties — all filtered by companyId
+- `rental.ts` — Tenants, leases, accruals (with льготы via POST /accruals/:id/discount), payments (with smart auto/manual allocation to accruals), deposits, expenses, statements, rental-properties — all filtered by companyId
 - `dashboard.ts` — Summary stats, activity feed, rental overview — filtered by companyId
 - `activity.ts` — Activity log (GET/POST), filtered by companyId
+- `reports.ts` — GET /reports/debt, /reports/rental-summary, /reports/cashflow, /reports/payments, /reports/counterparties — all filtered by companyId
+- `modules.ts` — GET /modules (list with enabled status), POST /modules/:key/toggle, GET /modules/enabled
 
 ## Frontend Pages
 
@@ -105,19 +109,25 @@ Under `artifacts/proptech/src/pages/`:
 - `rental/rental-dashboard.tsx` — Rental-specific dashboard (KPI + pending accruals + recent payments)
 - `rental/tenants.tsx` — Tenant management (CRUD)
 - `rental/leases.tsx` — Lease contract management
-- `rental/accruals.tsx` — Monthly accruals (approve/cancel)
-- `rental/payments.tsx` — Payment registration
+- `rental/accruals.tsx` — Monthly accruals (approve/cancel + Льгота button opens discount dialog)
+- `rental/payments.tsx` — Payment registration with auto/manual allocation to open accruals
 - `rental/deposits.tsx` — Deposit management
 - `rental/expenses.tsx` — Property expense tracking
 - `rental/rental-properties.tsx` — Rental property overview
 - `rental/statements.tsx` — Owner statements (generate + list)
+- `ChessBoard.tsx` — Visual grid of properties by project/block/floor with status colors
+- `reports/DebtReport.tsx` — Debt/overdue report (by contract)
+- `reports/RentalSummaryReport.tsx` — Monthly rental summary (charged vs paid, collection rate)
+- `reports/CashflowReport.tsx` — Cash flow (inflow vs outflow by month)
+- `reports/PaymentsReport.tsx` — Payment history with allocation detail
 
 ## Sidebar Navigation Groups
 
-- (ungrouped): Главный дашборд
-- Аренда: Дашборд аренды, Объекты, Арендаторы, Договоры аренды
+- (ungrouped): Рабочий стол
+- Аренда: Дашборд аренды, Объекты, Арендаторы, Договоры
 - Финансы: Начисления, Платежи, Депозиты, Расходы, Акты собственников
-- Справочники: Контрагенты, Компании, Сотрудники, Объекты (реестр)
+- Справочник: Контрагенты, Шахматка (/properties/chess), Реестр объектов, Сотрудники
+- Отчёты: Задолженность, Сводка аренды, Денежный поток, История платежей
 - Система: Центр импорта, Лог активности, Настройки
 
 ## Seeded Data

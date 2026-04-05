@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Save, User, Shield, Loader2 } from "lucide-react";
+import { Building2, Save, User, Shield, Loader2, LayoutGrid, Home, BarChart3, Bell, Users, Wrench, TrendingUp, FileText, CheckCircle2, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -24,49 +25,48 @@ async function apiFetch(path: string, options?: RequestInit) {
 }
 
 interface Company {
-  id: number;
-  name: string;
-  legalName: string | null;
-  bin: string | null;
-  phone: string | null;
-  email: string | null;
-  address: string | null;
+  id: number; name: string; legalName: string | null;
+  bin: string | null; phone: string | null; email: string | null; address: string | null;
 }
+
+interface Module {
+  key: string; name: string; description: string; icon: string; category: string;
+  isEnabled: boolean; enabledAt: string | null;
+}
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  Home, BarChart3, Bell, Users, Wrench, TrendingUp, FileText,
+  Building2: Building2,
+  BarChart2: BarChart3,
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  core: "Основные", analytics: "Аналитика", communication: "Коммуникация", operations: "Операции",
+};
 
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"org" | "profile">("org");
+  const [activeTab, setActiveTab] = useState<"org" | "profile" | "modules">("org");
+  const isAdmin = (user as any)?.role === "admin";
 
   const [org, setOrg] = useState<Company | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    legalName: "",
-    bin: "",
-    phone: "",
-    email: "",
-    address: "",
-  });
+  const [form, setForm] = useState({ name: "", legalName: "", bin: "", phone: "", email: "", address: "" });
+  const [modules, setModules] = useState<Module[]>([]);
+  const [togglingModule, setTogglingModule] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetch("/companies/my")
       .then((data: Company) => {
         setOrg(data);
-        setForm({
-          name: data.name || "",
-          legalName: data.legalName || "",
-          bin: data.bin || "",
-          phone: data.phone || "",
-          email: data.email || "",
-          address: data.address || "",
-        });
+        setForm({ name: data.name || "", legalName: data.legalName || "", bin: data.bin || "", phone: data.phone || "", email: data.email || "", address: data.address || "" });
       })
-      .catch(() => {
-        toast({ title: "Ошибка", description: "Не удалось загрузить данные организации", variant: "destructive" });
-      })
+      .catch(() => toast({ title: "Ошибка", description: "Не удалось загрузить данные организации", variant: "destructive" }))
       .finally(() => setLoading(false));
+
+    apiFetch("/modules").then(setModules).catch(() => {});
   }, []);
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -74,47 +74,59 @@ export default function Settings() {
 
   const handleSaveOrg = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name) {
-      toast({ title: "Ошибка", description: "Название организации обязательно", variant: "destructive" });
-      return;
-    }
+    if (!form.name) { toast({ title: "Ошибка", description: "Название организации обязательно", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      await apiFetch("/companies/my", {
-        method: "PATCH",
-        body: JSON.stringify(form),
-      });
+      await apiFetch("/companies/my", { method: "PATCH", body: JSON.stringify(form) });
       toast({ title: "Сохранено", description: "Данные организации обновлены" });
     } catch (err: any) {
       toast({ title: "Ошибка", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  const isAdmin = (user as any)?.role === "admin";
+  const handleToggleModule = async (key: string) => {
+    if (key === "rental") { toast({ title: "Нельзя отключить", description: "Модуль аренды всегда активен", variant: "destructive" }); return; }
+    setTogglingModule(key);
+    try {
+      const result = await apiFetch(`/modules/${key}/toggle`, { method: "POST" });
+      setModules(prev => prev.map(m => m.key === key ? { ...m, isEnabled: result.isEnabled, enabledAt: result.enabledAt } : m));
+      const mod = modules.find(m => m.key === key);
+      toast({ title: result.isEnabled ? "Модуль включён" : "Модуль выключен", description: mod?.name });
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally { setTogglingModule(null); }
+  };
+
+  const groupedModules = modules.reduce((acc, m) => {
+    const cat = m.category || "other";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(m);
+    return acc;
+  }, {} as Record<string, Module[]>);
+
+  const tabs = [
+    { id: "org", label: "Организация", icon: Building2 },
+    { id: "profile", label: "Мой профиль", icon: User },
+    { id: "modules", label: "Модули", icon: LayoutGrid },
+  ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Настройки</h1>
-        <p className="text-gray-500 text-sm mt-1">Управление организацией и аккаунтом</p>
+        <p className="text-gray-500 text-sm mt-1">Управление организацией, аккаунтом и модулями системы</p>
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 gap-0">
-        {[
-          { id: "org", label: "Организация", icon: Building2 },
-          { id: "profile", label: "Мой профиль", icon: User },
-        ].map(tab => (
+        {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.id
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            className={cn(
+              "flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors",
+              activeTab === tab.id ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+            )}
           >
             <tab.icon className="h-4 w-4" />
             {tab.label}
@@ -122,7 +134,7 @@ export default function Settings() {
         ))}
       </div>
 
-      {/* Org settings */}
+      {/* Org tab */}
       {activeTab === "org" && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           {loading ? (
@@ -139,89 +151,41 @@ export default function Settings() {
                   <h2 className="font-semibold text-gray-900">{org?.name || "Организация"}</h2>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Shield className="h-3.5 w-3.5 text-blue-500" />
-                    <span className="text-xs text-blue-600 font-medium">
-                      {isAdmin ? "Администратор" : "Сотрудник"}
-                    </span>
+                    <span className="text-xs text-blue-600 font-medium">{isAdmin ? "Администратор" : "Сотрудник"}</span>
                   </div>
                 </div>
               </div>
-
               {isAdmin ? (
                 <form onSubmit={handleSaveOrg} className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-700">Название компании *</Label>
-                    <Input
-                      value={form.name}
-                      onChange={set("name")}
-                      required
-                      className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-                    />
+                    <Input value={form.name} onChange={set("name")} required className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white" />
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-700">Юридическое название</Label>
-                    <Input
-                      value={form.legalName}
-                      onChange={set("legalName")}
-                      placeholder="Полное юридическое наименование"
-                      className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-                    />
+                    <Input value={form.legalName} onChange={set("legalName")} placeholder="Полное юридическое наименование" className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium text-gray-700">ИНН / ИНО</Label>
-                      <Input
-                        value={form.bin}
-                        onChange={set("bin")}
-                        placeholder="12345678901234"
-                        className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-                      />
+                      <Input value={form.bin} onChange={set("bin")} placeholder="12345678901234" className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white" />
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-gray-700">Телефон</Label>
-                      <Input
-                        value={form.phone}
-                        onChange={set("phone")}
-                        placeholder="+996 700 000 000"
-                        className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-                      />
+                      <Input value={form.phone} onChange={set("phone")} placeholder="+996 700 000 000" className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white" />
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-700">Email организации</Label>
-                    <Input
-                      type="email"
-                      value={form.email}
-                      onChange={set("email")}
-                      placeholder="info@company.kg"
-                      className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-                    />
+                    <Input type="email" value={form.email} onChange={set("email")} placeholder="info@company.kg" className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white" />
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-700">Юридический адрес</Label>
-                    <Input
-                      value={form.address}
-                      onChange={set("address")}
-                      placeholder="г. Бишкек, ул. Манаса 72"
-                      className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-                    />
+                    <Input value={form.address} onChange={set("address")} placeholder="г. Бишкек, ул. Манаса 72" className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white" />
                   </div>
                   <div className="pt-2">
-                    <Button
-                      type="submit"
-                      disabled={saving}
-                      className="h-11 px-6 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700"
-                    >
-                      {saving ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Сохранение...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Сохранить изменения
-                        </>
-                      )}
+                    <Button type="submit" disabled={saving} className="h-11 px-6 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700">
+                      {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Сохранение...</> : <><Save className="h-4 w-4 mr-2" />Сохранить изменения</>}
                     </Button>
                   </div>
                 </form>
@@ -240,7 +204,6 @@ export default function Settings() {
                       <span className="text-sm text-gray-900 font-medium">{value || "—"}</span>
                     </div>
                   ))}
-                  <p className="text-xs text-gray-400 pt-2">Обратитесь к администратору для изменения данных организации.</p>
                 </div>
               )}
             </>
@@ -256,19 +219,14 @@ export default function Settings() {
               {(user as any)?.firstName?.[0]}{(user as any)?.lastName?.[0]}
             </div>
             <div>
-              <p className="font-semibold text-gray-900 text-lg">
-                {(user as any)?.firstName} {(user as any)?.lastName}
-              </p>
+              <p className="font-semibold text-gray-900 text-lg">{(user as any)?.firstName} {(user as any)?.lastName}</p>
               <p className="text-sm text-gray-500">{(user as any)?.email}</p>
-              <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${
-                isAdmin ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"
-              }`}>
+              <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${isAdmin ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
                 <Shield className="h-3 w-3" />
                 {isAdmin ? "Администратор" : "Сотрудник"}
               </span>
             </div>
           </div>
-
           <div className="space-y-3">
             {[
               { label: "Email", value: (user as any)?.email },
@@ -282,10 +240,81 @@ export default function Settings() {
               </div>
             ))}
           </div>
+          <p className="text-xs text-gray-400 pt-4">Для изменения личных данных или пароля обратитесь к администратору.</p>
+        </div>
+      )}
 
-          <p className="text-xs text-gray-400 pt-4">
-            Для изменения личных данных или пароля обратитесь к администратору.
-          </p>
+      {/* Modules tab */}
+      {activeTab === "modules" && (
+        <div className="space-y-5">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 text-sm text-blue-800">
+            <p className="font-medium mb-0.5">Управление модулями системы</p>
+            <p className="text-blue-600 text-xs">Включайте только нужные функции. Данные сохраняются при отключении модуля.</p>
+          </div>
+          {!isAdmin && (
+            <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
+              Управление модулями доступно только администраторам.
+            </p>
+          )}
+          {Object.entries(groupedModules).map(([category, mods]) => (
+            <div key={category} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {CATEGORY_LABELS[category] || category}
+                </p>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {mods.map(m => {
+                  const IconComp = ICON_MAP[m.icon] || LayoutGrid;
+                  const isCore = m.key === "rental";
+                  const isToggling = togglingModule === m.key;
+                  return (
+                    <div key={m.key} className="flex items-center gap-4 px-5 py-4">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                        m.isEnabled ? "bg-blue-50" : "bg-gray-100"
+                      )}>
+                        <IconComp className={cn("w-5 h-5", m.isEnabled ? "text-blue-600" : "text-gray-400")} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-900">{m.name}</p>
+                          {isCore && <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded uppercase tracking-wide">Core</span>}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        {m.isEnabled ? (
+                          <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Включён
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <XCircle className="w-3.5 h-3.5" /> Выключен
+                          </span>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleToggleModule(m.key)}
+                            disabled={isCore || isToggling}
+                            className={cn(
+                              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
+                              m.isEnabled ? "bg-blue-600" : "bg-gray-200"
+                            )}
+                          >
+                            <span className={cn(
+                              "inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform",
+                              m.isEnabled ? "translate-x-6" : "translate-x-1"
+                            )} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

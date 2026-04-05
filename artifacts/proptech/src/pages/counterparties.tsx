@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react";
 import {
-  useListCounterparties,
-  useCreateCounterparty,
-  useUpdateCounterparty,
-  useDeleteCounterparty,
-  Counterparty,
-  getListCounterpartiesQueryKey,
+  useListCounterparties, useCreateCounterparty, useUpdateCounterparty, useDeleteCounterparty,
+  Counterparty, getListCounterpartiesQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit2, Trash2, Search } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, Briefcase } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,26 +15,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
-type CounterpartyType = "individual" | "company";
+const CATEGORIES = [
+  { key: "all", label: "Все" },
+  { key: "tenant", label: "Арендаторы" },
+  { key: "buyer", label: "Покупатели" },
+  { key: "supplier", label: "Поставщики" },
+  { key: "contractor", label: "Подрядчики" },
+  { key: "owner", label: "Собственники" },
+  { key: "other", label: "Прочие" },
+];
 
-const typeLabels: Record<string, string> = {
-  individual: "Физическое лицо",
-  company: "Юридическое лицо",
+const CATEGORY_COLORS: Record<string, string> = {
+  tenant: "bg-blue-100 text-blue-800",
+  buyer: "bg-purple-100 text-purple-800",
+  supplier: "bg-orange-100 text-orange-800",
+  contractor: "bg-yellow-100 text-yellow-800",
+  owner: "bg-green-100 text-green-800",
+  other: "bg-gray-100 text-gray-700",
 };
 
-const typeColors: Record<string, string> = {
-  individual: "bg-blue-100 text-blue-800",
-  company: "bg-purple-100 text-purple-800",
+const TYPE_LABELS: Record<string, string> = {
+  individual: "Физлицо",
+  company: "Юрлицо",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  tenant: "Арендатор", buyer: "Покупатель", supplier: "Поставщик",
+  contractor: "Подрядчик", owner: "Собственник", other: "Прочее",
 };
 
 interface CounterpartyDialogProps {
@@ -55,10 +63,12 @@ function CounterpartyDialog({ open, onClose, counterparty }: CounterpartyDialogP
 
   const [formData, setFormData] = useState({
     fullName: "",
-    type: "individual" as CounterpartyType,
+    type: "individual",
+    category: "tenant",
     iin: "",
     phone: "",
     email: "",
+    address: "",
     additionalContact: "",
     comment: "",
   });
@@ -67,23 +77,17 @@ function CounterpartyDialog({ open, onClose, counterparty }: CounterpartyDialogP
     if (counterparty && open) {
       setFormData({
         fullName: counterparty.fullName,
-        type: (counterparty.type || "individual") as CounterpartyType,
+        type: counterparty.type || "individual",
+        category: (counterparty as any).category || "other",
         iin: counterparty.iin || "",
         phone: counterparty.phone || "",
         email: counterparty.email || "",
+        address: (counterparty as any).address || "",
         additionalContact: counterparty.additionalContact || "",
         comment: counterparty.comment || "",
       });
     } else if (!counterparty && open) {
-      setFormData({
-        fullName: "",
-        type: "individual",
-        iin: "",
-        phone: "",
-        email: "",
-        additionalContact: "",
-        comment: "",
-      });
+      setFormData({ fullName: "", type: "individual", category: "tenant", iin: "", phone: "", email: "", address: "", additionalContact: "", comment: "" });
     }
   }, [counterparty, open]);
 
@@ -93,13 +97,14 @@ function CounterpartyDialog({ open, onClose, counterparty }: CounterpartyDialogP
       const payload = {
         fullName: formData.fullName,
         type: formData.type,
+        category: formData.category,
         iin: formData.iin || null,
         phone: formData.phone || null,
         email: formData.email || null,
+        address: formData.address || null,
         additionalContact: formData.additionalContact || null,
         comment: formData.comment || null,
       };
-
       if (counterparty) {
         await updateMutation.mutateAsync({ id: counterparty.id, data: payload });
         toast({ title: "Контрагент обновлён" });
@@ -107,15 +112,10 @@ function CounterpartyDialog({ open, onClose, counterparty }: CounterpartyDialogP
         await createMutation.mutateAsync({ data: payload });
         toast({ title: "Контрагент добавлен" });
       }
-
       queryClient.invalidateQueries({ queryKey: getListCounterpartiesQueryKey() });
       onClose();
     } catch (err: any) {
-      toast({
-        title: "Ошибка",
-        description: err?.response?.data?.error || "Не удалось сохранить контрагента",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка", description: err?.response?.data?.error || "Не удалось сохранить контрагента", variant: "destructive" });
     }
   };
 
@@ -128,91 +128,95 @@ function CounterpartyDialog({ open, onClose, counterparty }: CounterpartyDialogP
           <DialogTitle>{counterparty ? "Редактировать контрагента" : "Добавить контрагента"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="type">Тип *</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(v) => setFormData({ ...formData, type: v as CounterpartyType })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="individual">Физическое лицо</SelectItem>
-                <SelectItem value="company">Юридическое лицо</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Тип *</Label>
+              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">Физическое лицо</SelectItem>
+                  <SelectItem value="company">Юридическое лицо</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Категория *</Label>
+              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tenant">Арендатор</SelectItem>
+                  <SelectItem value="buyer">Покупатель</SelectItem>
+                  <SelectItem value="supplier">Поставщик</SelectItem>
+                  <SelectItem value="contractor">Подрядчик</SelectItem>
+                  <SelectItem value="owner">Собственник</SelectItem>
+                  <SelectItem value="other">Прочее</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
-            <Label htmlFor="fullName">
-              {formData.type === "company" ? "Наименование организации *" : "ФИО *"}
-            </Label>
+            <Label>{formData.type === "company" ? "Наименование организации *" : "ФИО *"}</Label>
             <Input
-              id="fullName"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               placeholder={formData.type === "company" ? 'ОсОО "Название компании"' : "Иванов Иван Иванович"}
-              required
+              required className="mt-1"
             />
           </div>
 
-          <div>
-            <Label htmlFor="iin">
-              {formData.type === "company" ? "ИНН (ОГРН)" : "ИНН (ИИН)"}
-            </Label>
-            <Input
-              id="iin"
-              value={formData.iin}
-              onChange={(e) => setFormData({ ...formData, iin: e.target.value })}
-              placeholder={formData.type === "company" ? "12345678901" : "12345678901234"}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>{formData.type === "company" ? "ИНН (ОГРН)" : "ИНН (ИИН)"}</Label>
+              <Input
+                value={formData.iin}
+                onChange={(e) => setFormData({ ...formData, iin: e.target.value })}
+                placeholder="12345678901234" className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Телефон</Label>
+              <Input
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+996 700 000 000" className="mt-1"
+              />
+            </div>
           </div>
 
           <div>
-            <Label htmlFor="phone">Телефон</Label>
+            <Label>Email</Label>
             <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+996 700 000 000"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
+              type="email" value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="example@mail.kg"
+              placeholder="example@mail.kg" className="mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="additionalContact">Доп. контакт</Label>
+            <Label>Адрес</Label>
             <Input
-              id="additionalContact"
-              value={formData.additionalContact}
-              onChange={(e) => setFormData({ ...formData, additionalContact: e.target.value })}
-              placeholder="WhatsApp, Telegram и т.д."
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="г. Бишкек, ул..." className="mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="comment">Комментарий</Label>
+            <Label>Комментарий</Label>
             <Input
-              id="comment"
               value={formData.comment}
               onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+              className="mt-1"
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Отмена
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? "Сохранение..." : "Сохранить"}
             </Button>
@@ -225,6 +229,7 @@ function CounterpartyDialog({ open, onClose, counterparty }: CounterpartyDialogP
 
 export default function Counterparties() {
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const { data: counterparties, isLoading } = useListCounterparties({
     search: search || undefined,
@@ -238,16 +243,6 @@ export default function Counterparties() {
   const [selectedCP, setSelectedCP] = useState<Counterparty | undefined>();
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const handleAdd = () => {
-    setSelectedCP(undefined);
-    setDialogOpen(true);
-  };
-
-  const handleEdit = (cp: Counterparty) => {
-    setSelectedCP(cp);
-    setDialogOpen(true);
-  };
-
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
@@ -260,31 +255,72 @@ export default function Counterparties() {
     setDeleteId(null);
   };
 
+  const filtered = (counterparties || []).filter((cp) => {
+    if (categoryFilter === "all") return true;
+    return (cp as any).category === categoryFilter;
+  });
+
+  // Count by category
+  const countByCategory = (counterparties || []).reduce((acc, cp) => {
+    const cat = (cp as any).category || "other";
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="space-y-5">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold">Контрагенты</h1>
-          <p className="text-muted-foreground text-sm">Покупатели, арендаторы и юридические лица</p>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Briefcase className="w-6 h-6 text-blue-600" /> Справочник контрагентов
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">Арендаторы, покупатели, поставщики и подрядчики</p>
         </div>
-        <Button onClick={handleAdd}>
-          <Plus className="w-4 h-4 mr-2" />
-          Добавить
+        <Button onClick={() => { setSelectedCP(undefined); setDialogOpen(true); }}>
+          <Plus className="w-4 h-4 mr-2" /> Добавить
         </Button>
       </div>
 
+      {/* Category tabs */}
+      <div className="flex gap-1 flex-wrap border-b border-gray-200">
+        {CATEGORIES.map(cat => {
+          const count = cat.key === "all" ? (counterparties?.length ?? 0) : (countByCategory[cat.key] || 0);
+          return (
+            <button
+              key={cat.key}
+              onClick={() => setCategoryFilter(cat.key)}
+              className={cn(
+                "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                categoryFilter === cat.key
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              {cat.label}
+              <span className={cn(
+                "ml-1.5 text-xs px-1.5 py-0.5 rounded-full",
+                categoryFilter === cat.key ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+              )}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Search + type filter */}
       <div className="flex gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Поиск по имени..."
+            placeholder="Поиск по имени, телефону, ИНН..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-52">
+          <SelectTrigger className="w-44">
             <SelectValue placeholder="Все типы" />
           </SelectTrigger>
           <SelectContent>
@@ -295,11 +331,13 @@ export default function Counterparties() {
         </Select>
       </div>
 
-      <div className="rounded-md border">
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-gray-50">
               <TableHead>ФИО / Наименование</TableHead>
+              <TableHead>Категория</TableHead>
               <TableHead>Тип</TableHead>
               <TableHead>ИНН</TableHead>
               <TableHead>Телефон</TableHead>
@@ -311,39 +349,43 @@ export default function Counterparties() {
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : !counterparties?.length ? (
+            ) : !filtered.length ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  Контрагенты не найдены
+                <TableCell colSpan={7} className="text-center py-12">
+                  <Briefcase className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                  <p className="text-gray-400">Контрагенты не найдены</p>
                 </TableCell>
               </TableRow>
             ) : (
-              counterparties.map((cp) => (
-                <TableRow key={cp.id}>
-                  <TableCell className="font-medium">{cp.fullName}</TableCell>
+              filtered.map((cp) => (
+                <TableRow key={cp.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium text-gray-900">{cp.fullName}</TableCell>
                   <TableCell>
-                    <Badge className={typeColors[cp.type] || ""} variant="secondary">
-                      {typeLabels[cp.type] || cp.type}
+                    <Badge
+                      className={cn("text-xs", CATEGORY_COLORS[(cp as any).category] || CATEGORY_COLORS.other)}
+                      variant="secondary"
+                    >
+                      {CATEGORY_LABELS[(cp as any).category] || (cp as any).category || "—"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{cp.iin || "—"}</TableCell>
-                  <TableCell>{cp.phone || "—"}</TableCell>
-                  <TableCell>{cp.email || "—"}</TableCell>
+                  <TableCell>
+                    <span className="text-xs text-gray-500">{TYPE_LABELS[cp.type] || cp.type}</span>
+                  </TableCell>
+                  <TableCell className="text-gray-500">{cp.iin || "—"}</TableCell>
+                  <TableCell className="text-gray-600">{cp.phone || "—"}</TableCell>
+                  <TableCell className="text-gray-500 text-sm">{cp.email || "—"}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(cp)}>
+                      <Button variant="ghost" size="icon" onClick={() => { setSelectedCP(cp); setDialogOpen(true); }}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        variant="ghost" size="icon"
                         className="text-red-500 hover:text-red-700"
                         onClick={() => setDeleteId(cp.id)}
                       >
@@ -358,11 +400,7 @@ export default function Counterparties() {
         </Table>
       </div>
 
-      <CounterpartyDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        counterparty={selectedCP}
-      />
+      <CounterpartyDialog open={dialogOpen} onClose={() => setDialogOpen(false)} counterparty={selectedCP} />
 
       <AlertDialog open={deleteId !== null} onOpenChange={(v) => !v && setDeleteId(null)}>
         <AlertDialogContent>
@@ -374,9 +412,7 @@ export default function Counterparties() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Удалить
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

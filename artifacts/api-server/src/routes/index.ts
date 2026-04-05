@@ -11,6 +11,8 @@ import importRouter from "./import";
 import rentalRouter from "./rental";
 import dashboardRouter from "./dashboard";
 import activityRouter from "./activity";
+import reportsRouter from "./reports";
+import modulesRouter from "./modules";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use(importRouter);
 router.use(rentalRouter);
 router.use(dashboardRouter);
 router.use(activityRouter);
+router.use(reportsRouter);
+router.use(modulesRouter);
 
 export default router;
