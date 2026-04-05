@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw, ChevronsUpDown, Check, Search, Building2, List } from "lucide-react";
+import { CheckCircle, XCircle, Tag, AlertTriangle, RefreshCw, ChevronsUpDown, Check, Search, Building2, List, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -388,6 +388,15 @@ export default function Accruals() {
   const [discountAccrual, setDiscountAccrual] = useState<Accrual | null>(null);
   const [recalcLoading, setRecalcLoading] = useState(false);
   const [groupByObject, setGroupByObject] = useState(true);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   const { data: accruals, isLoading } = useQuery<Accrual[]>({
     queryKey: ["accruals"],
@@ -575,11 +584,22 @@ export default function Accruals() {
           {Array.from(grouped.entries()).map(([projectName, rows]) => {
             const groupBalance = rows.reduce((s, a) => s + parseFloat(a.balance), 0);
             const groupPending = rows.filter(a => a.status === "pending").length;
+            const isCollapsed = collapsedGroups.has(projectName);
             return (
               <div key={projectName} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                {/* Group header */}
-                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                {/* Group header — clickable */}
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  onClick={() => toggleGroup(projectName)}
+                >
                   <div className="flex items-center gap-2">
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200",
+                        isCollapsed && "-rotate-90"
+                      )}
+                    />
                     <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
                     <span className="font-semibold text-gray-800 text-sm">{projectName}</span>
                     <span className="text-gray-400 text-xs">· {rows.length} начисл.</span>
@@ -594,30 +614,32 @@ export default function Accruals() {
                       Долг: {fmtCurrency(groupBalance)}
                     </span>
                   )}
-                </div>
+                </button>
 
-                {/* Rows table */}
-                <Table>
-                  <AccrualsTableHeader label="Помещение / Договор" />
-                  <TableBody>
-                    {rows.map((accrual) => {
-                      const info = leaseInfoMap[accrual.leaseContractId];
-                      const rowLabel = info
-                        ? `${info.unitNumber ? `кв. ${info.unitNumber}` : ""} ${info.tenantName ? `— ${info.tenantName}` : ""}`.trim() || info.label
-                        : `#${accrual.leaseContractId}`;
-                      return (
-                        <AccrualRow
-                          key={accrual.id}
-                          accrual={accrual}
-                          label={rowLabel}
-                          loadingId={loadingId}
-                          onStatusChange={handleStatusChange}
-                          onDiscount={setDiscountAccrual}
-                        />
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                {/* Rows table — collapsible */}
+                {!isCollapsed && (
+                  <Table>
+                    <AccrualsTableHeader label="Помещение / Договор" />
+                    <TableBody>
+                      {rows.map((accrual) => {
+                        const info = leaseInfoMap[accrual.leaseContractId];
+                        const rowLabel = info
+                          ? `${info.unitNumber ? `кв. ${info.unitNumber}` : ""} ${info.tenantName ? `— ${info.tenantName}` : ""}`.trim() || info.label
+                          : `#${accrual.leaseContractId}`;
+                        return (
+                          <AccrualRow
+                            key={accrual.id}
+                            accrual={accrual}
+                            label={rowLabel}
+                            loadingId={loadingId}
+                            onStatusChange={handleStatusChange}
+                            onDiscount={setDiscountAccrual}
+                          />
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
             );
           })}
