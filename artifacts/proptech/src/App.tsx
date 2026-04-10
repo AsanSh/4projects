@@ -35,10 +35,19 @@ import Investors from "@/pages/rental/investors";
 import Investments from "@/pages/rental/investments";
 import Distributions from "@/pages/rental/distributions";
 
+import ConstructionDashboard from "@/pages/construction/dashboard";
+import ConstructionProjects from "@/pages/construction/projects";
+import ConstructionStages from "@/pages/construction/stages";
+import ConstructionTasks from "@/pages/construction/tasks";
+import ConstructionWorkers from "@/pages/construction/workers";
+import ConstructionContractors from "@/pages/construction/contractors";
+import ConstructionMaterials from "@/pages/construction/materials";
+import ConstructionBudget from "@/pages/construction/budget";
+import ConstructionExpenses from "@/pages/construction/expenses";
+import ConstructionChess from "@/pages/construction/chess";
+import ConstructionReports from "@/pages/construction/reports";
+
 import {
-  ConstructionDashboard, ConstructionProjects, ConstructionStages, ConstructionTasks,
-  ConstructionWorkers, ConstructionContractors, ConstructionMaterials,
-  ConstructionBudget, ConstructionExpenses, ConstructionReports,
   ConstructionCounterparties, ConstructionEmployees,
   ProptechDashboard, SalesProperties, SalesContracts,
   CrmLeads, CrmPipeline, CrmClients,
@@ -118,6 +127,7 @@ function Router() {
       <Route path="/construction/materials"><ProtectedRoute component={ConstructionMaterials} /></Route>
       <Route path="/construction/budget"><ProtectedRoute component={ConstructionBudget} /></Route>
       <Route path="/construction/expenses"><ProtectedRoute component={ConstructionExpenses} /></Route>
+      <Route path="/construction/chess"><ProtectedRoute component={ConstructionChess} /></Route>
       <Route path="/construction/reports"><ProtectedRoute component={ConstructionReports} /></Route>
       <Route path="/construction/counterparties"><ProtectedRoute component={ConstructionCounterparties} /></Route>
       <Route path="/construction/employees"><ProtectedRoute component={ConstructionEmployees} /></Route>

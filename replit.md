@@ -45,7 +45,25 @@ pnpm --filter @workspace/api-client-react run codegen
 pnpm --filter @workspace/api-server run build
 ```
 
-## Database Schema (17 tables)
+## Construction Module — COMPLETED ✅
+
+10 fully working pages with real API backend:
+- **Dashboard** — KPIs, budget progress, project summary
+- **Projects** — building type/construction type/floors/units/area, cost per sqm with multi-currency + bank rate selection, auto-calculated cost in KGS
+- **Stages** — progress bars, dates, budget per stage
+- **Tasks** — Kanban columns (todo/in_progress/review/done), priority, quick status change
+- **Workers** — brigades, specializations, daily rates, project assignment
+- **Contractors** — type (company/IP), star rating, contract details
+- **Materials** — categories, units, quantity × price calculation, delivery status
+- **Budget** — grouped by category, plan vs actual with progress bars, multi-currency
+- **Expenses** — multi-currency with bank rate source (НБКР/Optima/RSB/Bakai/DoBank/MBank), auto KGS conversion
+- **Chess (Шахматка)** — visual floor grid, bulk generation, status colors (available/reserved/sold/occupied)
+- **Reports** — budget vs actual, task completion, sales summary
+
+API: `/api/construction/*` with full CRUD for all 10 entities.
+DB: 10 tables (`construction_projects`, `construction_stages`, `construction_tasks`, `construction_workers`, `construction_contractors`, `construction_materials`, `construction_budget_items`, `construction_expenses`, `construction_units`, `currency_rates`).
+
+## Database Schema (27+ tables)
 
 - `companies` — Construction companies
 - `users` — System users with roles (admin, manager, staff)
