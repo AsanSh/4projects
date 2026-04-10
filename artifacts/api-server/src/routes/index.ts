@@ -13,6 +13,7 @@ import dashboardRouter from "./dashboard";
 import activityRouter from "./activity";
 import reportsRouter from "./reports";
 import modulesRouter from "./modules";
+import investorsRouter from "./investors";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(dashboardRouter);
 router.use(activityRouter);
 router.use(reportsRouter);
 router.use(modulesRouter);
+router.use("/rental", investorsRouter);
 
 export default router;

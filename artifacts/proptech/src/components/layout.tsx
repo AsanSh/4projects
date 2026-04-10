@@ -10,7 +10,7 @@ import {
   BarChart2, Grid3X3, HardHat, Package, Globe,
   ChevronDown, ChevronRight, KeyRound, BarChart,
   Layers, Truck, ClipboardList, Hammer, Flag, Map,
-  ShoppingBag, Target, Star,
+  ShoppingBag, Target, Star, PieChart, Coins,
 } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
@@ -120,6 +120,14 @@ const MODULES: Module[] = [
           { href: "/reports/rental", label: "Сводка аренды", icon: BarChart2 },
           { href: "/reports/cashflow", label: "Денежный поток", icon: Wallet },
           { href: "/reports/payments", label: "История платежей", icon: CreditCard },
+        ],
+      },
+      {
+        title: "Инвесторы",
+        items: [
+          { href: "/rental/investors", label: "Инвесторы", icon: Users },
+          { href: "/rental/investments", label: "Доли в объектах", icon: PieChart },
+          { href: "/rental/distributions", label: "Распределение прибыли", icon: Coins },
         ],
       },
       {

@@ -16,3 +16,6 @@ export * from "./owner_statements";
 export * from "./activity_log";
 export * from "./module_settings";
 export * from "./sessions";
+export * from "./investors";
+export * from "./investments";
+export * from "./distributions";

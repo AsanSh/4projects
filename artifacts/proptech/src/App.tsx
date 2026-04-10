@@ -31,6 +31,10 @@ import RentalSummaryReport from "@/pages/reports/RentalSummaryReport";
 import CashflowReport from "@/pages/reports/CashflowReport";
 import PaymentsReport from "@/pages/reports/PaymentsReport";
 
+import Investors from "@/pages/rental/investors";
+import Investments from "@/pages/rental/investments";
+import Distributions from "@/pages/rental/distributions";
+
 import {
   ConstructionDashboard, ConstructionProjects, ConstructionStages, ConstructionTasks,
   ConstructionWorkers, ConstructionContractors, ConstructionMaterials,
@@ -100,6 +104,9 @@ function Router() {
       <Route path="/rental/statements"><ProtectedRoute component={OwnerStatements} /></Route>
       <Route path="/rental/counterparties"><ProtectedRoute component={RentalCounterparties} /></Route>
       <Route path="/rental/employees"><ProtectedRoute component={RentalEmployees} /></Route>
+      <Route path="/rental/investors"><ProtectedRoute component={Investors} /></Route>
+      <Route path="/rental/investments"><ProtectedRoute component={Investments} /></Route>
+      <Route path="/rental/distributions"><ProtectedRoute component={Distributions} /></Route>
 
       {/* ── Контроль строительства ── */}
       <Route path="/construction/dashboard"><ProtectedRoute component={ConstructionDashboard} /></Route>
