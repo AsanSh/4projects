@@ -31,6 +31,19 @@ import RentalSummaryReport from "@/pages/reports/RentalSummaryReport";
 import CashflowReport from "@/pages/reports/CashflowReport";
 import PaymentsReport from "@/pages/reports/PaymentsReport";
 
+import {
+  ConstructionDashboard, ConstructionProjects, ConstructionStages, ConstructionTasks,
+  ConstructionWorkers, ConstructionContractors, ConstructionMaterials,
+  ConstructionBudget, ConstructionExpenses, ConstructionReports,
+  ConstructionCounterparties, ConstructionEmployees,
+  ProptechDashboard, SalesProperties, SalesContracts,
+  CrmLeads, CrmPipeline, CrmClients,
+  ProptechPayments, ProptechReports, ProptechCounterparties, ProptechEmployees,
+  WarehouseDashboard, WarehouseItems, WarehouseIncoming, WarehouseOutgoing,
+  WarehouseInventory, WarehouseCosts, WarehouseReports, WarehouseSuppliers, WarehouseEmployees,
+  RentalCounterparties, RentalEmployees,
+} from "@/pages/placeholder";
+
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
@@ -58,9 +71,9 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/">
-        <Redirect to="/dashboard" />
-      </Route>
+      <Route path="/"><Redirect to="/dashboard" /></Route>
+
+      {/* ── Сводное (consolidated) ── */}
       <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>
       <Route path="/companies"><ProtectedRoute component={Companies} /></Route>
       <Route path="/users"><ProtectedRoute component={Users} /></Route>
@@ -70,6 +83,12 @@ function Router() {
       <Route path="/import"><ProtectedRoute component={ImportCenter} /></Route>
       <Route path="/activity"><ProtectedRoute component={ActivityLog} /></Route>
       <Route path="/settings"><ProtectedRoute component={Settings} /></Route>
+      <Route path="/reports/debt"><ProtectedRoute component={DebtReport} /></Route>
+      <Route path="/reports/rental"><ProtectedRoute component={RentalSummaryReport} /></Route>
+      <Route path="/reports/cashflow"><ProtectedRoute component={CashflowReport} /></Route>
+      <Route path="/reports/payments"><ProtectedRoute component={PaymentsReport} /></Route>
+
+      {/* ── Аренда ── */}
       <Route path="/rental/dashboard"><ProtectedRoute component={RentalDashboard} /></Route>
       <Route path="/rental/properties"><ProtectedRoute component={RentalProperties} /></Route>
       <Route path="/rental/tenants"><ProtectedRoute component={RentalTenants} /></Route>
@@ -79,10 +98,46 @@ function Router() {
       <Route path="/rental/deposits"><ProtectedRoute component={Deposits} /></Route>
       <Route path="/rental/expenses"><ProtectedRoute component={Expenses} /></Route>
       <Route path="/rental/statements"><ProtectedRoute component={OwnerStatements} /></Route>
-      <Route path="/reports/debt"><ProtectedRoute component={DebtReport} /></Route>
-      <Route path="/reports/rental"><ProtectedRoute component={RentalSummaryReport} /></Route>
-      <Route path="/reports/cashflow"><ProtectedRoute component={CashflowReport} /></Route>
-      <Route path="/reports/payments"><ProtectedRoute component={PaymentsReport} /></Route>
+      <Route path="/rental/counterparties"><ProtectedRoute component={RentalCounterparties} /></Route>
+      <Route path="/rental/employees"><ProtectedRoute component={RentalEmployees} /></Route>
+
+      {/* ── Контроль строительства ── */}
+      <Route path="/construction/dashboard"><ProtectedRoute component={ConstructionDashboard} /></Route>
+      <Route path="/construction/projects"><ProtectedRoute component={ConstructionProjects} /></Route>
+      <Route path="/construction/stages"><ProtectedRoute component={ConstructionStages} /></Route>
+      <Route path="/construction/tasks"><ProtectedRoute component={ConstructionTasks} /></Route>
+      <Route path="/construction/workers"><ProtectedRoute component={ConstructionWorkers} /></Route>
+      <Route path="/construction/contractors"><ProtectedRoute component={ConstructionContractors} /></Route>
+      <Route path="/construction/materials"><ProtectedRoute component={ConstructionMaterials} /></Route>
+      <Route path="/construction/budget"><ProtectedRoute component={ConstructionBudget} /></Route>
+      <Route path="/construction/expenses"><ProtectedRoute component={ConstructionExpenses} /></Route>
+      <Route path="/construction/reports"><ProtectedRoute component={ConstructionReports} /></Route>
+      <Route path="/construction/counterparties"><ProtectedRoute component={ConstructionCounterparties} /></Route>
+      <Route path="/construction/employees"><ProtectedRoute component={ConstructionEmployees} /></Route>
+
+      {/* ── ПропТех ── */}
+      <Route path="/proptech/dashboard"><ProtectedRoute component={ProptechDashboard} /></Route>
+      <Route path="/sales/properties"><ProtectedRoute component={SalesProperties} /></Route>
+      <Route path="/sales/contracts"><ProtectedRoute component={SalesContracts} /></Route>
+      <Route path="/crm/leads"><ProtectedRoute component={CrmLeads} /></Route>
+      <Route path="/crm/pipeline"><ProtectedRoute component={CrmPipeline} /></Route>
+      <Route path="/crm/clients"><ProtectedRoute component={CrmClients} /></Route>
+      <Route path="/proptech/payments"><ProtectedRoute component={ProptechPayments} /></Route>
+      <Route path="/proptech/reports"><ProtectedRoute component={ProptechReports} /></Route>
+      <Route path="/proptech/counterparties"><ProtectedRoute component={ProptechCounterparties} /></Route>
+      <Route path="/proptech/employees"><ProtectedRoute component={ProptechEmployees} /></Route>
+
+      {/* ── Центральный склад ── */}
+      <Route path="/warehouse/dashboard"><ProtectedRoute component={WarehouseDashboard} /></Route>
+      <Route path="/warehouse/items"><ProtectedRoute component={WarehouseItems} /></Route>
+      <Route path="/warehouse/incoming"><ProtectedRoute component={WarehouseIncoming} /></Route>
+      <Route path="/warehouse/outgoing"><ProtectedRoute component={WarehouseOutgoing} /></Route>
+      <Route path="/warehouse/inventory"><ProtectedRoute component={WarehouseInventory} /></Route>
+      <Route path="/warehouse/costs"><ProtectedRoute component={WarehouseCosts} /></Route>
+      <Route path="/warehouse/reports"><ProtectedRoute component={WarehouseReports} /></Route>
+      <Route path="/warehouse/suppliers"><ProtectedRoute component={WarehouseSuppliers} /></Route>
+      <Route path="/warehouse/employees"><ProtectedRoute component={WarehouseEmployees} /></Route>
+
       <Route component={NotFound} />
     </Switch>
   );
