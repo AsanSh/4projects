@@ -15,6 +15,7 @@ import reportsRouter from "./reports";
 import modulesRouter from "./modules";
 import investorsRouter from "./investors";
 import constructionRouter from "./construction";
+import constructionFinanceRouter from "./construction-finance";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(reportsRouter);
 router.use(modulesRouter);
 router.use("/rental", investorsRouter);
 router.use("/construction", constructionRouter);
+router.use("/construction", constructionFinanceRouter);
 
 export default router;

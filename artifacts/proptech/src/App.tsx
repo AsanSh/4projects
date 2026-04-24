@@ -46,15 +46,36 @@ import ConstructionBudget from "@/pages/construction/budget";
 import ConstructionExpenses from "@/pages/construction/expenses";
 import ConstructionChess from "@/pages/construction/chess";
 import ConstructionReports from "@/pages/construction/reports";
+import ConstructionOperations from "@/pages/construction/operations";
+import ConstructionContractsSales from "@/pages/construction/contracts-sales";
+import ConstructionAccruals from "@/pages/construction/accruals";
+import ConstructionCashier from "@/pages/construction/cashier";
+import ConstructionAccounts from "@/pages/construction/accounts";
+import ConstructionCashflow from "@/pages/construction/analytics/cashflow";
+import ConstructionPnL from "@/pages/construction/analytics/pnl";
+import ConstructionExpenseAnalysis from "@/pages/construction/analytics/expenses";
+import ConstructionDebt from "@/pages/construction/analytics/debt";
+import ConstructionForecast from "@/pages/construction/planning/forecast";
+import ConstructionOverdue from "@/pages/construction/planning/overdue";
+import ConstructionApprovals from "@/pages/construction/planning/approvals";
+import ConstructionBroadcast from "@/pages/construction/planning/broadcast";
 
 import {
-  ConstructionCounterparties, ConstructionEmployees,
+  ConstructionCounterparties, ConstructionEmployees, ConstructionSettings,
   ProptechDashboard, SalesProperties, SalesContracts,
   CrmLeads, CrmPipeline, CrmClients,
   ProptechPayments, ProptechReports, ProptechCounterparties, ProptechEmployees,
+  ProptechProperties, ProptechFinances, ProptechDocuments,
+  ProptechAnalyticsDebt, ProptechAnalyticsSummary, ProptechAnalyticsCashflow, ProptechAnalyticsHistory, ProptechAnalyticsActs,
+  ProptechInvestors, ProptechInvestments, ProptechDistributions,
+  ProptechPlanningForecast, ProptechPlanningOverdue, ProptechPlanningMessages, ProptechSettings,
   WarehouseDashboard, WarehouseItems, WarehouseIncoming, WarehouseOutgoing,
   WarehouseInventory, WarehouseCosts, WarehouseReports, WarehouseSuppliers, WarehouseEmployees,
+  WarehouseOrders, WarehouseCompanies, WarehouseRequests, WarehouseCounterparties, WarehouseSettings,
   RentalCounterparties, RentalEmployees,
+  RentalAnalyticsDebt, RentalAnalyticsSummary, RentalAnalyticsCashflow, RentalAnalyticsHistory, RentalAnalyticsOwners,
+  RentalPlanningForecast, RentalPlanningOverdue, RentalPlanningBroadcast, RentalSettings,
+  SettingsLegal, SettingsSystemAccounts, SettingsRoles, SettingsCategories,
 } from "@/pages/placeholder";
 
 const queryClient = new QueryClient();
@@ -131,9 +152,27 @@ function Router() {
       <Route path="/construction/reports"><ProtectedRoute component={ConstructionReports} /></Route>
       <Route path="/construction/counterparties"><ProtectedRoute component={ConstructionCounterparties} /></Route>
       <Route path="/construction/employees"><ProtectedRoute component={ConstructionEmployees} /></Route>
+      <Route path="/construction/operations"><ProtectedRoute component={ConstructionOperations} /></Route>
+      <Route path="/construction/contracts-sales"><ProtectedRoute component={ConstructionContractsSales} /></Route>
+      <Route path="/construction/accruals"><ProtectedRoute component={ConstructionAccruals} /></Route>
+      <Route path="/construction/cashier"><ProtectedRoute component={ConstructionCashier} /></Route>
+      <Route path="/construction/accounts"><ProtectedRoute component={ConstructionAccounts} /></Route>
+      <Route path="/construction/analytics/cashflow"><ProtectedRoute component={ConstructionCashflow} /></Route>
+      <Route path="/construction/analytics/pnl"><ProtectedRoute component={ConstructionPnL} /></Route>
+      <Route path="/construction/analytics/expenses"><ProtectedRoute component={ConstructionExpenseAnalysis} /></Route>
+      <Route path="/construction/analytics/debt"><ProtectedRoute component={ConstructionDebt} /></Route>
+      <Route path="/construction/planning/forecast"><ProtectedRoute component={ConstructionForecast} /></Route>
+      <Route path="/construction/planning/overdue"><ProtectedRoute component={ConstructionOverdue} /></Route>
+      <Route path="/construction/planning/approvals"><ProtectedRoute component={ConstructionApprovals} /></Route>
+      <Route path="/construction/planning/broadcast"><ProtectedRoute component={ConstructionBroadcast} /></Route>
+
+      <Route path="/construction/settings"><ProtectedRoute component={ConstructionSettings} /></Route>
 
       {/* ── ПропТех ── */}
       <Route path="/proptech/dashboard"><ProtectedRoute component={ProptechDashboard} /></Route>
+      <Route path="/proptech/properties"><ProtectedRoute component={ProptechProperties} /></Route>
+      <Route path="/proptech/finances"><ProtectedRoute component={ProptechFinances} /></Route>
+      <Route path="/proptech/documents"><ProtectedRoute component={ProptechDocuments} /></Route>
       <Route path="/sales/properties"><ProtectedRoute component={SalesProperties} /></Route>
       <Route path="/sales/contracts"><ProtectedRoute component={SalesContracts} /></Route>
       <Route path="/crm/leads"><ProtectedRoute component={CrmLeads} /></Route>
@@ -143,17 +182,51 @@ function Router() {
       <Route path="/proptech/reports"><ProtectedRoute component={ProptechReports} /></Route>
       <Route path="/proptech/counterparties"><ProtectedRoute component={ProptechCounterparties} /></Route>
       <Route path="/proptech/employees"><ProtectedRoute component={ProptechEmployees} /></Route>
+      <Route path="/proptech/analytics/debt"><ProtectedRoute component={ProptechAnalyticsDebt} /></Route>
+      <Route path="/proptech/analytics/summary"><ProtectedRoute component={ProptechAnalyticsSummary} /></Route>
+      <Route path="/proptech/analytics/cashflow"><ProtectedRoute component={ProptechAnalyticsCashflow} /></Route>
+      <Route path="/proptech/analytics/history"><ProtectedRoute component={ProptechAnalyticsHistory} /></Route>
+      <Route path="/proptech/analytics/acts"><ProtectedRoute component={ProptechAnalyticsActs} /></Route>
+      <Route path="/proptech/investors"><ProtectedRoute component={ProptechInvestors} /></Route>
+      <Route path="/proptech/investments"><ProtectedRoute component={ProptechInvestments} /></Route>
+      <Route path="/proptech/distributions"><ProtectedRoute component={ProptechDistributions} /></Route>
+      <Route path="/proptech/planning/forecast"><ProtectedRoute component={ProptechPlanningForecast} /></Route>
+      <Route path="/proptech/planning/overdue"><ProtectedRoute component={ProptechPlanningOverdue} /></Route>
+      <Route path="/proptech/planning/messages"><ProtectedRoute component={ProptechPlanningMessages} /></Route>
+      <Route path="/proptech/settings"><ProtectedRoute component={ProptechSettings} /></Route>
 
-      {/* ── Центральный склад ── */}
+      {/* ── Аренда (дополнительно) ── */}
+      <Route path="/rental/analytics/debt"><ProtectedRoute component={RentalAnalyticsDebt} /></Route>
+      <Route path="/rental/analytics/summary"><ProtectedRoute component={RentalAnalyticsSummary} /></Route>
+      <Route path="/rental/analytics/cashflow"><ProtectedRoute component={RentalAnalyticsCashflow} /></Route>
+      <Route path="/rental/analytics/history"><ProtectedRoute component={RentalAnalyticsHistory} /></Route>
+      <Route path="/rental/analytics/owners"><ProtectedRoute component={RentalAnalyticsOwners} /></Route>
+      <Route path="/rental/planning/forecast"><ProtectedRoute component={RentalPlanningForecast} /></Route>
+      <Route path="/rental/planning/overdue"><ProtectedRoute component={RentalPlanningOverdue} /></Route>
+      <Route path="/rental/planning/broadcast"><ProtectedRoute component={RentalPlanningBroadcast} /></Route>
+      <Route path="/rental/settings"><ProtectedRoute component={RentalSettings} /></Route>
+
+      {/* ── Закуп / Снабжение ── */}
       <Route path="/warehouse/dashboard"><ProtectedRoute component={WarehouseDashboard} /></Route>
       <Route path="/warehouse/items"><ProtectedRoute component={WarehouseItems} /></Route>
+      <Route path="/warehouse/suppliers"><ProtectedRoute component={WarehouseSuppliers} /></Route>
+      <Route path="/warehouse/orders"><ProtectedRoute component={WarehouseOrders} /></Route>
+      <Route path="/warehouse/companies"><ProtectedRoute component={WarehouseCompanies} /></Route>
+      <Route path="/warehouse/requests"><ProtectedRoute component={WarehouseRequests} /></Route>
       <Route path="/warehouse/incoming"><ProtectedRoute component={WarehouseIncoming} /></Route>
       <Route path="/warehouse/outgoing"><ProtectedRoute component={WarehouseOutgoing} /></Route>
       <Route path="/warehouse/inventory"><ProtectedRoute component={WarehouseInventory} /></Route>
       <Route path="/warehouse/costs"><ProtectedRoute component={WarehouseCosts} /></Route>
       <Route path="/warehouse/reports"><ProtectedRoute component={WarehouseReports} /></Route>
-      <Route path="/warehouse/suppliers"><ProtectedRoute component={WarehouseSuppliers} /></Route>
+      <Route path="/warehouse/counterparties"><ProtectedRoute component={WarehouseCounterparties} /></Route>
       <Route path="/warehouse/employees"><ProtectedRoute component={WarehouseEmployees} /></Route>
+      <Route path="/warehouse/settings"><ProtectedRoute component={WarehouseSettings} /></Route>
+
+      {/* ── Системные настройки ── */}
+      <Route path="/settings/legal"><ProtectedRoute component={SettingsLegal} /></Route>
+      <Route path="/settings/accounts"><ProtectedRoute component={SettingsSystemAccounts} /></Route>
+      <Route path="/settings/roles"><ProtectedRoute component={SettingsRoles} /></Route>
+      <Route path="/settings/categories"><ProtectedRoute component={SettingsCategories} /></Route>
 
       <Route component={NotFound} />
     </Switch>

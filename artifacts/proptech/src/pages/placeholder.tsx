@@ -62,3 +62,40 @@ export const WarehouseEmployees = () => <Placeholder module="Центральн�
 
 export const RentalCounterparties = () => <Placeholder module="Аренда" page="Контрагенты аренды" icon={<Home className="w-8 h-8 text-blue-400" />} />;
 export const RentalEmployees = () => <Placeholder module="Аренда" page="Сотрудники аренды" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalAnalyticsDebt = () => <Placeholder module="Аренда" page="Задолженность" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalAnalyticsSummary = () => <Placeholder module="Аренда" page="Сводка аренды" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalAnalyticsCashflow = () => <Placeholder module="Аренда" page="Денежный поток" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalAnalyticsHistory = () => <Placeholder module="Аренда" page="История платежей" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalAnalyticsOwners = () => <Placeholder module="Аренда" page="Акты собственников" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalPlanningForecast = () => <Placeholder module="Аренда" page="Будущие поступления" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalPlanningOverdue = () => <Placeholder module="Аренда" page="Просрочки" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalPlanningBroadcast = () => <Placeholder module="Аренда" page="Рассылка" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+export const RentalSettings = () => <Placeholder module="Аренда" page="Настройки аренды" icon={<Home className="w-8 h-8 text-blue-400" />} />;
+
+export const ProptechProperties = () => <Placeholder module="ПропТех" page="Объекты" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechFinances = () => <Placeholder module="ПропТех" page="Финансы клиента" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechDocuments = () => <Placeholder module="ПропТех" page="Документы" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechAnalyticsDebt = () => <Placeholder module="ПропТех" page="Задолженность" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechAnalyticsSummary = () => <Placeholder module="ПропТех" page="Сводка объектов" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechAnalyticsCashflow = () => <Placeholder module="ПропТех" page="Денежный поток" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechAnalyticsHistory = () => <Placeholder module="ПропТех" page="История платежей" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechAnalyticsActs = () => <Placeholder module="ПропТех" page="Акты собственников" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechInvestors = () => <Placeholder module="ПропТех" page="Инвесторы" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechInvestments = () => <Placeholder module="ПропТех" page="Доли в объектах" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechDistributions = () => <Placeholder module="ПропТех" page="Распределение прибыли" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechPlanningForecast = () => <Placeholder module="ПропТех" page="Будущие поступления" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechPlanningOverdue = () => <Placeholder module="ПропТех" page="Просрочки" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechPlanningMessages = () => <Placeholder module="ПропТех" page="Рассылка / чат" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+export const ProptechSettings = () => <Placeholder module="ПропТех" page="Настройки" icon={<Building2 className="w-8 h-8 text-violet-400" />} />;
+
+export const WarehouseOrders = () => <Placeholder module="Закуп" page="Заказы" icon={<Package className="w-8 h-8 text-emerald-400" />} />;
+export const WarehouseCompanies = () => <Placeholder module="Закуп" page="Компании поставщиков" icon={<Package className="w-8 h-8 text-emerald-400" />} />;
+export const WarehouseRequests = () => <Placeholder module="Закуп" page="Заявки прорабов" icon={<Package className="w-8 h-8 text-emerald-400" />} />;
+export const WarehouseCounterparties = () => <Placeholder module="Закуп" page="Контрагенты" icon={<Package className="w-8 h-8 text-emerald-400" />} />;
+export const WarehouseSettings = () => <Placeholder module="Закуп" page="Настройки склада" icon={<Package className="w-8 h-8 text-emerald-400" />} />;
+
+export const ConstructionSettings = () => <Placeholder module="Строительство" page="Настройки" icon={<Home className="w-8 h-8 text-orange-400" />} />;
+export const SettingsLegal = () => <Placeholder module="Система" page="Юридические лица" />;
+export const SettingsSystemAccounts = () => <Placeholder module="Система" page="Счета компании" />;
+export const SettingsRoles = () => <Placeholder module="Система" page="Роли и доступы" />;
+export const SettingsCategories = () => <Placeholder module="Система" page="Статьи операций" />;
