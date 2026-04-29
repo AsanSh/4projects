@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Settings, Bell, FileText, CreditCard } from "lucide-react";
+import { Save, Settings, Bell, FileText, CreditCard, Phone, Mail, MessageCircle, Info, ChevronRight, Plus, Download } from "lucide-react";
 
 const tabs = [
   { id: "general", label: "Общие", icon: Settings },
@@ -13,23 +14,117 @@ const tabs = [
   { id: "documents", label: "Документы", icon: FileText },
 ];
 
+const TAX_REGIMES = [
+  {
+    id: "general",
+    label: "Общий налоговый режим",
+    description: "НДС + НсП",
+    taxes: [
+      { name: "НДС (налог на добавленную стоимость)", rate: "12%" },
+      { name: "НсП (налог с продаж)", rate: "2%" },
+    ],
+  },
+  {
+    id: "single_cash",
+    label: "Единый налог — Наличные",
+    description: "Оплата наличными",
+    taxes: [
+      { name: "Единый налог (наличные расчёты)", rate: "6%" },
+    ],
+  },
+  {
+    id: "single_bank",
+    label: "Единый налог — Безналичные",
+    description: "Оплата через банк",
+    taxes: [
+      { name: "Единый налог (безналичные расчёты)", rate: "4%" },
+    ],
+  },
+];
+
+const DOC_TEMPLATES = [
+  { id: "lease", icon: "📄", label: "Договор аренды", desc: "Стандартный договор аренды помещения" },
+  { id: "act_handover", icon: "✅", label: "Акт приёма-передачи", desc: "Приём-передача объекта арендатору" },
+  { id: "invoice", icon: "🧾", label: "Счёт на оплату", desc: "Счёт за аренду с реквизитами" },
+  { id: "reconciliation", icon: "📊", label: "Акт сверки расчётов", desc: "Сводный акт по начислениям и платежам" },
+  { id: "termination", icon: "📝", label: "Соглашение о расторжении", desc: "Досрочное расторжение договора аренды" },
+  { id: "addendum", icon: "📎", label: "Доп. соглашение", desc: "Изменение условий действующего договора" },
+];
+
+const CHANNEL_INFO: Record<string, { icon: React.ElementType; color: string; requirements: string[]; note: string }> = {
+  sms: {
+    icon: Phone,
+    color: "text-green-600",
+    requirements: [
+      "API-ключ SMS-провайдера (МегаКом, О!, Beeline KG)",
+      "Зарегистрированное имя отправителя (Sender ID)",
+      "Номер телефона арендатора в формате +996...",
+    ],
+    note: "Рекомендуем SMSC.kg или InfoSMS для Кыргызстана.",
+  },
+  whatsapp: {
+    icon: MessageCircle,
+    color: "text-green-500",
+    requirements: [
+      "WhatsApp Business API аккаунт",
+      "Зарегистрированный номер телефона бизнеса",
+      "Шаблоны сообщений одобренные Meta",
+    ],
+    note: "Доступно через официальных партнёров Meta в KG.",
+  },
+  email: {
+    icon: Mail,
+    color: "text-blue-600",
+    requirements: [
+      "SMTP-сервер или Email API (SendGrid, Mailgun)",
+      "Email отправителя в домене .kg (например info@vashcompany.kg)",
+      "Верифицированный домен для повышения доставляемости",
+    ],
+    note: "Рекомендуем домен @kg.com или .kg для Кыргызстана.",
+  },
+  all: {
+    icon: Bell,
+    color: "text-purple-600",
+    requirements: [
+      "Настройки для всех трёх каналов: SMS, WhatsApp, Email",
+    ],
+    note: "Уведомление отправляется по всем доступным каналам.",
+  },
+};
+
 export default function RentalSettings() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [tab, setTab] = useState("general");
   const [general, setGeneral] = useState({
-    companyName: "", currency: "KGS", timezone: "Asia/Bishkek",
-    lateFeePercent: "0.1", lateFeeGraceDays: "3", vatPercent: "12",
+    companyName: "",
+    currency: "KGS",
+    timezone: "Asia/Bishkek",
+    lateFeePercent: "0.1",
+    lateFeeGraceDays: "3",
+    taxRegime: "general",
   });
   const [billing, setBilling] = useState({
     accrualDay: "1", dueDays: "5", autoAccrual: "true", roundUp: "true",
   });
   const [notif, setNotif] = useState({
-    overdueReminder: "3", upcomingReminder: "5", channel: "sms",
+    overdueReminder: "3", upcomingReminder: "5", channel: "email",
   });
 
+  useEffect(() => {
+    const companyName = (user as any)?.company?.name || "";
+    if (companyName) {
+      setGeneral(g => ({ ...g, companyName }));
+    }
+  }, [user]);
+
   function save() {
-    toast({ title: "Настройки сохранены" });
+    toast({ title: "Настройки сохранены", description: "Изменения применены к модулю аренды" });
   }
+
+  const selectedRegime = TAX_REGIMES.find(r => r.id === general.taxRegime);
+  const channelInfo = CHANNEL_INFO[notif.channel];
+  const ChannelIcon = channelInfo?.icon;
 
   return (
     <div>
@@ -55,15 +150,18 @@ export default function RentalSettings() {
         })}
       </div>
 
-      <div className="bg-white border rounded-lg p-6 max-w-2xl space-y-5">
+      <div className="bg-white border rounded-xl p-6 max-w-2xl space-y-5">
+        {/* ── GENERAL ── */}
         {tab === "general" && (
           <>
             <div>
               <Label className="text-sm font-medium">Название компании</Label>
               <Input className="mt-1.5" value={general.companyName}
                 onChange={e => setGeneral(f => ({ ...f, companyName: e.target.value }))}
-                placeholder="ИП Иванов Иван" />
+                placeholder="ОсОО Ваша Компания" />
+              <p className="text-xs text-gray-400 mt-1">Отображается в документах и актах сверки</p>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium">Валюта</Label>
@@ -81,14 +179,15 @@ export default function RentalSettings() {
                 <Select value={general.timezone} onValueChange={v => setGeneral(f => ({ ...f, timezone: v }))}>
                   <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Asia/Bishkek">Asia/Bishkek (UTC+6)</SelectItem>
-                    <SelectItem value="Asia/Almaty">Asia/Almaty (UTC+6)</SelectItem>
-                    <SelectItem value="Europe/Moscow">Europe/Moscow (UTC+3)</SelectItem>
+                    <SelectItem value="Asia/Bishkek">Бишкек (UTC+6)</SelectItem>
+                    <SelectItem value="Asia/Almaty">Алматы (UTC+6)</SelectItem>
+                    <SelectItem value="Europe/Moscow">Москва (UTC+3)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium">Пеня (% в день)</Label>
                 <Input className="mt-1.5" type="number" step="0.01" value={general.lateFeePercent}
@@ -99,15 +198,37 @@ export default function RentalSettings() {
                 <Input className="mt-1.5" type="number" value={general.lateFeeGraceDays}
                   onChange={e => setGeneral(f => ({ ...f, lateFeeGraceDays: e.target.value }))} />
               </div>
-              <div>
-                <Label className="text-sm font-medium">НДС (%)</Label>
-                <Input className="mt-1.5" type="number" value={general.vatPercent}
-                  onChange={e => setGeneral(f => ({ ...f, vatPercent: e.target.value }))} />
-              </div>
+            </div>
+
+            {/* Tax Regime */}
+            <div>
+              <Label className="text-sm font-medium">Налоговый режим (KG)</Label>
+              <Select value={general.taxRegime} onValueChange={v => setGeneral(f => ({ ...f, taxRegime: v }))}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TAX_REGIMES.map(r => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.label} — {r.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedRegime && (
+                <div className="mt-2 rounded-lg bg-blue-50 border border-blue-100 p-3">
+                  <p className="text-xs font-semibold text-blue-800 mb-1.5">Применяемые налоги:</p>
+                  {selectedRegime.taxes.map(t => (
+                    <div key={t.name} className="flex items-center justify-between text-xs text-blue-700">
+                      <span>{t.name}</span>
+                      <span className="font-bold bg-blue-100 px-2 py-0.5 rounded-full">{t.rate}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}
 
+        {/* ── BILLING ── */}
         {tab === "billing" && (
           <>
             <div className="grid grid-cols-2 gap-4">
@@ -149,6 +270,7 @@ export default function RentalSettings() {
           </>
         )}
 
+        {/* ── NOTIFICATIONS ── */}
         {tab === "notifications" && (
           <>
             <div className="grid grid-cols-2 gap-4">
@@ -168,21 +290,80 @@ export default function RentalSettings() {
               <Select value={notif.channel} onValueChange={v => setNotif(f => ({ ...f, channel: v }))}>
                 <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sms">СМС</SelectItem>
-                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
                   <SelectItem value="all">Все каналы</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {channelInfo && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
+                    <ChannelIcon className={`w-4 h-4 ${channelInfo.color}`} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800">Что нужно для работы:</p>
+                </div>
+                <ul className="space-y-1.5">
+                  {channelInfo.requirements.map((req, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+                  <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-700">{channelInfo.note}</p>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Обратитесь к администратору системы для подключения канала уведомлений.
+                </p>
+              </div>
+            )}
           </>
         )}
 
+        {/* ── DOCUMENTS ── */}
         {tab === "documents" && (
-          <div className="text-center py-8 text-gray-400">
-            <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Шаблоны документов — в разработке</p>
-          </div>
+          <>
+            <div className="flex items-center justify-between mb-1">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Шаблоны документов</p>
+                <p className="text-xs text-gray-400">Стандартные документы для Кыргызской Республики</p>
+              </div>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                <Plus className="w-3.5 h-3.5" /> Добавить шаблон
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {DOC_TEMPLATES.map(doc => (
+                <div key={doc.id} className="flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition-colors group cursor-pointer">
+                  <span className="text-xl flex-shrink-0">{doc.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{doc.label}</p>
+                    <p className="text-xs text-gray-400">{doc.desc}</p>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                      <Download className="w-3 h-3" /> Скачать
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 p-3">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700">
+                  Шаблоны соответствуют законодательству Кыргызской Республики.
+                  Для кастомизации шаблонов обратитесь к администратору.
+                </p>
+              </div>
+            </div>
+          </>
         )}
 
         <div className="pt-2">

@@ -107,7 +107,7 @@ export default function Login() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@buildflow.kz"
+                  placeholder="admin@company.kg"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

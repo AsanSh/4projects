@@ -164,7 +164,7 @@ function CounterpartyDialog({ open, onClose, counterparty }: CounterpartyDialogP
             <Input
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              placeholder={formData.type === "company" ? 'ОсОО "Название компании"' : "Иванов Иван Иванович"}
+              placeholder={formData.type === "company" ? 'ОсОО "Ваша Компания" / АО / ЗАО' : "Иванов Иван Иванович"}
               required className="mt-1"
             />
           </div>

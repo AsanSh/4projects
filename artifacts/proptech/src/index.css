@@ -267,3 +267,18 @@
     inset: -1px;
   }
 }
+
+/* ── Print styles — hide chrome, show content only ── */
+@media print {
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+  body, html {
+    background: white !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
