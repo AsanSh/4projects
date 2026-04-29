@@ -114,7 +114,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/"><Redirect to="/dashboard" /></Route>
+      <Route path="/"><Redirect to="/rental/dashboard" /></Route>
 
       {/* ── Сводное (consolidated) ── */}
       <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>

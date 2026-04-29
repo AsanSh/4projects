@@ -16,6 +16,7 @@ import modulesRouter from "./modules";
 import investorsRouter from "./investors";
 import constructionRouter from "./construction";
 import constructionFinanceRouter from "./construction-finance";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(modulesRouter);
 router.use("/rental", investorsRouter);
 router.use("/construction", constructionRouter);
 router.use("/construction", constructionFinanceRouter);
+router.use(notificationsRouter);
 
 export default router;

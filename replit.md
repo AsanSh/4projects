@@ -156,6 +156,14 @@ Under `artifacts/proptech/src/pages/`:
 - 4 properties: А-101 (available), Б-205 (sold), О-301 (office), В-403 (reserved)
 - 2 tenants: Петров Петр Петрович, Садыкова Айгерим Болатовна
 
+## Notifications & Chat
+
+- DB tables: `notifications` (per-user, per-company), `messages` (user-to-user)
+- API routes: `/notifications` (CRUD + read-all), `/messages` (conversations, thread, send, unread-count)
+- Frontend components: `notifications-panel.tsx` (dropdown, tabs, icons), `chat-panel.tsx` (conversations, thread, new-chat search)
+- Both panels integrated into `layout.tsx` header
+- Default app route is `/rental/dashboard` (Аренда module)
+
 ## Notes
 
 - All numeric DB fields use `numeric()` type, returned as strings — parse with `parseFloat()` in routes

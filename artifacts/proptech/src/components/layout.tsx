@@ -1,6 +1,8 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
+import NotificationsPanel from "@/components/notifications-panel";
+import ChatPanel from "@/components/chat-panel";
 import {
   LayoutDashboard, Building2, Users, FileText, Receipt, CreditCard,
   Wallet, PiggyBank, Home, UserCircle, Settings, LogOut,
@@ -454,15 +456,10 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Notifications */}
-          <button className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell className="w-4.5 h-4.5 text-gray-500 w-[18px] h-[18px]" />
-            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] flex items-center justify-center rounded-full font-bold leading-none">7</span>
-          </button>
+          <NotificationsPanel />
 
           {/* Messages */}
-          <button className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors">
-            <MessageCircle className="w-[18px] h-[18px] text-gray-500" />
-          </button>
+          <ChatPanel />
 
           {/* Divider */}
           <div className="w-px h-6 bg-gray-100" />
