@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import {
@@ -284,6 +284,21 @@ export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [modulePickerOpen, setModulePickerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const modulePickerRef = useRef<HTMLDivElement>(null);
+  const createRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (modulePickerRef.current && !modulePickerRef.current.contains(e.target as Node)) {
+        setModulePickerOpen(false);
+      }
+      if (createRef.current && !createRef.current.contains(e.target as Node)) {
+        setCreateOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const activeModuleId = detectModule(location);
   const activeModule = MODULES.find(m => m.id === activeModuleId) || MODULES[MODULES.length - 1];
@@ -365,17 +380,17 @@ export function Layout({ children }: { children: ReactNode }) {
         <header className="h-14 bg-white border-b border-gray-100 flex items-center px-5 gap-3 flex-shrink-0 z-10 shadow-sm">
 
           {/* Module switcher */}
-          <div className="relative">
+          <div className="relative" ref={modulePickerRef}>
             <button
               onClick={() => setModulePickerOpen(o => !o)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 text-sm font-medium text-gray-700 bg-white transition-all"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 text-sm font-medium text-gray-700 bg-white transition-all whitespace-nowrap"
             >
-              <ModuleIcon className="w-4 h-4" style={{ color: activeModule.color }} />
+              <ModuleIcon className="w-4 h-4 flex-shrink-0" style={{ color: activeModule.color }} />
               <span>{activeModule.shortLabel}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             </button>
             {modulePickerOpen && (
-              <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl border border-gray-100 shadow-xl z-50 py-1 overflow-hidden">
+              <div className="absolute top-full left-0 mt-1 bg-white rounded-xl border border-gray-100 shadow-xl py-1 overflow-hidden" style={{ zIndex: 9999, minWidth: "210px" }}>
                 {MODULES.map(m => {
                   const Icon = m.icon;
                   const dashboardHref = m.sections[0]?.items[0]?.href || "/dashboard";
@@ -383,12 +398,12 @@ export function Layout({ children }: { children: ReactNode }) {
                     <Link key={m.id} href={dashboardHref}>
                       <div
                         className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm cursor-pointer transition-colors",
+                          "flex items-center gap-3 px-4 py-2.5 text-sm cursor-pointer transition-colors whitespace-nowrap",
                           m.id === activeModuleId ? "bg-indigo-50 text-indigo-700" : "hover:bg-gray-50 text-gray-700"
                         )}
                         onClick={() => setModulePickerOpen(false)}
                       >
-                        <Icon className="w-4 h-4" style={{ color: m.color }} />
+                        <Icon className="w-4 h-4 flex-shrink-0" style={{ color: m.color }} />
                         {m.label}
                       </div>
                     </Link>
@@ -412,10 +427,10 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex-1" />
 
           {/* Create button */}
-          <div className="relative">
+          <div className="relative" ref={createRef}>
             <button
               onClick={() => setCreateOpen(o => !o)}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md whitespace-nowrap"
               style={{ background: "#4F46E5" }}
             >
               <Plus className="w-4 h-4" />
@@ -423,7 +438,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <ChevronDown className="w-3.5 h-3.5 ml-0.5 opacity-70" />
             </button>
             {createOpen && (
-              <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-xl border border-gray-100 shadow-xl z-50 py-1">
+              <div className="absolute top-full right-0 mt-1 w-52 bg-white rounded-xl border border-gray-100 shadow-xl py-1" style={{ zIndex: 9999 }}>
                 {quickActions.map(qa => (
                   <Link key={qa.href} href={qa.href}>
                     <div className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setCreateOpen(false)}>
@@ -470,13 +485,6 @@ export function Layout({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      {/* Backdrop for dropdowns */}
-      {(modulePickerOpen || createOpen) && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => { setModulePickerOpen(false); setCreateOpen(false); }}
-        />
-      )}
     </div>
   );
 }
