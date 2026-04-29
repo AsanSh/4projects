@@ -1,10 +1,8 @@
 import { useState } from "react";
 import {
   useListExpenses,
-  useCreateExpense,
   useListProperties,
   getListExpensesQueryKey,
-  CreateExpenseBodyCategory,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,8 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const categoryLabels: Record<string, string> = {
   maintenance: "Обслуживание",
@@ -42,38 +41,46 @@ interface ExpenseDialogProps {
 }
 
 function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
-  const createMutation = useCreateExpense();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: properties } = useListProperties();
+  const [loading, setLoading] = useState(false);
+
+  const { data: accounts = [] } = useQuery<any[]>({
+    queryKey: ["rental-accounts"],
+    queryFn: () => api.get("/rental/accounts").then(r => r.data),
+  });
 
   const [formData, setFormData] = useState({
     propertyId: "",
-    category: "maintenance" as CreateExpenseBodyCategory,
+    category: "maintenance",
     amount: "",
     currency: "KGS",
     expenseDate: new Date().toISOString().split("T")[0],
+    accountId: "",
     description: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      await createMutation.mutateAsync({
-        data: {
-          propertyId: parseInt(formData.propertyId),
-          category: formData.category,
-          amount: parseFloat(formData.amount),
-          currency: formData.currency,
-          expenseDate: formData.expenseDate,
-          description: formData.description || null,
-        },
+      await api.post("/rental/expenses", {
+        propertyId: parseInt(formData.propertyId),
+        category: formData.category,
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        expenseDate: formData.expenseDate,
+        accountId: formData.accountId ? parseInt(formData.accountId) : null,
+        description: formData.description || null,
       });
       toast({ title: "Расход зарегистрирован" });
       queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
       onClose();
     } catch {
       toast({ title: "Ошибка", description: "Не удалось сохранить расход", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -101,7 +108,7 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
           </div>
           <div>
             <Label>Категория *</Label>
-            <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v as CreateExpenseBodyCategory })}>
+            <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {Object.entries(categoryLabels).map(([k, v]) => (
@@ -142,6 +149,18 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
             />
           </div>
           <div>
+            <Label>Расчётный счёт</Label>
+            <Select value={formData.accountId || "none"} onValueChange={(v) => setFormData({ ...formData, accountId: v === "none" ? "" : v })}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Выберите счёт (необязательно)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Без привязки к счёту —</SelectItem>
+                {(accounts as any[]).map((a: any) => (
+                  <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label>Описание</Label>
             <Input
               value={formData.description}
@@ -151,8 +170,8 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Сохранение..." : "Сохранить"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Сохранение..." : "Сохранить"}
             </Button>
           </div>
         </form>

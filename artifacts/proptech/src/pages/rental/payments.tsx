@@ -51,12 +51,18 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
     queryFn: () => api.get("/rental/contracts").then(r => r.data),
   });
 
+  const { data: accounts = [] } = useQuery<any[]>({
+    queryKey: ["rental-accounts"],
+    queryFn: () => api.get("/rental/accounts").then(r => r.data),
+  });
+
   const [formData, setFormData] = useState({
     leaseContractId: "",
     amount: "",
     currency: "KGS",
     paymentDate: new Date().toISOString().split("T")[0],
     paymentMethod: "bank_transfer",
+    accountId: "",
     note: "",
   });
 
@@ -97,6 +103,7 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
         currency: formData.currency,
         paymentDate: formData.paymentDate,
         paymentMethod: formData.paymentMethod,
+        accountId: formData.accountId ? parseInt(formData.accountId) : null,
         note: formData.note || null,
       };
 
@@ -220,6 +227,19 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label>Расчётный счёт</Label>
+            <Select value={formData.accountId || "none"} onValueChange={(v) => setFormData({ ...formData, accountId: v === "none" ? "" : v })}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Выберите счёт (необязательно)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Без привязки к счёту —</SelectItem>
+                {(accounts as any[]).map((a: any) => (
+                  <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Allocation mode */}

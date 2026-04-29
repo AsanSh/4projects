@@ -85,12 +85,14 @@ const MODULES: Module[] = [
         { href: "/rental/deposits",   label: "Депозиты",           icon: PiggyBank },
         { href: "/rental/expenses",   label: "Расходы",            icon: Receipt },
         { href: "/rental/statements", label: "Акты собственников", icon: ScrollText },
+        { href: "/rental/accounts",   label: "Расчётные счета",    icon: Landmark },
       ]},
       { title: "Аналитика", items: [
         { href: "/rental/analytics/debt",     label: "Задолженность",    icon: AlertTriangle },
         { href: "/rental/analytics/cashflow", label: "Денежный поток",   icon: TrendingUp },
+        { href: "/rental/analytics/summary",  label: "Сводный отчёт",    icon: PieChart },
         { href: "/rental/analytics/history",  label: "История платежей", icon: Activity },
-        { href: "/rental/analytics/owners",   label: "Акты собственников",icon: ScrollText },
+        { href: "/rental/analytics/owners",   label: "Отчёты владельцев", icon: ScrollText },
       ]},
       { title: "Инвесторы", items: [
         { href: "/rental/investors",     label: "Инвесторы",           icon: Users },
@@ -104,6 +106,7 @@ const MODULES: Module[] = [
       ]},
       { title: "Справочники", items: [
         { href: "/rental/counterparties", label: "Контрагенты", icon: Users },
+        { href: "/rental/employees",      label: "Сотрудники",  icon: UserCircle },
         { href: "/rental/settings",       label: "Настройки",   icon: Settings },
       ]},
     ],

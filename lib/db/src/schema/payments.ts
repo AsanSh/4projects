@@ -11,6 +11,7 @@ export const paymentsTable = pgTable("payments", {
   currency: text("currency").notNull().default("KZT"),
   paymentDate: text("payment_date").notNull(),
   paymentMethod: text("payment_method"),
+  accountId: integer("account_id"),
   note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

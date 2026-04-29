@@ -11,6 +11,7 @@ export const expensesTable = pgTable("expenses", {
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("KZT"),
   expenseDate: text("expense_date").notNull(),
+  accountId: integer("account_id"),
   description: text("description"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

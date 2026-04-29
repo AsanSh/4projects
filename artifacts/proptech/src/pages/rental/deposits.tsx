@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   useListDeposits,
-  useCreateDeposit,
   useListLeaseContracts,
   getListDepositsQueryKey,
 } from "@workspace/api-client-react";
@@ -14,8 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const statusColors: Record<string, string> = {
   held: "bg-blue-100 text-blue-800",
@@ -47,36 +47,44 @@ interface DepositDialogProps {
 }
 
 function DepositDialog({ open, onClose }: DepositDialogProps) {
-  const createMutation = useCreateDeposit();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: leases } = useListLeaseContracts();
+  const [loading, setLoading] = useState(false);
+
+  const { data: accounts = [] } = useQuery<any[]>({
+    queryKey: ["rental-accounts"],
+    queryFn: () => api.get("/rental/accounts").then(r => r.data),
+  });
 
   const [formData, setFormData] = useState({
     leaseContractId: "",
     amount: "",
     currency: "KGS",
     receivedDate: new Date().toISOString().split("T")[0],
+    accountId: "",
     note: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      await createMutation.mutateAsync({
-        data: {
-          leaseContractId: parseInt(formData.leaseContractId),
-          amount: parseFloat(formData.amount),
-          currency: formData.currency,
-          receivedDate: formData.receivedDate,
-          note: formData.note || null,
-        },
+      await api.post("/rental/deposits", {
+        leaseContractId: parseInt(formData.leaseContractId),
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        receivedDate: formData.receivedDate,
+        accountId: formData.accountId ? parseInt(formData.accountId) : null,
+        note: formData.note || null,
       });
       toast({ title: "Депозит зарегистрирован" });
       queryClient.invalidateQueries({ queryKey: getListDepositsQueryKey() });
       onClose();
     } catch {
       toast({ title: "Ошибка", description: "Не удалось зарегистрировать депозит", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -134,6 +142,18 @@ function DepositDialog({ open, onClose }: DepositDialogProps) {
             />
           </div>
           <div>
+            <Label>Расчётный счёт</Label>
+            <Select value={formData.accountId || "none"} onValueChange={(v) => setFormData({ ...formData, accountId: v === "none" ? "" : v })}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Выберите счёт (необязательно)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Без привязки к счёту —</SelectItem>
+                {(accounts as any[]).map((a: any) => (
+                  <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label>Примечание</Label>
             <Input
               value={formData.note}
@@ -142,8 +162,8 @@ function DepositDialog({ open, onClose }: DepositDialogProps) {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Сохранение..." : "Сохранить"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Сохранение..." : "Сохранить"}
             </Button>
           </div>
         </form>

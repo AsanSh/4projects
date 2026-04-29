@@ -72,11 +72,20 @@ import {
   WarehouseDashboard, WarehouseItems, WarehouseIncoming, WarehouseOutgoing,
   WarehouseInventory, WarehouseCosts, WarehouseReports, WarehouseSuppliers, WarehouseEmployees,
   WarehouseOrders, WarehouseCompanies, WarehouseRequests, WarehouseCounterparties, WarehouseSettings,
-  RentalCounterparties, RentalEmployees,
-  RentalAnalyticsDebt, RentalAnalyticsSummary, RentalAnalyticsCashflow, RentalAnalyticsHistory, RentalAnalyticsOwners,
-  RentalPlanningForecast, RentalPlanningOverdue, RentalPlanningBroadcast, RentalSettings,
   SettingsLegal, SettingsSystemAccounts, SettingsRoles, SettingsCategories,
 } from "@/pages/placeholder";
+import RentalAccounts from "@/pages/rental/accounts";
+import RentalCounterparties from "@/pages/rental/counterparties";
+import RentalEmployees from "@/pages/rental/employees";
+import RentalSettings from "@/pages/rental/settings";
+import RentalAnalyticsCashflow from "@/pages/rental/analytics/cashflow";
+import RentalAnalyticsDebt from "@/pages/rental/analytics/debt";
+import RentalAnalyticsSummary from "@/pages/rental/analytics/summary";
+import RentalAnalyticsHistory from "@/pages/rental/analytics/history";
+import RentalAnalyticsOwners from "@/pages/rental/analytics/owners";
+import RentalPlanningForecast from "@/pages/rental/planning/forecast";
+import RentalPlanningOverdue from "@/pages/rental/planning/overdue";
+import RentalPlanningBroadcast from "@/pages/rental/planning/broadcast";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +141,7 @@ function Router() {
       <Route path="/rental/deposits"><ProtectedRoute component={Deposits} /></Route>
       <Route path="/rental/expenses"><ProtectedRoute component={Expenses} /></Route>
       <Route path="/rental/statements"><ProtectedRoute component={OwnerStatements} /></Route>
+      <Route path="/rental/accounts"><ProtectedRoute component={RentalAccounts} /></Route>
       <Route path="/rental/counterparties"><ProtectedRoute component={RentalCounterparties} /></Route>
       <Route path="/rental/employees"><ProtectedRoute component={RentalEmployees} /></Route>
       <Route path="/rental/investors"><ProtectedRoute component={Investors} /></Route>

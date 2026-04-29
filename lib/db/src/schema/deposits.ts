@@ -10,6 +10,7 @@ export const depositsTable = pgTable("deposits", {
   currency: text("currency").notNull().default("KZT"),
   status: text("status").notNull().default("held"),
   receivedDate: text("received_date").notNull(),
+  accountId: integer("account_id"),
   returnedAmount: numeric("returned_amount", { precision: 14, scale: 2 }),
   returnedDate: text("returned_date"),
   note: text("note"),
