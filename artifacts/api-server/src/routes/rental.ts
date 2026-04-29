@@ -142,10 +142,10 @@ router.get("/rental/tenants", requireAuth, async (req: AuthenticatedRequest, res
 });
 
 router.post("/rental/tenants", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const { fullName, phone, email, iin, status, comment } = req.body;
+  const { fullName, phone, email, iin, type, status, comment } = req.body;
   if (!fullName) { res.status(400).json({ error: "fullName required" }); return; }
   const [row] = await db.insert(tenantsTable).values({
-    companyId: req.companyId, fullName, phone, email, iin, status: status || "active", comment
+    companyId: req.companyId, fullName, phone, email, iin, type: type || "individual", status: status || "active", comment
   }).returning();
   res.status(201).json(row);
 });
@@ -161,11 +161,11 @@ router.get("/rental/tenants/:id", requireAuth, async (req: AuthenticatedRequest,
 
 router.patch("/rental/tenants/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  const { fullName, phone, email, iin, status, comment } = req.body;
+  const { fullName, phone, email, iin, type, status, comment } = req.body;
   const conditions: SQL[] = [eq(tenantsTable.id, id)];
   if (req.companyId) conditions.push(eq(tenantsTable.companyId, req.companyId));
   const [row] = await db.update(tenantsTable)
-    .set({ fullName, phone, email, iin, status, comment })
+    .set({ fullName, phone, email, iin, type, status, comment })
     .where(and(...conditions)).returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   res.json(row);

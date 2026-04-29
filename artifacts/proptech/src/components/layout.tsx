@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import NotificationsPanel from "@/components/notifications-panel";
 import ChatPanel from "@/components/chat-panel";
+import UserProfileDropdown from "@/components/user-profile-dropdown";
 import {
   LayoutDashboard, Building2, Users, FileText, Receipt, CreditCard,
   Wallet, PiggyBank, Home, UserCircle, Settings, LogOut,
@@ -465,16 +466,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="w-px h-6 bg-gray-100" />
 
           {/* User profile */}
-          <div className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded-xl px-2 py-1 transition-colors">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style={{ background: "#4F46E5" }}>
-              {initials}
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-gray-900 leading-none">{user?.firstName || "Администратор"}</div>
-              <div className="text-[10px] text-gray-400 mt-0.5">Владелец</div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          </div>
+          <UserProfileDropdown />
         </header>
 
         {/* ── CONTENT ── */}

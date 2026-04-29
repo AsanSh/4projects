@@ -9,6 +9,7 @@ export const tenantsTable = pgTable("tenants", {
   phone: text("phone"),
   email: text("email"),
   iin: text("iin"),
+  type: text("type").notNull().default("individual"),
   status: text("status").notNull().default("active"),
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
