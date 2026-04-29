@@ -1,0 +1,374 @@
+You are a senior frontend architect + senior product designer + React/Next.js UI engineer.
+
+Your task is to redesign the existing BuildFlow interface and make it look as close as possible to a premium modern SaaS dashboard.
+
+IMPORTANT RULES:
+
+1. Do NOT break backend logic
+2. Do NOT remove business modules
+3. Do NOT remove routes unless necessary
+4. Do NOT change database logic
+5. Focus only on frontend UI/UX refactor first
+6. Reuse current APIs and data sources
+7. Keep functionality intact
+8. Improve navigation, layout, styling, responsiveness, usability
+
+====================================================
+MAIN GOAL
+====================================================
+
+Transform current BuildFlow ERP UI into premium product quality:
+
+Style references:
+- Stripe Dashboard
+- Linear
+- Notion
+- Modern Odoo
+- Ramp
+- ClickUp clean mode
+
+Need result:
+- Expensive SaaS feel
+- Clean navigation
+- Executive dashboard
+- Clear data hierarchy
+- Fast user workflows
+
+====================================================
+LAYOUT STRUCTURE
+====================================================
+
+Create layout with:
+
+1. LEFT SIDEBAR (fixed)
+2. TOP HEADER
+3. MAIN CONTENT GRID
+4. RIGHT CONTEXT PANEL (optional desktop)
+5. RESPONSIVE MOBILE NAVIGATION
+
+====================================================
+SIDEBAR
+====================================================
+
+Replace overloaded old menu with this clean structure:
+
+🏠 Home
+🏗 Projects
+💰 Finance
+🤝 Sales
+⚙ Operations
+👥 CRM
+📊 Reports
+🛠 Admin
+
+Bottom area:
+
++ Quick Actions
+
+- New Payment
+- New Contract
+- New Project
+- New Request
+- New Client
+
+Bottom user profile card:
+Avatar
+Name
+Role
+
+Sidebar requirements:
+
+- dark premium gradient background
+- rounded active states
+- icon + text
+- collapsible mode
+- smooth animations
+- hover states
+- selected state glow
+- modern spacing
+
+====================================================
+TOP HEADER
+====================================================
+
+Header contains:
+
+1. Business mode switcher:
+
+[ Construction ▼ ]
+
+Modes:
+- Construction
+- Rent
+- PropTech
+- Procurement
+- Holding
+
+2. Global Search bar:
+Search projects, clients, contracts...
+
+3. Create button:
++ Create
+
+Dropdown:
+- New Payment
+- New Contract
+- New Client
+- New Project
+
+4. Notifications bell
+
+5. Messages icon
+
+6. User profile dropdown
+
+====================================================
+HOME DASHBOARD PAGE
+====================================================
+
+Create premium dashboard page with cards and widgets.
+
+Top KPI row:
+
+1. Revenue
+2. Expenses
+3. Net Profit
+4. Margin %
+5. Cash Balance
+6. Accounts Payable
+
+Each card:
+
+- title
+- main value
+- monthly delta
+- trend icon
+- soft shadow
+- rounded xl
+
+Second row:
+
+Left large chart:
+Revenue vs Expenses (line chart)
+
+Middle:
+Expense Structure (donut chart)
+
+Right:
+Top Profitable Projects list
+
+Third row:
+
+1. Cost per m²
+2. Project Cost
+3. Budget Variance
+4. Best Client
+5. Top Contractor
+
+Fourth row:
+
+1. Overdue Payments table
+2. Upcoming Payments table
+3. Recent Transactions feed
+
+Right side panel:
+
+1. My Tasks
+2. Notifications
+
+====================================================
+PROJECT PAGE UX
+====================================================
+
+When opening a project:
+
+Project Name: Royal Park
+
+Tabs:
+
+- Overview
+- Chessboard
+- Construction
+- Finance
+- Materials
+- Documents
+- Team
+- Timeline
+
+Overview page includes:
+
+- Project KPIs
+- Sales progress
+- Build progress
+- Budget usage
+- Recent activity
+
+====================================================
+FINANCE PAGE
+====================================================
+
+Tabs:
+
+- Overview
+- Transactions
+- Payments
+- Accruals
+- Cashflow
+- P&L
+- Accounts
+
+Need tables with:
+
+- filters
+- date picker
+- project filter
+- status badges
+- export button
+- search
+
+====================================================
+CRM PAGE
+====================================================
+
+Tabs:
+
+- Clients
+- Investors
+- Contractors
+- Tenants
+- Communication
+
+Each profile page:
+
+- Overview
+- Contracts
+- Payments
+- Documents
+- History
+- Notes
+
+====================================================
+DESIGN SYSTEM
+====================================================
+
+Use:
+
+- Tailwind CSS
+- clean white content area
+- dark navy sidebar
+- primary blue accent
+- subtle shadows
+- border radius 16px+
+- Inter font
+- spacing 8px system
+- elegant charts
+- status badges
+
+Colors:
+
+Sidebar:
+#0B1020
+#121A33
+
+Primary:
+#4F46E5
+
+Background:
+#F7F8FC
+
+Cards:
+#FFFFFF
+
+Text:
+#111827
+#6B7280
+
+Success:
+#10B981
+
+Danger:
+#EF4444
+
+Warning:
+#F59E0B
+
+====================================================
+COMPONENTS TO BUILD
+====================================================
+
+Create reusable components:
+
+- AppLayout
+- Sidebar
+- SidebarItem
+- TopHeader
+- SearchBar
+- ModeSwitcher
+- KPIStatCard
+- ChartCard
+- TableCard
+- ActivityFeed
+- NotificationPanel
+- TabsHeader
+- EmptyState
+- FiltersBar
+
+====================================================
+RESPONSIVE
+====================================================
+
+Desktop:
+sidebar fixed
+
+Tablet:
+collapsed sidebar
+
+Mobile:
+bottom nav + drawer menu
+
+====================================================
+ANIMATIONS
+====================================================
+
+Use subtle premium motion:
+
+- sidebar hover
+- page fade in
+- card hover lift
+- dropdown smooth open
+- button transitions
+
+====================================================
+DEVELOPMENT PROCESS
+====================================================
+
+STEP 1:
+Analyze current codebase
+
+STEP 2:
+Find existing layout components
+
+STEP 3:
+Refactor navigation first
+
+STEP 4:
+Build dashboard page
+
+STEP 5:
+Refactor module pages one by one
+
+STEP 6:
+Improve responsive UI
+
+====================================================
+IMPORTANT
+====================================================
+
+Do NOT rewrite backend.
+Do NOT break data fetching.
+Do NOT remove modules.
+Only modernize UI architecture.
+
+Need production ready frontend.
+
+Start by auditing current frontend structure and propose implementation plan.
