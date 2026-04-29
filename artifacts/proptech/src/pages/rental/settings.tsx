@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Settings, Bell, FileText, CreditCard, Phone, Mail, MessageCircle, Info, ChevronRight, Plus, Download } from "lucide-react";
+import { Save, Settings, Bell, FileText, CreditCard, Phone, Mail, MessageCircle, Info, ChevronRight, Plus, Download, FileSignature, ClipboardCheck, Receipt, FileBarChart, XCircle, FilePlus2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const tabs = [
   { id: "general", label: "Общие", icon: Settings },
@@ -42,13 +43,13 @@ const TAX_REGIMES = [
   },
 ];
 
-const DOC_TEMPLATES = [
-  { id: "lease", icon: "📄", label: "Договор аренды", desc: "Стандартный договор аренды помещения" },
-  { id: "act_handover", icon: "✅", label: "Акт приёма-передачи", desc: "Приём-передача объекта арендатору" },
-  { id: "invoice", icon: "🧾", label: "Счёт на оплату", desc: "Счёт за аренду с реквизитами" },
-  { id: "reconciliation", icon: "📊", label: "Акт сверки расчётов", desc: "Сводный акт по начислениям и платежам" },
-  { id: "termination", icon: "📝", label: "Соглашение о расторжении", desc: "Досрочное расторжение договора аренды" },
-  { id: "addendum", icon: "📎", label: "Доп. соглашение", desc: "Изменение условий действующего договора" },
+const DOC_TEMPLATES: { id: string; Icon: React.ElementType; color: string; label: string; desc: string }[] = [
+  { id: "lease", Icon: FileSignature, color: "text-blue-600 bg-blue-50", label: "Договор аренды", desc: "Стандартный договор аренды помещения" },
+  { id: "act_handover", Icon: ClipboardCheck, color: "text-green-600 bg-green-50", label: "Акт приёма-передачи", desc: "Приём-передача объекта арендатору" },
+  { id: "invoice", Icon: Receipt, color: "text-amber-600 bg-amber-50", label: "Счёт на оплату", desc: "Счёт за аренду с реквизитами" },
+  { id: "reconciliation", Icon: FileBarChart, color: "text-purple-600 bg-purple-50", label: "Акт сверки расчётов", desc: "Сводный акт по начислениям и платежам" },
+  { id: "termination", Icon: XCircle, color: "text-red-600 bg-red-50", label: "Соглашение о расторжении", desc: "Досрочное расторжение договора аренды" },
+  { id: "addendum", Icon: FilePlus2, color: "text-indigo-600 bg-indigo-50", label: "Доп. соглашение", desc: "Изменение условий действующего договора" },
 ];
 
 const CHANNEL_INFO: Record<string, { icon: React.ElementType; color: string; requirements: string[]; note: string }> = {
@@ -91,6 +92,96 @@ const CHANNEL_INFO: Record<string, { icon: React.ElementType; color: string; req
     note: "Уведомление отправляется по всем доступным каналам.",
   },
 };
+
+function DocsTab() {
+  const { toast } = useToast();
+  const [addOpen, setAddOpen] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState<{ id: string; Icon: React.ElementType; color: string; label: string; desc: string }[]>([]);
+  const [newDoc, setNewDoc] = useState({ label: "", desc: "" });
+
+  function addTemplate() {
+    if (!newDoc.label.trim()) { toast({ title: "Введите название шаблона", variant: "destructive" }); return; }
+    setCustomTemplates(prev => [...prev, {
+      id: `custom_${Date.now()}`, Icon: FileText, color: "text-gray-600 bg-gray-50",
+      label: newDoc.label, desc: newDoc.desc,
+    }]);
+    setNewDoc({ label: "", desc: "" });
+    setAddOpen(false);
+    toast({ title: "Шаблон добавлен", description: newDoc.label });
+  }
+
+  const allDocs = [...DOC_TEMPLATES, ...customTemplates];
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-1">
+        <div>
+          <p className="text-sm font-semibold text-gray-800">Шаблоны документов</p>
+          <p className="text-xs text-gray-400">Стандартные документы для Кыргызской Республики</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setAddOpen(true)} className="gap-1.5 text-xs">
+          <Plus className="w-3.5 h-3.5" /> Добавить шаблон
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {allDocs.map(doc => {
+          const Icon = doc.Icon;
+          return (
+            <div key={doc.id} className="flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition-colors group cursor-pointer">
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${doc.color}`}>
+                <Icon className="w-4.5 h-4.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">{doc.label}</p>
+                <p className="text-xs text-gray-400">{doc.desc}</p>
+              </div>
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                  <Download className="w-3 h-3" /> Скачать
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 p-3">
+        <div className="flex items-start gap-2">
+          <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-blue-700">
+            Шаблоны соответствуют законодательству Кыргызской Республики.
+            Для кастомизации шаблонов обратитесь к администратору.
+          </p>
+        </div>
+      </div>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FilePlus2 className="w-4 h-4 text-blue-600" /> Добавить шаблон
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div>
+              <Label className="text-sm font-medium">Название шаблона *</Label>
+              <Input className="mt-1.5" placeholder="Акт возврата помещения" value={newDoc.label}
+                onChange={e => setNewDoc(d => ({ ...d, label: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Описание</Label>
+              <Input className="mt-1.5" placeholder="Краткое описание" value={newDoc.desc}
+                onChange={e => setNewDoc(d => ({ ...d, desc: e.target.value }))} />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button onClick={addTemplate} className="flex-1">Добавить</Button>
+              <Button variant="outline" onClick={() => setAddOpen(false)}>Отмена</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 export default function RentalSettings() {
   const { user } = useAuth();
@@ -328,42 +419,7 @@ export default function RentalSettings() {
 
         {/* ── DOCUMENTS ── */}
         {tab === "documents" && (
-          <>
-            <div className="flex items-center justify-between mb-1">
-              <div>
-                <p className="text-sm font-semibold text-gray-800">Шаблоны документов</p>
-                <p className="text-xs text-gray-400">Стандартные документы для Кыргызской Республики</p>
-              </div>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                <Plus className="w-3.5 h-3.5" /> Добавить шаблон
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {DOC_TEMPLATES.map(doc => (
-                <div key={doc.id} className="flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition-colors group cursor-pointer">
-                  <span className="text-xl flex-shrink-0">{doc.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{doc.label}</p>
-                    <p className="text-xs text-gray-400">{doc.desc}</p>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
-                      <Download className="w-3 h-3" /> Скачать
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 p-3">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-700">
-                  Шаблоны соответствуют законодательству Кыргызской Республики.
-                  Для кастомизации шаблонов обратитесь к администратору.
-                </p>
-              </div>
-            </div>
-          </>
+          <DocsTab />
         )}
 
         <div className="pt-2">

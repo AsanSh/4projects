@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CreditCard, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Plus, CreditCard, ChevronDown, AlertCircle, Building2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 const methodLabels: Record<string, string> = {
   cash: "Наличные", bank_transfer: "Перевод", card: "Карта",
@@ -338,6 +338,15 @@ function PaymentDialog({ open, onClose }: PaymentDialogProps) {
 
 export default function Payments() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   const { data: payments, isLoading } = useQuery<any[]>({
     queryKey: ["payments"],
@@ -349,11 +358,30 @@ export default function Payments() {
     queryFn: () => api.get("/rental/contracts").then(r => r.data),
   });
 
-  const leaseMap = Object.fromEntries(
-    (leases || []).map((l: any) => [l.id, `${l.contractNumber} — ${l.tenantName || ""}`.trim()])
-  );
+  // Map: leaseContractId → { contractNumber, tenantName, projectName }
+  const leaseInfo = useMemo(() => {
+    const map: Record<number, { label: string; projectName: string }> = {};
+    for (const l of leases || []) {
+      map[l.id] = {
+        label: `${l.contractNumber} — ${l.tenantName || ""}`.trim(),
+        projectName: l.propertyProjectName || "Без проекта",
+      };
+    }
+    return map;
+  }, [leases]);
 
   const totalPaid = (payments || []).reduce((s, p) => s + parseFloat(p.amount), 0);
+
+  // Group payments by project name
+  const grouped = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const p of (payments || [])) {
+      const key = leaseInfo[p.leaseContractId]?.projectName || "Без проекта";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return map;
+  }, [payments, leaseInfo]);
 
   return (
     <div className="space-y-5">
@@ -375,57 +403,71 @@ export default function Payments() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Договор</TableHead>
-              <TableHead>Дата</TableHead>
-              <TableHead>Сумма</TableHead>
-              <TableHead>Способ оплаты</TableHead>
-              <TableHead>Аллокации</TableHead>
-              <TableHead>Примечание</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : !payments?.length ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-gray-400 py-12">
-                  <CreditCard className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                  <p>Платежи не найдены</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              payments.map((payment) => (
-                <TableRow key={payment.id} className="hover:bg-gray-50">
-                  <TableCell className="text-sm">
-                    {leaseMap[payment.leaseContractId] || `Договор #${payment.leaseContractId}`}
-                  </TableCell>
-                  <TableCell className="text-gray-600">{formatDate(payment.paymentDate)}</TableCell>
-                  <TableCell className="font-semibold text-green-600">{fmtCurrency(payment.amount)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">
-                      {payment.paymentMethod ? methodLabels[payment.paymentMethod] || payment.paymentMethod : "—"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-400">
-                    авто
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm">{payment.note || "—"}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+        </div>
+      ) : !payments?.length ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+          <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          <p className="text-sm">Платежи не найдены</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {Array.from(grouped.entries()).map(([projectName, rows]) => {
+            const groupTotal = (rows as any[]).reduce((s: number, p: any) => s + parseFloat(p.amount), 0);
+            const isExpanded = expandedGroups.has(projectName);
+            return (
+              <div key={projectName} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  onClick={() => toggleGroup(projectName)}
+                >
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform duration-200", !isExpanded && "-rotate-90")} />
+                    <Building2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span className="font-semibold text-gray-800 text-sm">{projectName}</span>
+                    <span className="text-gray-400 text-xs">· {(rows as any[]).length} платежей</span>
+                  </div>
+                  <span className="text-sm font-bold text-green-600">{fmtCurrency(groupTotal)}</span>
+                </button>
+
+                {isExpanded && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50/50">
+                        <TableHead>Договор</TableHead>
+                        <TableHead>Дата</TableHead>
+                        <TableHead>Сумма</TableHead>
+                        <TableHead>Способ оплаты</TableHead>
+                        <TableHead>Примечание</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(rows as any[]).map((payment: any) => (
+                        <TableRow key={payment.id} className="hover:bg-gray-50">
+                          <TableCell className="text-sm text-gray-700">
+                            {leaseInfo[payment.leaseContractId]?.label || `Договор #${payment.leaseContractId}`}
+                          </TableCell>
+                          <TableCell className="text-gray-600">{formatDate(payment.paymentDate)}</TableCell>
+                          <TableCell className="font-semibold text-green-600">{fmtCurrency(payment.amount)}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {payment.paymentMethod ? methodLabels[payment.paymentMethod] || payment.paymentMethod : "—"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-gray-500 text-sm">{payment.note || "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <PaymentDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>

@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
 
 // ─── Formatters ──────────────────────────────────────────────────────────────
 const fmt2 = (v: number) =>
@@ -62,6 +63,7 @@ export default function RentalOPU() {
   const curYear = new Date().getFullYear();
   const [year, setYear] = useState(String(curYear));
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [hideZero, setHideZero] = useState(false);
 
   function toggle(id: string) {
     setCollapsed(prev => {
@@ -265,11 +267,15 @@ export default function RentalOPU() {
     return result;
   }, [payments, expenses, properties, contracts, distributions, year]);
 
-  // Filter hidden rows (collapsed parents)
+  // Filter hidden rows (collapsed parents + zero-value rows)
   const visibleRows = useMemo(() => {
+    const STRUCTURAL = new Set(["section", "total", "percent"]);
     return rows.filter(row => {
+      // If hiding zeros: skip item/group/subitem rows with all-zero values
+      if (hideZero && !STRUCTURAL.has(row.type) && row.total === 0 && row.values.every(v => v === 0)) {
+        return false;
+      }
       if (!row.parentId) return true;
-      // Check chain of parents
       let pid: string | undefined = row.parentId;
       while (pid) {
         if (collapsed.has(pid)) return false;
@@ -278,7 +284,7 @@ export default function RentalOPU() {
       }
       return true;
     });
-  }, [rows, collapsed]);
+  }, [rows, collapsed, hideZero]);
 
   const curMonth = new Date().getMonth();
 
@@ -320,12 +326,18 @@ export default function RentalOPU() {
           <h1 className="text-2xl font-bold text-gray-900">ОПУ</h1>
           <p className="text-gray-500 text-sm mt-0.5">Отчёт о прибылях и убытках</p>
         </div>
-        <Select value={year} onValueChange={setYear}>
-          <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {[2024, 2025, 2026, 2027].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setHideZero(h => !h)} className="gap-1.5 h-8 text-xs">
+            {hideZero ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            {hideZero ? "Показать нули" : "Скрыть нули"}
+          </Button>
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[2024, 2025, 2026, 2027].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Table */}

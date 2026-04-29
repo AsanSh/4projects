@@ -527,10 +527,10 @@ export default function Accruals() {
   const [quickPayAccrual, setQuickPayAccrual] = useState<Accrual | null>(null);
   const [recalcLoading, setRecalcLoading] = useState(false);
   const [groupByObject, setGroupByObject] = useState(true);
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const toggleGroup = (key: string) => {
-    setCollapsedGroups(prev => {
+    setExpandedGroups(prev => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
       return next;
@@ -723,7 +723,7 @@ export default function Accruals() {
           {Array.from(grouped.entries()).map(([projectName, rows]) => {
             const groupBalance = rows.reduce((s, a) => s + parseFloat(a.balance), 0);
             const groupPending = rows.filter(a => a.status === "pending").length;
-            const isCollapsed = collapsedGroups.has(projectName);
+            const isExpanded = expandedGroups.has(projectName);
             return (
               <div key={projectName} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 {/* Group header — clickable */}
@@ -736,7 +736,7 @@ export default function Accruals() {
                     <ChevronDown
                       className={cn(
                         "w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200",
-                        isCollapsed && "-rotate-90"
+                        !isExpanded && "-rotate-90"
                       )}
                     />
                     <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
@@ -756,7 +756,7 @@ export default function Accruals() {
                 </button>
 
                 {/* Rows table — collapsible */}
-                {!isCollapsed && (
+                {isExpanded && (
                   <Table>
                     <AccrualsTableHeader label="Помещение / Договор" />
                     <TableBody>

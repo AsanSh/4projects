@@ -128,6 +128,39 @@ router.delete("/rental/accounts/:id", requireAuth, async (req: AuthenticatedRequ
   res.json({ ok: true });
 });
 
+router.post("/rental/accounts/transfer", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const { fromAccountId, toAccountId, amount, rate, date, note } = req.body;
+  if (!fromAccountId || !toAccountId || !amount) {
+    res.status(400).json({ error: "fromAccountId, toAccountId and amount required" }); return;
+  }
+  if (fromAccountId === toAccountId) {
+    res.status(400).json({ error: "Счёт источник и назначение не могут совпадать" }); return;
+  }
+  const [fromAcc] = await db.select().from(bankAccountsTable)
+    .where(and(eq(bankAccountsTable.id, fromAccountId), req.companyId ? eq(bankAccountsTable.companyId, req.companyId) : undefined));
+  const [toAcc] = await db.select().from(bankAccountsTable)
+    .where(and(eq(bankAccountsTable.id, toAccountId), req.companyId ? eq(bankAccountsTable.companyId, req.companyId) : undefined));
+
+  if (!fromAcc || !toAcc) { res.status(404).json({ error: "Счёт не найден" }); return; }
+
+  const fromBal = parseFloat(fromAcc.currentBalance || "0");
+  const debit = parseFloat(amount);
+  // credit: if different currency apply rate, else same amount
+  const credit = rate ? debit * parseFloat(rate) : debit;
+
+  const newFromBal = (fromBal - debit).toFixed(2);
+  const newToBal = (parseFloat(toAcc.currentBalance || "0") + credit).toFixed(2);
+
+  await db.update(bankAccountsTable)
+    .set({ currentBalance: newFromBal })
+    .where(eq(bankAccountsTable.id, fromAccountId));
+  await db.update(bankAccountsTable)
+    .set({ currentBalance: newToBal })
+    .where(eq(bankAccountsTable.id, toAccountId));
+
+  res.json({ ok: true, fromBalance: newFromBal, toBalance: newToBal, debit, credit, note, date });
+});
+
 // TENANTS
 router.get("/rental/tenants", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const { search, status } = req.query as Record<string, string | undefined>;

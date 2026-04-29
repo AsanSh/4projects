@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
 
 const fmt2 = (v: number) =>
   new Intl.NumberFormat("ru-KG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
@@ -31,6 +32,7 @@ export default function RentalODDS() {
   const curYear = new Date().getFullYear();
   const [year, setYear] = useState(String(curYear));
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [hideZero, setHideZero] = useState(false);
 
   function toggle(id: string) {
     setCollapsed(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -211,7 +213,11 @@ export default function RentalODDS() {
   }, [payments, expenses, properties, contracts, accruals, distributions, year]);
 
   const visibleRows = useMemo(() => {
+    const STRUCTURAL = new Set(["section", "total", "balance"]);
     return rows.filter(row => {
+      if (hideZero && !STRUCTURAL.has(row.type) && row.total === 0 && row.values.every(v => v === 0)) {
+        return false;
+      }
       if (!row.parentId) return true;
       let pid: string | undefined = row.parentId;
       while (pid) {
@@ -221,7 +227,7 @@ export default function RentalODDS() {
       }
       return true;
     });
-  }, [rows, collapsed]);
+  }, [rows, collapsed, hideZero]);
 
   const curMonth = new Date().getMonth();
 
@@ -249,12 +255,18 @@ export default function RentalODDS() {
           <h1 className="text-2xl font-bold text-gray-900">ОДДС</h1>
           <p className="text-gray-500 text-sm mt-0.5">Отчёт о движении денежных средств</p>
         </div>
-        <Select value={year} onValueChange={setYear}>
-          <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {[2024, 2025, 2026, 2027].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setHideZero(h => !h)} className="gap-1.5 h-8 text-xs">
+            {hideZero ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            {hideZero ? "Показать нули" : "Скрыть нули"}
+          </Button>
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[2024, 2025, 2026, 2027].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto border border-gray-200 rounded-lg bg-white">
