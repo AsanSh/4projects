@@ -77,6 +77,7 @@ import {
   SettingsLegal, SettingsSystemAccounts, SettingsRoles,
 } from "@/pages/placeholder";
 import SettingsCategories from "@/pages/settings/categories";
+import SettingsPeriods from "@/pages/settings/periods";
 import RentalAccounts from "@/pages/rental/accounts";
 import RentalCounterparties from "@/pages/rental/counterparties";
 import RentalEmployees from "@/pages/rental/employees";
@@ -268,6 +269,7 @@ function Router() {
       <Route path="/settings/accounts"><ProtectedRoute component={SettingsSystemAccounts} /></Route>
       <Route path="/settings/roles"><ProtectedRoute component={SettingsRoles} /></Route>
       <Route path="/settings/categories"><ProtectedRoute component={SettingsCategories} /></Route>
+      <Route path="/settings/periods"><ProtectedRoute component={SettingsPeriods} /></Route>
 
       <Route component={NotFound} />
     </Switch>

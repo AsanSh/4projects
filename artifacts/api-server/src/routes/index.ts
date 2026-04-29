@@ -19,6 +19,7 @@ import constructionFinanceRouter from "./construction-finance";
 import notificationsRouter from "./notifications";
 import categoriesRouter from "./categories";
 import portalRouter from "./portal";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -42,6 +43,7 @@ router.use("/construction", constructionFinanceRouter);
 router.use(notificationsRouter);
 router.use(categoriesRouter);
 router.use(portalRouter);
+router.use(adminRouter);
 
 // NBKR exchange rates proxy
 router.get("/nbkr/rates", async (_req, res): Promise<void> => {

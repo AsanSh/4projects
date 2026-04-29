@@ -16,6 +16,7 @@ import {
   ListOrdered, Calculator, Building, Send, Calendar,
   BarChart, Landmark, Scale, Factory,
   Search, Plus, MessageCircle, Zap,
+  ShieldCheck, CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,7 +75,7 @@ const MODULES: Module[] = [
   },
   {
     id: "rental", label: "Аренда", shortLabel: "Аренда",
-    icon: Home, color: "#3b82f6", urlPrefix: ["/rental"],
+    icon: Home, color: "#3b82f6", urlPrefix: ["/rental", "/settings/categories", "/settings/periods"],
     sections: [
       { title: "Управление", items: [
         { href: "/rental/dashboard",  label: "Дашборд",    icon: BarChart3 },
@@ -111,7 +112,11 @@ const MODULES: Module[] = [
       { title: "Справочники", items: [
         { href: "/rental/counterparties", label: "Контрагенты", icon: Users },
         { href: "/rental/employees",      label: "Сотрудники",  icon: UserCircle },
-        { href: "/rental/settings",       label: "Настройки",   icon: Settings },
+      ]},
+      { title: "Администратор", items: [
+        { href: "/settings/categories", label: "Категории расходов", icon: Receipt },
+        { href: "/settings/periods",    label: "Периоды учёта",      icon: CalendarDays },
+        { href: "/rental/settings",     label: "Настройки",          icon: Settings },
       ]},
     ],
   },
