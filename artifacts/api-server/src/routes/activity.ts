@@ -70,9 +70,11 @@ router.post("/activity/:id/restore", requireAuth, async (req: AuthenticatedReque
     .where(and(eq(activityLogTable.id, id), eq(activityLogTable.companyId, companyId)));
 
   if (!entry) { res.status(404).json({ error: "Запись не найдена" }); return; }
-  if (!entry.snapshot) { res.status(400).json({ error: "Снапшот недоступен для восстановления" }); return; }
-  if (entry.restoredAt) { res.status(400).json({ error: "Запись уже восстановлена" }); return; }
-  if (entry.actionType !== "delete") { res.status(400).json({ error: "Восстановление доступно только для удалённых записей" }); return; }
+  if (!entry.snapshot) { res.status(400).json({ error: "Снапшот недоступен" }); return; }
+  if (entry.restoredAt) { res.status(400).json({ error: "Уже восстановлено" }); return; }
+  if (entry.actionType !== "delete" && entry.actionType !== "update") {
+    res.status(400).json({ error: "Восстановление доступно только для удалённых или изменённых записей" }); return;
+  }
 
   const entityType = entry.entityType;
   if (!entityType || !RESTORE_MAP[entityType]) {
@@ -84,13 +86,39 @@ router.post("/activity/:id/restore", requireAuth, async (req: AuthenticatedReque
     res.status(400).json({ error: "Не удалось распарсить снапшот" }); return;
   }
 
-  // Strip the primary key so DB assigns a new one
-  const { id: _id, ...restoreData } = data;
-  // Ensure companyId isolation
-  restoreData.companyId = companyId;
+  let resultId: number;
+  let resultDescription: string;
 
-  const { table } = RESTORE_MAP[entityType];
-  const [restored] = await db.insert(table).values(restoreData).returning();
+  if (entry.actionType === "delete") {
+    // Re-insert row with new ID
+    const { id: _id, ...restoreData } = data;
+    restoreData.companyId = companyId;
+    const { table } = RESTORE_MAP[entityType];
+    const [restored] = await db.insert(table).values(restoreData).returning();
+    resultId = restored.id;
+    resultDescription = `Восстановлена удалённая запись (${entityType} #${restored.id})`;
+
+  } else {
+    // update: revert to old state (restore old status, paidAmount, balance etc.)
+    const { table } = RESTORE_MAP[entityType];
+    const entityId = entry.entityId;
+    if (!entityId) { res.status(400).json({ error: "entityId не задан для отмены изменения" }); return; }
+    // Only revert safe fields: status, notes, dueDate
+    const revertFields: Record<string, unknown> = {};
+    if (data.status !== undefined)    revertFields.status    = data.status;
+    if (data.notes !== undefined)     revertFields.notes     = data.notes;
+    if (data.dueDate !== undefined)   revertFields.dueDate   = data.dueDate;
+    if (data.paidAmount !== undefined) revertFields.paidAmount = data.paidAmount;
+    if (data.balance !== undefined)   revertFields.balance   = data.balance;
+    if (data.discountAmount !== undefined) revertFields.discountAmount = data.discountAmount;
+    if (data.discountType !== undefined)   revertFields.discountType = data.discountType;
+    if (data.discountReason !== undefined) revertFields.discountReason = data.discountReason;
+    await db.update(table).set(revertFields).where(
+      and(eq((table as any).id, entityId), eq((table as any).companyId, companyId))
+    );
+    resultId = entityId;
+    resultDescription = `Отменено изменение: ${entry.description}`;
+  }
 
   // Mark as restored
   await db.update(activityLogTable)
@@ -101,15 +129,15 @@ router.post("/activity/:id/restore", requireAuth, async (req: AuthenticatedReque
   await db.insert(activityLogTable).values({
     companyId,
     type: entityType,
-    description: `Восстановлена запись (${entityType} #${restored.id}) из удалённого состояния`,
+    description: resultDescription,
     entityType,
-    entityId: restored.id,
+    entityId: resultId,
     userId: req.userId,
     module: entry.module,
     actionType: "restore",
   });
 
-  res.json({ restored, logId: id });
+  res.json({ entityId: resultId, logId: id });
 });
 
 export default router;

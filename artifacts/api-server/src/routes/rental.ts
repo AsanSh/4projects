@@ -410,6 +410,20 @@ router.patch("/rental/accruals/:id", requireAuth, async (req: AuthenticatedReque
 
   const [row] = await db.update(accrualsTable).set(updates as any).where(and(...conditions)).returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
+
+  // Логируем смену статуса
+  if (status !== undefined && status !== existing.status && req.companyId) {
+    const statusLabels: Record<string, string> = {
+      cancelled: "Отменено", approved: "Принято", pending: "Ожидает",
+      paid: "Оплачено", partial: "Частично", overdue: "Просрочено",
+    };
+    await logOp(
+      req.companyId, req.userId, "accrual", id, "update",
+      `Начисление #${id} (${existing.period}): статус изменён с «${statusLabels[existing.status] ?? existing.status}» на «${statusLabels[status] ?? status}»`,
+      existing,
+    );
+  }
+
   res.json(row);
 });
 

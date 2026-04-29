@@ -89,7 +89,7 @@ function LogRow({ entry, onRestored }: { entry: LogEntry; onRestored: () => void
   const ActionIcon = ac.icon;
   const ec = ENTITY_CONFIG[entry.entityType || ""] || null;
   const EntityIcon = ec?.icon || FileText;
-  const canRestore = actionType === "delete" && !!entry.snapshot && !entry.restoredAt;
+  const canRestore = (actionType === "delete" || actionType === "update") && !!entry.snapshot && !entry.restoredAt;
 
   async function doRestore() {
     setRestoring(true);
@@ -150,7 +150,8 @@ function LogRow({ entry, onRestored }: { entry: LogEntry; onRestored: () => void
             {canRestore && (
               <Button size="sm" variant="outline" onClick={() => setConfirmOpen(true)}
                 className="h-7 text-xs gap-1 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300">
-                <RotateCcw className="w-3 h-3" /> Восстановить
+                <RotateCcw className="w-3 h-3" />
+                {actionType === "delete" ? "Восстановить" : "Отменить действие"}
               </Button>
             )}
           </div>
@@ -161,7 +162,8 @@ function LogRow({ entry, onRestored }: { entry: LogEntry; onRestored: () => void
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-indigo-600" /> Восстановить запись?
+              <RotateCcw className="w-4 h-4 text-indigo-600" />
+              {actionType === "delete" ? "Восстановить запись?" : "Отменить это действие?"}
             </DialogTitle>
             <DialogDescription className="text-sm text-gray-500 pt-1">
               {entry.description}
@@ -170,15 +172,19 @@ function LogRow({ entry, onRestored }: { entry: LogEntry; onRestored: () => void
           <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-amber-700">
-              Запись будет создана заново с новым ID. Связанные данные могут потребовать ручной проверки.
+              {actionType === "delete"
+                ? "Запись будет создана заново с новым ID. Связанные данные могут потребовать ручной проверки."
+                : "Данные будут возвращены к состоянию до этого изменения."}
             </p>
           </div>
           <div className="flex gap-2 pt-1">
             <Button onClick={doRestore} disabled={restoring} className="flex-1 bg-indigo-600 hover:bg-indigo-700 gap-1.5">
               <RotateCcw className="w-3.5 h-3.5" />
-              {restoring ? "Восстанавливаем..." : "Восстановить"}
+              {restoring
+                ? "Выполняем..."
+                : actionType === "delete" ? "Восстановить" : "Отменить действие"}
             </Button>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Отмена</Button>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Закрыть</Button>
           </div>
         </DialogContent>
       </Dialog>
