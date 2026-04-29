@@ -9,7 +9,8 @@ import {
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit2 } from "lucide-react";
+import { Plus, Edit2, ExternalLink } from "lucide-react";
+import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -185,6 +186,7 @@ function TenantDialog({ open, onClose, tenant }: TenantDialogProps) {
 
 export default function RentalTenants() {
   const { data: tenants, isLoading } = useListTenants();
+  const [, navigate] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | undefined>();
 
@@ -251,9 +253,14 @@ export default function RentalTenants() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(tenant)}>
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-blue-600 hover:bg-blue-50 gap-1" onClick={() => navigate(`/rental/tenants/${tenant.id}`)}>
+                        <ExternalLink className="w-3 h-3" /> Портал
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(tenant)}>
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

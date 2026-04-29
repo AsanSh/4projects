@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Eye, Trash2, Users, Phone, Mail, Building2 } from "lucide-react";
+import { Plus, Eye, Trash2, Users, Phone, Mail, Building2, ExternalLink } from "lucide-react";
+import { useLocation } from "wouter";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const authHeaders = () => {
@@ -128,6 +129,7 @@ function InvestorDialog({ investor, onClose, onSaved }: { investor: Investor | n
 export default function Investors() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [dialog, setDialog] = useState<Investor | null | "new">(null);
   const [search, setSearch] = useState("");
 
@@ -252,6 +254,9 @@ export default function Investors() {
                 <TableCell className="text-sm text-gray-500">{fmtDate(inv.createdAt)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1 justify-center">
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-blue-600 hover:bg-blue-50 gap-1" onClick={() => navigate(`/rental/investors/${inv.id}`)}>
+                      <ExternalLink className="w-3 h-3" /> Портал
+                    </Button>
                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDialog(inv)}>
                       <Eye className="w-3.5 h-3.5 text-gray-400 hover:text-blue-500" />
                     </Button>

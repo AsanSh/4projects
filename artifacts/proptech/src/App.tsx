@@ -32,8 +32,10 @@ import CashflowReport from "@/pages/reports/CashflowReport";
 import PaymentsReport from "@/pages/reports/PaymentsReport";
 
 import Investors from "@/pages/rental/investors";
+import InvestorDetail from "@/pages/rental/investor-detail";
 import Investments from "@/pages/rental/investments";
 import Distributions from "@/pages/rental/distributions";
+import TenantDetail from "@/pages/rental/tenant-detail";
 
 import ConstructionDashboard from "@/pages/construction/dashboard";
 import ConstructionProjects from "@/pages/construction/projects";
@@ -72,8 +74,9 @@ import {
   WarehouseDashboard, WarehouseItems, WarehouseIncoming, WarehouseOutgoing,
   WarehouseInventory, WarehouseCosts, WarehouseReports, WarehouseSuppliers, WarehouseEmployees,
   WarehouseOrders, WarehouseCompanies, WarehouseRequests, WarehouseCounterparties, WarehouseSettings,
-  SettingsLegal, SettingsSystemAccounts, SettingsRoles, SettingsCategories,
+  SettingsLegal, SettingsSystemAccounts, SettingsRoles,
 } from "@/pages/placeholder";
+import SettingsCategories from "@/pages/settings/categories";
 import RentalAccounts from "@/pages/rental/accounts";
 import RentalCounterparties from "@/pages/rental/counterparties";
 import RentalEmployees from "@/pages/rental/employees";
@@ -136,6 +139,7 @@ function Router() {
       {/* ── Аренда ── */}
       <Route path="/rental/dashboard"><ProtectedRoute component={RentalDashboard} /></Route>
       <Route path="/rental/properties"><ProtectedRoute component={RentalProperties} /></Route>
+      <Route path="/rental/tenants/:id"><ProtectedRoute component={TenantDetail} /></Route>
       <Route path="/rental/tenants"><ProtectedRoute component={RentalTenants} /></Route>
       <Route path="/rental/contracts"><ProtectedRoute component={RentalContracts} /></Route>
       <Route path="/rental/accruals"><ProtectedRoute component={Accruals} /></Route>
@@ -146,6 +150,7 @@ function Router() {
       <Route path="/rental/accounts"><ProtectedRoute component={RentalAccounts} /></Route>
       <Route path="/rental/counterparties"><ProtectedRoute component={RentalCounterparties} /></Route>
       <Route path="/rental/employees"><ProtectedRoute component={RentalEmployees} /></Route>
+      <Route path="/rental/investors/:id"><ProtectedRoute component={InvestorDetail} /></Route>
       <Route path="/rental/investors"><ProtectedRoute component={Investors} /></Route>
       <Route path="/rental/investments"><ProtectedRoute component={Investments} /></Route>
       <Route path="/rental/distributions"><ProtectedRoute component={Distributions} /></Route>

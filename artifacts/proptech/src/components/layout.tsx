@@ -386,7 +386,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* ── TOP HEADER ── */}
-        <header className="h-14 bg-white border-b border-gray-100 flex items-center px-5 gap-3 flex-shrink-0 z-10 shadow-sm">
+        <header className="h-14 bg-white border-b border-gray-100 flex items-center px-5 gap-3 flex-shrink-0 relative z-50 shadow-sm">
 
           {/* Module switcher */}
           <div className="relative" ref={modulePickerRef}>

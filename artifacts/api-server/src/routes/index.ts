@@ -17,6 +17,7 @@ import investorsRouter from "./investors";
 import constructionRouter from "./construction";
 import constructionFinanceRouter from "./construction-finance";
 import notificationsRouter from "./notifications";
+import categoriesRouter from "./categories";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use("/rental", investorsRouter);
 router.use("/construction", constructionRouter);
 router.use("/construction", constructionFinanceRouter);
 router.use(notificationsRouter);
+router.use(categoriesRouter);
 
 export default router;
