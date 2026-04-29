@@ -18,6 +18,7 @@ import constructionRouter from "./construction";
 import constructionFinanceRouter from "./construction-finance";
 import notificationsRouter from "./notifications";
 import categoriesRouter from "./categories";
+import portalRouter from "./portal";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use("/construction", constructionRouter);
 router.use("/construction", constructionFinanceRouter);
 router.use(notificationsRouter);
 router.use(categoriesRouter);
+router.use(portalRouter);
 
 export default router;

@@ -1,11 +1,13 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Phone, Mail, Send, Building2, TrendingUp, Wallet, Percent,
-  FileText, Printer, Calendar, User, BadgeDollarSign
+  FileText, Printer, Calendar, User, BadgeDollarSign, UserPlus, X, Check
 } from "lucide-react";
 
 function fmt(n: any) {
@@ -63,6 +65,27 @@ export default function InvestorDetail() {
   const totalReceived = myDistributions.reduce((s: number, d: any) => s + parseFloat(d.amount || 0), 0);
   const roi = totalInvested > 0 ? (totalReceived / totalInvested * 100) : 0;
 
+  const [showPortalDialog, setShowPortalDialog] = useState(false);
+  const [portalForm, setPortalForm] = useState({ email: "", firstName: "", lastName: "", password: "" });
+  const [portalStatus, setPortalStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  async function createPortalAccount() {
+    if (!portalForm.email || !portalForm.firstName || !portalForm.lastName || !portalForm.password) {
+      setPortalStatus({ type: "error", msg: "Заполните все поля" }); return;
+    }
+    setPortalLoading(true); setPortalStatus(null);
+    try {
+      await api.post("/portal/create-investor-account", { investorId: id, ...portalForm });
+      setPortalStatus({ type: "success", msg: "Аккаунт успешно создан. Инвестор может войти через portal." });
+      setPortalForm({ email: "", firstName: "", lastName: "", password: "" });
+    } catch (e: any) {
+      setPortalStatus({ type: "error", msg: e?.response?.data?.error || "Ошибка создания аккаунта" });
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+
   function handlePrint() { window.print(); }
 
   if (isLoading) return (
@@ -99,11 +122,69 @@ export default function InvestorDetail() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => { setShowPortalDialog(true); setPortalStatus(null); }} variant="outline" size="sm" className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50">
+            <UserPlus className="w-4 h-4" /> Создать доступ
+          </Button>
           <Button onClick={handlePrint} variant="outline" size="sm" className="gap-1.5">
             <Printer className="w-4 h-4" /> Акт сверки
           </Button>
         </div>
       </div>
+
+      {/* Portal account dialog */}
+      {showPortalDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <UserPlus className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900">Создать доступ к порталу</h2>
+                  <p className="text-xs text-gray-500">{investor.fullName}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowPortalDialog(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-3">
+              <p className="text-sm text-gray-500">Инвестор получит отдельный логин для просмотра своих данных в портале.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-700 mb-1 block">Имя</label>
+                  <Input value={portalForm.firstName} onChange={e => setPortalForm(p => ({ ...p, firstName: e.target.value }))} placeholder="Иван" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-700 mb-1 block">Фамилия</label>
+                  <Input value={portalForm.lastName} onChange={e => setPortalForm(p => ({ ...p, lastName: e.target.value }))} placeholder="Петров" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 mb-1 block">Email (логин)</label>
+                <Input type="email" value={portalForm.email} onChange={e => setPortalForm(p => ({ ...p, email: e.target.value }))} placeholder="investor@email.com" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 mb-1 block">Пароль</label>
+                <Input type="password" value={portalForm.password} onChange={e => setPortalForm(p => ({ ...p, password: e.target.value }))} placeholder="Минимум 6 символов" />
+              </div>
+              {portalStatus && (
+                <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${portalStatus.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                  {portalStatus.type === "success" ? <Check className="w-4 h-4 flex-shrink-0" /> : <X className="w-4 h-4 flex-shrink-0" />}
+                  {portalStatus.msg}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 px-6 py-4 border-t bg-gray-50 rounded-b-2xl">
+              <Button variant="outline" onClick={() => setShowPortalDialog(false)} className="flex-1">Отмена</Button>
+              <Button onClick={createPortalAccount} disabled={portalLoading} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                {portalLoading ? "Создание..." : "Создать аккаунт"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Contact & info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

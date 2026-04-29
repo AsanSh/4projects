@@ -91,13 +91,13 @@ import RentalODDS from "@/pages/rental/analytics/odds";
 import RentalPlanningForecast from "@/pages/rental/planning/forecast";
 import RentalPlanningOverdue from "@/pages/rental/planning/overdue";
 import RentalPlanningBroadcast from "@/pages/rental/planning/broadcast";
+import InvestorPortal from "@/pages/portal/investor";
+import TenantPortal from "@/pages/portal/tenant";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ component: Component, ...rest }: any) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) return (
+function Spinner() {
+  return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
@@ -105,7 +105,18 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
       </div>
     </div>
   );
+}
+
+function ProtectedRoute({ component: Component, ...rest }: any) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const role = (user as any)?.role;
+
+  if (isLoading) return <Spinner />;
   if (!isAuthenticated) return <Redirect to="/login" />;
+
+  // Portal users see their own portal, not the main app
+  if (role === "investor") return <Redirect to="/investor-portal" />;
+  if (role === "tenant") return <Redirect to="/tenant-portal" />;
 
   return (
     <Layout>
@@ -114,11 +125,20 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   );
 }
 
+function PortalRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <Spinner />;
+  if (!isAuthenticated) return <Redirect to="/login" />;
+  return <Component />;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/investor-portal"><PortalRoute component={InvestorPortal} /></Route>
+      <Route path="/tenant-portal"><PortalRoute component={TenantPortal} /></Route>
       <Route path="/"><Redirect to="/rental/dashboard" /></Route>
 
       {/* ── Сводное (consolidated) ── */}
