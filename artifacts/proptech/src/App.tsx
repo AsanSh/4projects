@@ -92,6 +92,7 @@ import RentalODDS from "@/pages/rental/analytics/odds";
 import RentalPlanningForecast from "@/pages/rental/planning/forecast";
 import RentalPlanningOverdue from "@/pages/rental/planning/overdue";
 import RentalPlanningBroadcast from "@/pages/rental/planning/broadcast";
+import RentalOperationsLog from "@/pages/rental/admin/log";
 import InvestorPortal from "@/pages/portal/investor";
 import TenantPortal from "@/pages/portal/tenant";
 
@@ -247,6 +248,7 @@ function Router() {
       <Route path="/rental/planning/overdue"><ProtectedRoute component={RentalPlanningOverdue} /></Route>
       <Route path="/rental/planning/broadcast"><ProtectedRoute component={RentalPlanningBroadcast} /></Route>
       <Route path="/rental/settings"><ProtectedRoute component={RentalSettings} /></Route>
+      <Route path="/rental/admin/log"><ProtectedRoute component={RentalOperationsLog} /></Route>
 
       {/* ── Закуп / Снабжение ── */}
       <Route path="/warehouse/dashboard"><ProtectedRoute component={WarehouseDashboard} /></Route>

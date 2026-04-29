@@ -3,9 +3,27 @@ import { eq, and, SQL, sql, asc } from "drizzle-orm";
 import {
   db, propertiesTable, tenantsTable, leaseContractsTable,
   accrualsTable, paymentsTable, depositsTable, expensesTable,
-  ownerStatementsTable, paymentAllocationsTable, bankAccountsTable
+  ownerStatementsTable, paymentAllocationsTable, bankAccountsTable,
+  activityLogTable,
 } from "@workspace/db";
+
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
+
+async function logOp(
+  companyId: number, userId: number | undefined,
+  entityType: string, entityId: number | null,
+  actionType: "create" | "update" | "delete",
+  description: string,
+  snapshot?: object,
+) {
+  await db.insert(activityLogTable).values({
+    companyId, userId: userId ?? null,
+    type: entityType, description,
+    entityType, entityId,
+    module: "rental", actionType,
+    snapshot: snapshot ? JSON.stringify(snapshot) : null,
+  });
+}
 
 const router: ReturnType<typeof Router> = Router();
 
@@ -208,7 +226,12 @@ router.delete("/rental/tenants/:id", requireAuth, async (req: AuthenticatedReque
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const conditions: SQL[] = [eq(tenantsTable.id, id)];
   if (req.companyId) conditions.push(eq(tenantsTable.companyId, req.companyId));
+  const [snap] = await db.select().from(tenantsTable).where(and(...conditions));
   await db.delete(tenantsTable).where(and(...conditions));
+  if (snap && req.companyId) {
+    await logOp(req.companyId, req.userId, "tenant", id, "delete",
+      `Удалён арендатор: ${snap.fullName}`, snap);
+  }
   res.sendStatus(204);
 });
 
@@ -531,7 +554,39 @@ router.post("/rental/payments", requireAuth, async (req: AuthenticatedRequest, r
     }
   }
 
+  if (req.companyId) {
+    await logOp(req.companyId, req.userId, "payment", payment.id, "create",
+      `Добавлен платёж ${paymentAmount} ${currency} (договор #${leaseContractId})`, payment);
+  }
   res.status(201).json({ ...payment, allocations: createdAllocations, unallocated: remainingAmount });
+});
+
+router.delete("/rental/payments/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const conds: SQL[] = [eq(paymentsTable.id, id)];
+  if (req.companyId) conds.push(eq(paymentsTable.companyId, req.companyId));
+  const [snap] = await db.select().from(paymentsTable).where(and(...conds));
+  if (!snap) { res.status(404).json({ error: "Платёж не найден" }); return; }
+  // Reverse allocations
+  const allocs = await db.select().from(paymentAllocationsTable).where(eq(paymentAllocationsTable.paymentId, id));
+  for (const alloc of allocs) {
+    const [accrual] = await db.select().from(accrualsTable).where(eq(accrualsTable.id, alloc.accrualId));
+    if (accrual) {
+      const newPaid = Math.max(0, parseFloat(accrual.paidAmount) - parseFloat(alloc.amount));
+      const effectiveAmount = parseFloat(accrual.amount) - parseFloat(accrual.discountAmount ?? "0");
+      const newBalance = Math.max(0, effectiveAmount - newPaid);
+      const newStatus = newBalance <= 0 ? "paid" : newPaid > 0 ? "partial" : "pending";
+      await db.update(accrualsTable).set({ paidAmount: String(newPaid), balance: String(newBalance), status: newStatus })
+        .where(eq(accrualsTable.id, alloc.accrualId));
+    }
+  }
+  await db.delete(paymentAllocationsTable).where(eq(paymentAllocationsTable.paymentId, id));
+  await db.delete(paymentsTable).where(and(...conds));
+  if (req.companyId) {
+    await logOp(req.companyId, req.userId, "payment", id, "delete",
+      `Удалён платёж ${snap.amount} ${snap.currency} от ${snap.paymentDate}`, snap);
+  }
+  res.sendStatus(204);
 });
 
 // DEPOSITS

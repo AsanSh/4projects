@@ -11,6 +11,11 @@ export const activityLogTable = pgTable("activity_log", {
   entityId: integer("entity_id"),
   userId: integer("user_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // Extended fields for operations log
+  module: text("module"),
+  actionType: text("action_type"),
+  snapshot: text("snapshot"),
+  restoredAt: timestamp("restored_at", { withTimezone: true }),
 });
 
 export const insertActivityLogSchema = createInsertSchema(activityLogTable).omit({ id: true, createdAt: true });
