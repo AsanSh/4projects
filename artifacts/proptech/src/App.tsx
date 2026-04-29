@@ -83,6 +83,8 @@ import RentalAnalyticsDebt from "@/pages/rental/analytics/debt";
 import RentalAnalyticsSummary from "@/pages/rental/analytics/summary";
 import RentalAnalyticsHistory from "@/pages/rental/analytics/history";
 import RentalAnalyticsOwners from "@/pages/rental/analytics/owners";
+import RentalOPU from "@/pages/rental/analytics/opu";
+import RentalODDS from "@/pages/rental/analytics/odds";
 import RentalPlanningForecast from "@/pages/rental/planning/forecast";
 import RentalPlanningOverdue from "@/pages/rental/planning/overdue";
 import RentalPlanningBroadcast from "@/pages/rental/planning/broadcast";
@@ -197,6 +199,8 @@ function Router() {
       <Route path="/proptech/analytics/cashflow"><ProtectedRoute component={ProptechAnalyticsCashflow} /></Route>
       <Route path="/proptech/analytics/history"><ProtectedRoute component={ProptechAnalyticsHistory} /></Route>
       <Route path="/proptech/analytics/acts"><ProtectedRoute component={ProptechAnalyticsActs} /></Route>
+      <Route path="/proptech/analytics/opu"><ProtectedRoute component={RentalOPU} /></Route>
+      <Route path="/proptech/analytics/odds"><ProtectedRoute component={RentalODDS} /></Route>
       <Route path="/proptech/investors"><ProtectedRoute component={ProptechInvestors} /></Route>
       <Route path="/proptech/investments"><ProtectedRoute component={ProptechInvestments} /></Route>
       <Route path="/proptech/distributions"><ProtectedRoute component={ProptechDistributions} /></Route>
@@ -211,6 +215,8 @@ function Router() {
       <Route path="/rental/analytics/cashflow"><ProtectedRoute component={RentalAnalyticsCashflow} /></Route>
       <Route path="/rental/analytics/history"><ProtectedRoute component={RentalAnalyticsHistory} /></Route>
       <Route path="/rental/analytics/owners"><ProtectedRoute component={RentalAnalyticsOwners} /></Route>
+      <Route path="/rental/analytics/opu"><ProtectedRoute component={RentalOPU} /></Route>
+      <Route path="/rental/analytics/odds"><ProtectedRoute component={RentalODDS} /></Route>
       <Route path="/rental/planning/forecast"><ProtectedRoute component={RentalPlanningForecast} /></Route>
       <Route path="/rental/planning/overdue"><ProtectedRoute component={RentalPlanningOverdue} /></Route>
       <Route path="/rental/planning/broadcast"><ProtectedRoute component={RentalPlanningBroadcast} /></Route>

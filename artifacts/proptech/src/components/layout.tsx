@@ -91,11 +91,12 @@ const MODULES: Module[] = [
         { href: "/rental/accounts",   label: "Расчётные счета",    icon: Landmark },
       ]},
       { title: "Аналитика", items: [
+        { href: "/rental/analytics/odds",     label: "ОДДС",             icon: BarChart3 },
+        { href: "/rental/analytics/opu",      label: "ОПУ",              icon: LineChart },
         { href: "/rental/analytics/debt",     label: "Задолженность",    icon: AlertTriangle },
-        { href: "/rental/analytics/cashflow", label: "Денежный поток",   icon: TrendingUp },
-        { href: "/rental/analytics/summary",  label: "Сводный отчёт",    icon: PieChart },
         { href: "/rental/analytics/history",  label: "История платежей", icon: Activity },
         { href: "/rental/analytics/owners",   label: "Отчёты владельцев", icon: ScrollText },
+        { href: "/rental/analytics/summary",  label: "Сводный отчёт",    icon: PieChart },
       ]},
       { title: "Инвесторы", items: [
         { href: "/rental/investors",     label: "Инвесторы",           icon: Users },
@@ -132,9 +133,11 @@ const MODULES: Module[] = [
         { href: "/sales/contracts",  label: "Договоры",  icon: FileText },
       ]},
       { title: "Аналитика", items: [
-        { href: "/proptech/analytics/cashflow", label: "Денежный поток",   icon: LineChart },
+        { href: "/proptech/analytics/odds",     label: "ОДДС",             icon: BarChart3 },
+        { href: "/proptech/analytics/opu",      label: "ОПУ",              icon: LineChart },
         { href: "/proptech/analytics/debt",     label: "Задолженность",    icon: AlertTriangle },
         { href: "/proptech/analytics/summary",  label: "Сводка объектов",  icon: Grid3X3 },
+        { href: "/proptech/analytics/cashflow", label: "Денежный поток",   icon: TrendingUp },
       ]},
       { title: "Инвесторы", items: [
         { href: "/proptech/investors",     label: "Инвесторы",       icon: Users },
