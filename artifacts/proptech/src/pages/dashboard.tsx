@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -9,15 +8,6 @@ import {
   Calendar, ChevronDown, ArrowRight, CheckSquare, Bell,
   Building2, CheckCircle2,
 } from "lucide-react";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.38, delay: i * 0.055, ease: [0.22, 1, 0.36, 1] },
-  }),
-};
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -176,36 +166,31 @@ export default function Dashboard() {
   const monthEnd = todayStr;
 
   return (
-    <motion.div
-      className="flex gap-5"
-      initial="hidden"
-      animate="show"
-      variants={{ hidden: {}, show: {} }}
-    >
+    <div className="flex gap-5">
       {/* ───── LEFT: MAIN CONTENT ───── */}
       <div className="flex-1 min-w-0 space-y-4">
 
         {/* Header row */}
-        <motion.div className="flex items-start justify-between" variants={fadeUp} custom={0}>
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-[23px] font-bold text-gray-900 tracking-tight">
+            <h1 className="text-[22px] font-bold text-gray-900">
               {getGreeting()}, {user?.firstName || "Администратор"}!
             </h1>
-            <p className="text-sm text-gray-400 mt-1">Обзор показателей на сегодня</p>
+            <p className="text-sm text-gray-400 mt-0.5">Обзор показателей на сегодня</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-gray-300 transition-all shadow-sm">
+            <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-gray-300 transition-all shadow-sm">
               <Calendar className="w-3.5 h-3.5 text-gray-400" />
               {monthStart} → {monthEnd}
             </button>
-            <button className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-gray-300 transition-all shadow-sm">
+            <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-gray-300 transition-all shadow-sm">
               Все проекты <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
             </button>
-            <button className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 transition-all shadow-sm">
+            <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 transition-all shadow-sm">
               KGS <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
             </button>
           </div>
-        </motion.div>
+        </div>
 
         {/* ── KPI Cards ── */}
         <div className="grid grid-cols-3 xl:grid-cols-6 gap-3">
@@ -216,36 +201,35 @@ export default function Dashboard() {
             { label: "Рентабельность", value: margin.toFixed(1) + "%", currency: "", delta: margin > 0 ? "+4.3 п.п." : null, up: true, icon: TrendingUp, iconColor: "#f59e0b", bg: "#fffbeb" },
             { label: "Остатки на счетах", value: fmtFull(cashBalance), currency: "KGS", delta: null, up: true, icon: Wallet, iconColor: "#3b82f6", bg: "#eff6ff" },
             { label: "Кредит. задол-ть", value: overdueDebt > 0 ? fmtFull(overdueDebt) : "—", currency: overdueDebt > 0 ? "KGS" : "", delta: overdueCount > 0 ? `${overdueCount} контрагентов` : null, up: false, icon: AlertCircle, iconColor: "#ef4444", bg: "#fef2f2" },
-          ].map((c, idx) => {
+          ].map(c => {
             const Icon = c.icon;
             return (
-              <motion.div key={c.label} variants={fadeUp} custom={idx + 1}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-[1.125rem] hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-[11px] font-medium text-gray-400 leading-tight tracking-wide uppercase">{c.label}</span>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.bg }}>
-                    <Icon className="w-3.5 h-3.5" style={{ color: c.iconColor }} />
+              <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-medium text-gray-400 leading-tight">{c.label}</span>
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.bg }}>
+                    <Icon className="w-3 h-3" style={{ color: c.iconColor }} />
                   </div>
                 </div>
-                <div className="amount-lg leading-none">{c.value}</div>
-                {c.currency && <div className="text-[10px] text-gray-400 mt-1 font-medium">{c.currency}</div>}
+                <div className="text-[18px] font-bold text-gray-900 leading-tight tabular-nums">{c.value}</div>
+                {c.currency && <div className="text-[10px] text-gray-400 mt-0.5">{c.currency}</div>}
                 {c.delta && (
-                  <div className={`text-[10px] mt-1.5 font-semibold ${c.up ? "text-emerald-500" : "text-red-500"}`}>
+                  <div className={`text-[10px] mt-1 font-medium ${c.up ? "text-emerald-500" : "text-red-500"}`}>
                     {c.delta} <span className="text-gray-400 font-normal">vs прошлый мес.</span>
                   </div>
                 )}
-              </motion.div>
+              </div>
             );
           })}
         </div>
 
         {/* ── Charts Row ── */}
-        <motion.div className="grid grid-cols-3 gap-4" variants={fadeUp} custom={8}>
+        <div className="grid grid-cols-3 gap-4">
 
           {/* Line chart - Revenue vs Expenses */}
-          <div className="col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div className="font-semibold text-gray-900 text-sm tracking-tight">Динамика доходов и расходов</div>
+          <div className="col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="font-semibold text-gray-800 text-sm">Динамика доходов и расходов</div>
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-blue-500 rounded" />Доходы</div>
                 <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-red-400 rounded" />Расходы</div>
@@ -302,19 +286,19 @@ export default function Dashboard() {
           {/* Donut + top projects */}
           <div className="flex flex-col gap-3">
             {/* Donut */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex-1">
-              <div className="font-semibold text-gray-900 text-sm mb-4 tracking-tight">Структура расходов</div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex-1">
+              <div className="font-semibold text-gray-800 text-sm mb-3">Структура расходов</div>
               {expCatSorted.length === 0 ? (
                 <div className="flex items-center justify-center h-20 text-gray-300 text-xs">Нет расходов</div>
               ) : (
                 <div className="flex items-center gap-3">
                   <DonutChart data={expCatSorted} />
-                  <div className="flex-1 space-y-2 min-w-0">
+                  <div className="flex-1 space-y-1.5 min-w-0">
                     {expCatSorted.map(([cat, amt], i) => (
                       <div key={cat} className="flex items-center gap-1.5 text-[11px]">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: CAT_COLORS[i % CAT_COLORS.length] }} />
                         <span className="text-gray-600 truncate flex-1">{cat}</span>
-                        <span className="font-semibold text-gray-800 flex-shrink-0">{expense > 0 ? Math.round(amt / expense * 100) : 0}%</span>
+                        <span className="font-mono text-gray-500 flex-shrink-0">{expense > 0 ? Math.round(amt / expense * 100) : 0}%</span>
                       </div>
                     ))}
                   </div>
@@ -322,12 +306,12 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* ── Top Projects (full row) ── */}
-        <motion.div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6" variants={fadeUp} custom={9}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="font-semibold text-gray-900 text-sm tracking-tight">Топ прибыльных проектов</div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-semibold text-gray-800 text-sm">Топ прибыльных проектов</div>
             <Link href="/construction/projects">
               <button className="text-xs text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все проекты <ArrowRight className="w-3 h-3" /></button>
             </Link>
@@ -336,24 +320,24 @@ export default function Dashboard() {
             <div className="text-center py-4 text-gray-400 text-sm">Нет данных по проектам</div>
           ) : (
             <div className="grid grid-cols-3 gap-4">
-              {topProjects.map((p: any) => (
-                <div key={p.id} className="flex items-center gap-3 p-[0.9375rem] rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
-                  <div className="w-11 h-11 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+              {topProjects.map((p: any, i: number) => (
+                <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
                     <Building2 className="w-5 h-5 text-indigo-500" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-semibold text-sm text-gray-900 truncate tracking-tight">{p.name}</div>
-                    <div className="amount-sm mt-1">{fmtFull(p.profit)} <span className="text-[10px] font-normal text-gray-400">KGS</span></div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">Рент.: {p.margin.toFixed(1)}%</div>
+                    <div className="font-semibold text-sm text-gray-900 truncate">{p.name}</div>
+                    <div className="text-[11px] text-emerald-600 mt-0.5">Прибыль: {fmtFull(p.profit)} KGS</div>
+                    <div className="text-[10px] text-gray-400">Рент.: {p.margin.toFixed(1)}%</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* ── Mini metrics row ── */}
-        <motion.div className="grid grid-cols-5 gap-3" variants={fadeUp} custom={10}>
+        <div className="grid grid-cols-5 gap-3">
           {[
             { label: "Себестоимость 1м²", value: costPerSqm > 0 ? fmt(costPerSqm) : "—", sub: "KGS/м²", delta: costPerSqm > 0 ? "vs прош. мес." : "" },
             { label: "Себестоимость проекта", value: fmt(expense), sub: "KGS всего", delta: expense > 0 ? "-1.3%" : "" },
@@ -361,41 +345,41 @@ export default function Dashboard() {
             { label: "Самый доходный клиент", value: contracts[0]?.buyerName?.split(" ")[0] || "—", sub: contracts[0] ? fmt(contracts[0].paidAmount) + " KGS" : "" },
             { label: "Топ контрагент по расходам", value: ops.filter((o: any) => o.type === "expense")[0]?.description?.split(" ").slice(0, 2).join(" ") || "—", sub: "" },
           ].map(c => (
-            <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-              <div className="text-[10px] text-gray-400 font-medium mb-2 leading-tight uppercase tracking-wide">{c.label}</div>
-              <div className="amount truncate">{c.value}</div>
-              {c.sub && <div className="text-[10px] text-gray-400 mt-1 truncate">{c.sub}</div>}
-              {c.delta && <div className={`text-[10px] mt-1.5 font-semibold ${(c as any).neg ? "text-red-500" : "text-emerald-500"}`}>{c.delta}</div>}
+            <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow">
+              <div className="text-[10px] text-gray-400 font-medium mb-1.5 leading-tight">{c.label}</div>
+              <div className="text-base font-bold text-gray-900 truncate">{c.value}</div>
+              {c.sub && <div className="text-[10px] text-gray-400 mt-0.5 truncate">{c.sub}</div>}
+              {c.delta && <div className={`text-[10px] mt-1 font-medium ${(c as any).neg ? "text-red-500" : "text-emerald-500"}`}>{c.delta}</div>}
             </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* ── Bottom tables row ── */}
-        <motion.div className="grid grid-cols-3 gap-4" variants={fadeUp} custom={11}>
+        <div className="grid grid-cols-3 gap-4">
 
           {/* Overdue */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-[0.9375rem] border-b border-gray-50 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-gray-900 tracking-tight">Просрочки платежей</span>
+                <span className="font-semibold text-sm text-gray-800">Просрочки платежей</span>
                 {overdueAccruals.length > 0 && (
                   <span className="w-5 h-5 bg-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center rounded-full">{Math.min(9, overdueAccruals.length)}</span>
                 )}
               </div>
               <Link href="/construction/planning/overdue">
-                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все <ArrowRight className="w-3 h-3" /></button>
+                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все просрочки <ArrowRight className="w-3 h-3" /></button>
               </Link>
             </div>
             {overdueAccruals.length === 0 ? (
-              <div className="px-5 py-7 text-center text-gray-400 text-sm">
+              <div className="px-4 py-6 text-center text-gray-400 text-sm">
                 <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-300" />Нет просрочек
               </div>
             ) : (
               <table className="w-full">
                 <thead><tr className="border-b border-gray-50">
-                  <th className="text-left px-5 py-2.5 text-[10px] text-gray-400 uppercase tracking-wide">Контрагент</th>
-                  <th className="text-right px-5 py-2.5 text-[10px] text-gray-400 uppercase tracking-wide">Сумма</th>
-                  <th className="text-right px-5 py-2.5 text-[10px] text-gray-400 uppercase tracking-wide">Дн.</th>
+                  <th className="text-left px-4 py-2 text-[10px] text-gray-400">КОНТРАГЕНТ</th>
+                  <th className="text-right px-4 py-2 text-[10px] text-gray-400">СУММА</th>
+                  <th className="text-right px-4 py-2 text-[10px] text-gray-400">ДНЕЙ</th>
                 </tr></thead>
                 <tbody>
                   {overdueAccruals.slice(0, 3).map((a: any) => {
@@ -403,9 +387,9 @@ export default function Dashboard() {
                     const contract = contracts.find((c: any) => c.id === a.contractId);
                     return (
                       <tr key={a.id} className="border-b border-gray-50 hover:bg-red-50/30 transition-colors">
-                        <td className="px-5 py-3 text-xs font-medium text-gray-700 truncate max-w-[100px]">{contract?.buyerName || "—"}</td>
-                        <td className="px-5 py-3 text-right"><span className="amount-sm" style={{ color: "#ef4444" }}>{fmt(a.remainingAmount)}</span></td>
-                        <td className="px-5 py-3 text-right">
+                        <td className="px-4 py-2.5 text-xs font-medium text-gray-700 truncate max-w-[100px]">{contract?.buyerName || "—"}</td>
+                        <td className="px-4 py-2.5 text-xs text-right font-mono text-red-600">{fmt(a.remainingAmount)}</td>
+                        <td className="px-4 py-2.5 text-right">
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${days > 30 ? "bg-red-100 text-red-600" : "bg-yellow-100 text-yellow-700"}`}>{days}</span>
                         </td>
                       </tr>
@@ -418,36 +402,36 @@ export default function Dashboard() {
 
           {/* Upcoming */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-[0.9375rem] border-b border-gray-50 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-gray-900 tracking-tight">Ближайшие поступления</span>
+                <span className="font-semibold text-sm text-gray-800">Ближайшие поступления</span>
                 {upcomingAccruals.length > 0 && (
                   <span className="w-5 h-5 bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center rounded-full">{upcomingAccruals.length}</span>
                 )}
               </div>
               <Link href="/construction/planning/forecast">
-                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все <ArrowRight className="w-3 h-3" /></button>
+                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все поступления <ArrowRight className="w-3 h-3" /></button>
               </Link>
             </div>
             {upcomingAccruals.length === 0 ? (
-              <div className="px-5 py-7 text-center text-gray-400 text-sm">
+              <div className="px-4 py-6 text-center text-gray-400 text-sm">
                 <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-200" />Нет предстоящих
               </div>
             ) : (
               <table className="w-full">
                 <thead><tr className="border-b border-gray-50">
-                  <th className="text-left px-5 py-2.5 text-[10px] text-gray-400 uppercase tracking-wide">Контрагент</th>
-                  <th className="text-right px-5 py-2.5 text-[10px] text-gray-400 uppercase tracking-wide">Сумма</th>
-                  <th className="text-right px-5 py-2.5 text-[10px] text-gray-400 uppercase tracking-wide">Дата</th>
+                  <th className="text-left px-4 py-2 text-[10px] text-gray-400">КОНТРАГЕНТ</th>
+                  <th className="text-right px-4 py-2 text-[10px] text-gray-400">СУММА</th>
+                  <th className="text-right px-4 py-2 text-[10px] text-gray-400">ДАТА</th>
                 </tr></thead>
                 <tbody>
                   {upcomingAccruals.map((a: any) => {
                     const contract = contracts.find((c: any) => c.id === a.contractId);
                     return (
                       <tr key={a.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
-                        <td className="px-5 py-3 text-xs font-medium text-gray-700 truncate max-w-[100px]">{contract?.buyerName || "—"}</td>
-                        <td className="px-5 py-3 text-right"><span className="amount-sm" style={{ color: "#3b82f6" }}>{fmt(a.remainingAmount)}</span></td>
-                        <td className="px-5 py-3 text-right text-[10px] text-gray-400">{a.dueDate?.slice(5).replace("-", ".")}</td>
+                        <td className="px-4 py-2.5 text-xs font-medium text-gray-700 truncate max-w-[100px]">{contract?.buyerName || "—"}</td>
+                        <td className="px-4 py-2.5 text-xs text-right font-mono text-blue-600">{fmt(a.remainingAmount)}</td>
+                        <td className="px-4 py-2.5 text-right text-[10px] text-gray-400">{a.dueDate?.slice(5).replace("-", ".")}</td>
                       </tr>
                     );
                   })}
@@ -458,29 +442,29 @@ export default function Dashboard() {
 
           {/* Recent operations */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-[0.9375rem] border-b border-gray-50 flex items-center justify-between">
-              <span className="font-semibold text-sm text-gray-900 tracking-tight">Недавние операции</span>
+            <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+              <span className="font-semibold text-sm text-gray-800">Недавние операции</span>
               <Link href="/construction/operations">
-                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все <ArrowRight className="w-3 h-3" /></button>
+                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все операции <ArrowRight className="w-3 h-3" /></button>
               </Link>
             </div>
             {recentOps.length === 0 ? (
-              <div className="px-5 py-7 text-center text-gray-400 text-sm">Нет операций</div>
+              <div className="px-4 py-6 text-center text-gray-400 text-sm">Нет операций</div>
             ) : (
               <div className="divide-y divide-gray-50">
                 {recentOps.slice(0, 4).map((op: any) => {
                   const isIncome = op.type === "income";
                   const isTransfer = op.type === "transfer";
                   return (
-                    <div key={op.id} className="px-5 py-3 hover:bg-gray-50/70 transition-colors">
+                    <div key={op.id} className="px-4 py-2.5 hover:bg-gray-50/70 transition-colors">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium text-gray-800 truncate">{op.description}</div>
                           <div className="text-[10px] text-gray-400 mt-0.5">{op.category || "Операция"} · {op.date}</div>
                         </div>
-                        <span className="amount-sm flex-shrink-0" style={{ color: isIncome ? "#10b981" : isTransfer ? "#3b82f6" : "#6b7280" }}>
+                        <div className={`text-xs font-mono font-semibold flex-shrink-0 ${isIncome ? "text-emerald-600" : isTransfer ? "text-blue-600" : "text-gray-600"}`}>
                           {isIncome ? "+" : isTransfer ? "⇄" : "−"}{fmt(op.amountKgs)}
-                        </span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -488,18 +472,18 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* ───── RIGHT PANEL ───── */}
-      <motion.div className="w-64 flex-shrink-0 space-y-4" variants={fadeUp} custom={2}>
+      <div className="w-64 flex-shrink-0 space-y-4">
 
         {/* My Tasks */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-[0.9375rem] border-b border-gray-50 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckSquare className="w-4 h-4 text-indigo-500" />
-              <span className="font-semibold text-sm text-gray-900 tracking-tight">Мои задачи</span>
+              <span className="font-semibold text-sm text-gray-800">Мои задачи</span>
               <span className="w-5 h-5 bg-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center rounded-full">
                 {tasks.filter(t => !t.done).length}
               </span>
@@ -507,7 +491,7 @@ export default function Dashboard() {
           </div>
           <div className="divide-y divide-gray-50">
             {tasks.map(task => (
-              <div key={task.id} className="px-5 py-3 flex items-start gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
+              <div key={task.id} className="px-4 py-2.5 flex items-start gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
                 onClick={() => setTasks(prev => prev.map(t => t.id === task.id ? { ...t, done: !t.done } : t))}>
                 <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 mt-0.5 border ${task.done ? "bg-indigo-500 border-indigo-500" : "border-gray-200"}`}>
                   {task.done && <CheckCircle2 className="w-3 h-3 text-white" />}
@@ -516,13 +500,13 @@ export default function Dashboard() {
                   <div className={`text-xs font-medium leading-snug ${task.done ? "line-through text-gray-400" : "text-gray-700"}`}>{task.text}</div>
                   {task.sub && <div className="text-[10px] text-gray-400 mt-0.5">{task.sub}</div>}
                 </div>
-                <div className={`text-[10px] flex-shrink-0 font-semibold mt-0.5 ${task.date === "Сегодня" ? "text-indigo-500" : task.date === "Завтра" ? "text-amber-500" : "text-gray-400"}`}>
+                <div className={`text-[10px] flex-shrink-0 font-medium mt-0.5 ${task.date === "Сегодня" ? "text-indigo-500" : task.date === "Завтра" ? "text-amber-500" : "text-gray-400"}`}>
                   {task.date}
                 </div>
               </div>
             ))}
           </div>
-          <div className="px-5 py-2.5 border-t border-gray-50">
+          <div className="px-4 py-2 border-t border-gray-50">
             <Link href="/construction/planning/approvals">
               <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1 w-full justify-center py-1">
                 Все задачи <ArrowRight className="w-3 h-3" />
@@ -533,10 +517,10 @@ export default function Dashboard() {
 
         {/* Notifications */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-[0.9375rem] border-b border-gray-50 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-indigo-500" />
-              <span className="font-semibold text-sm text-gray-900 tracking-tight">Уведомления</span>
+              <span className="font-semibold text-sm text-gray-800">Уведомления</span>
               <span className="w-5 h-5 bg-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center rounded-full">
                 {MOCK_NOTIFICATIONS.length}
               </span>
@@ -544,7 +528,7 @@ export default function Dashboard() {
           </div>
           <div className="divide-y divide-gray-50">
             {MOCK_NOTIFICATIONS.map(n => (
-              <div key={n.id} className="px-5 py-3 flex items-start gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer">
+              <div key={n.id} className="px-4 py-2.5 flex items-start gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer">
                 <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: n.color }} />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium text-gray-700">{n.text}</div>
@@ -554,13 +538,13 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-          <div className="px-5 py-2.5 border-t border-gray-50">
+          <div className="px-4 py-2 border-t border-gray-50">
             <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1 w-full justify-center py-1">
               Все уведомления <ArrowRight className="w-3 h-3" />
             </button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
