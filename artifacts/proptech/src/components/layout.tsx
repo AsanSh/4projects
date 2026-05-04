@@ -1,5 +1,6 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import NotificationsPanel from "@/components/notifications-panel";
 import ChatPanel from "@/components/chat-panel";
@@ -15,8 +16,8 @@ import {
   LineChart, AlertTriangle, Bell, CheckSquare, ArrowRightLeft,
   ListOrdered, Calculator, Building, Send, Calendar,
   BarChart, Landmark, Scale, Factory,
-  Search, Plus, MessageCircle, Zap,
-  ShieldCheck, CalendarDays,
+  Search, Plus, MessageCircle, Zap, X,
+  ShieldCheck, CalendarDays, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,13 +27,15 @@ interface NavItem { href: string; label: string; icon: React.ElementType }
 interface NavSection { title: string; items: NavItem[] }
 interface Module {
   id: ModuleId; label: string; shortLabel: string; icon: React.ElementType;
-  color: string; urlPrefix: string[]; sections: NavSection[];
+  color: string; gradient: string; urlPrefix: string[]; sections: NavSection[];
 }
 
 const MODULES: Module[] = [
   {
     id: "construction", label: "Контроль строительства", shortLabel: "Строительство",
-    icon: HardHat, color: "#f97316", urlPrefix: ["/construction"],
+    icon: HardHat, color: "#f97316",
+    gradient: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+    urlPrefix: ["/construction"],
     sections: [
       { title: "Управление", items: [
         { href: "/construction/dashboard",   label: "Дашборд",      icon: LayoutDashboard },
@@ -75,7 +78,9 @@ const MODULES: Module[] = [
   },
   {
     id: "rental", label: "Аренда", shortLabel: "Аренда",
-    icon: Home, color: "#3b82f6", urlPrefix: ["/rental", "/settings/categories", "/settings/periods"],
+    icon: Home, color: "#3b82f6",
+    gradient: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+    urlPrefix: ["/rental", "/settings/categories", "/settings/periods"],
     sections: [
       { title: "Управление", items: [
         { href: "/rental/dashboard",  label: "Дашборд",    icon: BarChart3 },
@@ -121,7 +126,9 @@ const MODULES: Module[] = [
   },
   {
     id: "proptech", label: "ПропТех", shortLabel: "ПропТех",
-    icon: Building2, color: "#8b5cf6", urlPrefix: ["/proptech", "/sales", "/crm"],
+    icon: Building2, color: "#8b5cf6",
+    gradient: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
+    urlPrefix: ["/proptech", "/sales", "/crm"],
     sections: [
       { title: "Управление", items: [
         { href: "/proptech/dashboard",  label: "Дашборд",   icon: LayoutDashboard },
@@ -156,7 +163,9 @@ const MODULES: Module[] = [
   },
   {
     id: "warehouse", label: "Закуп / Снабжение", shortLabel: "Закуп",
-    icon: ShoppingBag, color: "#10b981", urlPrefix: ["/warehouse"],
+    icon: ShoppingBag, color: "#10b981",
+    gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+    urlPrefix: ["/warehouse"],
     sections: [
       { title: "Управление", items: [
         { href: "/warehouse/dashboard",  label: "Дашборд",        icon: LayoutDashboard },
@@ -183,7 +192,9 @@ const MODULES: Module[] = [
   },
   {
     id: "consolidated", label: "Сводное", shortLabel: "Сводное",
-    icon: Globe, color: "#6b7280", urlPrefix: ["/dashboard", "/counterparties", "/properties", "/users", "/settings", "/import", "/activity", "/companies", "/reports"],
+    icon: Globe, color: "#6366f1",
+    gradient: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
+    urlPrefix: ["/dashboard", "/counterparties", "/properties", "/users", "/settings", "/import", "/activity", "/companies", "/reports"],
     sections: [
       { title: "Главная", items: [
         { href: "/dashboard",     label: "Главный дашборд",  icon: LayoutDashboard },
@@ -211,34 +222,34 @@ const MODULES: Module[] = [
   },
 ];
 
-const MODULE_QUICK_ACTIONS: Record<ModuleId, { label: string; href: string }[]> = {
+const MODULE_QUICK_ACTIONS: Record<ModuleId, { label: string; href: string; icon: React.ElementType }[]> = {
   construction: [
-    { label: "Новая операция",   href: "/construction/operations" },
-    { label: "Новый договор",    href: "/construction/contracts-sales" },
-    { label: "Новый проект",     href: "/construction/projects" },
-    { label: "Согласование",     href: "/construction/planning/approvals" },
-    { label: "Новый контрагент", href: "/construction/counterparties" },
+    { label: "Новая операция",   href: "/construction/operations",       icon: ArrowRightLeft },
+    { label: "Новый договор",    href: "/construction/contracts-sales",  icon: FileText },
+    { label: "Новый проект",     href: "/construction/projects",         icon: Map },
+    { label: "Согласование",     href: "/construction/planning/approvals",icon: CheckSquare },
+    { label: "Новый контрагент", href: "/construction/counterparties",   icon: Users },
   ],
   rental: [
-    { label: "Новый платёж",   href: "/rental/payments" },
-    { label: "Новый договор",  href: "/rental/contracts" },
-    { label: "Новый арендатор",href: "/rental/tenants" },
-    { label: "Начисление",     href: "/rental/accruals" },
+    { label: "Новый платёж",    href: "/rental/payments",  icon: CreditCard },
+    { label: "Новый договор",   href: "/rental/contracts", icon: FileText },
+    { label: "Новый арендатор", href: "/rental/tenants",   icon: Users },
+    { label: "Начисление",      href: "/rental/accruals",  icon: ListOrdered },
   ],
   proptech: [
-    { label: "Новый лид",    href: "/crm/leads" },
-    { label: "Новый договор",href: "/sales/contracts" },
-    { label: "Новый клиент", href: "/crm/clients" },
+    { label: "Новый лид",    href: "/crm/leads",        icon: Target },
+    { label: "Новый договор",href: "/sales/contracts",  icon: FileText },
+    { label: "Новый клиент", href: "/crm/clients",      icon: Users },
   ],
   warehouse: [
-    { label: "Новый заказ",   href: "/warehouse/orders" },
-    { label: "Новая заявка",  href: "/warehouse/requests" },
-    { label: "Поставщик",     href: "/warehouse/suppliers" },
+    { label: "Новый заказ",  href: "/warehouse/orders",    icon: ClipboardList },
+    { label: "Новая заявка", href: "/warehouse/requests",  icon: Target },
+    { label: "Поставщик",    href: "/warehouse/suppliers", icon: Factory },
   ],
   consolidated: [
-    { label: "Новый объект",     href: "/properties" },
-    { label: "Новый контрагент", href: "/counterparties" },
-    { label: "Импорт данных",    href: "/import" },
+    { label: "Новый объект",     href: "/properties",    icon: Building2 },
+    { label: "Новый контрагент", href: "/counterparties",icon: Users },
+    { label: "Импорт данных",    href: "/import",        icon: Calculator },
   ],
 };
 
@@ -249,65 +260,279 @@ function detectModule(path: string): ModuleId {
   return "consolidated";
 }
 
-interface SectionGroupProps {
-  section: NavSection;
-  location: string;
-  defaultOpen?: boolean;
+// ─── Neumorphic Nav Item ────────────────────────────────────────────────────
+function NavItemTile({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link href={item.href}>
+      <motion.div
+        className="flex items-center gap-2.5 px-2.5 py-[7px] rounded-xl text-[12.5px] cursor-pointer select-none relative overflow-hidden"
+        style={active ? {
+          background: "rgba(255,255,255,0.12)",
+          boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.25), inset -1px -1px 3px rgba(255,255,255,0.06)",
+        } : {
+          background: "transparent",
+        }}
+        whileHover={{
+          background: "rgba(255,255,255,0.07)",
+          boxShadow: "inset 1px 1px 3px rgba(0,0,0,0.2), inset -1px -1px 2px rgba(255,255,255,0.04)",
+          transition: { duration: 0.15 },
+        }}
+        whileTap={{ scale: 0.97 }}
+      >
+        {active && (
+          <motion.div
+            layoutId="active-nav-pill"
+            className="absolute left-0 top-0 bottom-0 w-0.5 rounded-r-full"
+            style={{ background: "rgba(255,255,255,0.6)" }}
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+          />
+        )}
+        <Icon className={cn(
+          "w-3.5 h-3.5 flex-shrink-0 transition-colors",
+          active ? "text-white" : "text-white/35"
+        )} />
+        <span className={cn(
+          "truncate transition-colors",
+          active ? "text-white font-medium" : "text-white/55"
+        )}>{item.label}</span>
+      </motion.div>
+    </Link>
+  );
 }
 
-function SectionGroup({ section, location, defaultOpen }: SectionGroupProps) {
+// ─── Collapsible Section ────────────────────────────────────────────────────
+function SectionGroup({ section, location, defaultOpen }: {
+  section: NavSection; location: string; defaultOpen?: boolean
+}) {
   const isActive = section.items.some(i => location === i.href || location.startsWith(i.href + "/"));
   const [open, setOpen] = useState(isActive || !!defaultOpen);
 
   return (
-    <div className="mb-1">
-      <button
+    <div className="mb-0.5">
+      <motion.button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-semibold text-white/30 hover:text-white/50 uppercase tracking-wider transition-colors"
+        className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[10.5px] font-semibold text-white/25 hover:text-white/45 uppercase tracking-widest transition-colors"
+        whileTap={{ scale: 0.98 }}
       >
         {section.title}
-        {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-      </button>
-      {open && (
-        <div className="ml-1 space-y-0.5">
-          {section.items.map(item => {
-            const active = location === item.href || location.startsWith(item.href + "/");
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} href={item.href}>
-                <div className={cn(
-                  "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] cursor-pointer transition-all duration-150 group",
-                  active
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-white/60 hover:text-white hover:bg-white/8"
-                )}>
-                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", active ? "text-white" : "text-white/40 group-hover:text-white/70")} />
-                  <span className="truncate">{item.label}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+        <motion.div animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.18 }}>
+          <ChevronRight className="w-3 h-3" />
+        </motion.div>
+      </motion.button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="space-y-0.5 ml-0.5 pb-1">
+              {section.items.map(item => {
+                const active = location === item.href || location.startsWith(item.href + "/");
+                return <NavItemTile key={item.href} item={item} active={active} />;
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
+// ─── Module Switcher Tiles ──────────────────────────────────────────────────
+function ModuleTile({ m, active, onClick }: { m: Module; active: boolean; onClick: () => void }) {
+  const Icon = m.icon;
+  const dashHref = m.sections[0]?.items[0]?.href || "/dashboard";
+  return (
+    <Link href={dashHref}>
+      <motion.div
+        onClick={onClick}
+        className="flex items-center gap-3 px-4 py-3 cursor-pointer relative overflow-hidden"
+        style={active ? {
+          background: "rgba(255,255,255,0.08)",
+          boxShadow: "inset 1px 1px 4px rgba(0,0,0,0.2)",
+        } : {}}
+        whileHover={{
+          background: "rgba(255,255,255,0.05)",
+          transition: { duration: 0.12 },
+        }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
+          style={{ background: m.gradient }}
+        >
+          <Icon className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <div className={cn("text-sm font-medium leading-none", active ? "text-white" : "text-white/70")}>{m.shortLabel}</div>
+          <div className="text-[10px] text-white/30 mt-0.5 truncate max-w-[130px]">{m.label}</div>
+        </div>
+        {active && (
+          <motion.div
+            layoutId="module-active"
+            className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white/60"
+          />
+        )}
+      </motion.div>
+    </Link>
+  );
+}
+
+// ─── FAB Bloom Button ───────────────────────────────────────────────────────
+function FABBloom({ actions, moduleColor }: {
+  actions: { label: string; href: string; icon: React.ElementType }[];
+  moduleColor: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const angles = actions.map((_, i) => {
+    const spread = Math.min(160, actions.length * 32);
+    const start = 90 - spread / 2;
+    return start + (spread / Math.max(actions.length - 1, 1)) * i;
+  });
+
+  return (
+    <div className="relative flex flex-col items-center">
+      {/* Sub-buttons bloom upward */}
+      <AnimatePresence>
+        {open && actions.map((action, i) => {
+          const Icon = action.icon;
+          const delay = i * 0.04;
+          return (
+            <motion.div
+              key={action.href}
+              initial={{ opacity: 0, y: 0, scale: 0.5 }}
+              animate={{ opacity: 1, y: -(i + 1) * 46, scale: 1 }}
+              exit={{ opacity: 0, y: 0, scale: 0.5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 28, delay }}
+              className="absolute bottom-0 left-0 right-0 flex items-center justify-center"
+              style={{ pointerEvents: open ? "auto" : "none" }}
+            >
+              <Link href={action.href}>
+                <motion.div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-white text-[11px] font-medium cursor-pointer shadow-lg whitespace-nowrap"
+                  style={{ background: "rgba(30,35,60,0.95)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)" }}
+                  onClick={() => setOpen(false)}
+                  whileHover={{ scale: 1.04, background: "rgba(50,58,90,0.98)" }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <div className="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: moduleColor + "33" }}>
+                    <Icon className="w-3 h-3" style={{ color: moduleColor }} />
+                  </div>
+                  {action.label}
+                </motion.div>
+              </Link>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+
+      {/* Main FAB */}
+      <motion.button
+        onClick={() => setOpen(o => !o)}
+        className="relative z-10 w-full flex items-center justify-center gap-2 py-2 rounded-xl text-white text-[12px] font-semibold shadow-lg"
+        style={{
+          background: open
+            ? "rgba(255,255,255,0.1)"
+            : `linear-gradient(135deg, ${moduleColor}cc, ${moduleColor}88)`,
+          boxShadow: open
+            ? "inset 2px 2px 6px rgba(0,0,0,0.3)"
+            : `0 4px 15px ${moduleColor}44, 0 2px 4px rgba(0,0,0,0.2)`,
+          border: `1px solid ${open ? "rgba(255,255,255,0.1)" : moduleColor + "55"}`,
+        }}
+        whileTap={{ scale: 0.96 }}
+        animate={{ rotate: open ? 45 : 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <motion.div animate={{ rotate: open ? 45 : 0 }} transition={{ duration: 0.2 }}>
+          {open ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+        </motion.div>
+        {!open && <span>Создать</span>}
+      </motion.button>
+    </div>
+  );
+}
+
+// ─── 3D Flip User Card ──────────────────────────────────────────────────────
+function UserCard({ user, logout }: { user: any; logout: () => void }) {
+  const [flipped, setFlipped] = useState(false);
+  const initials = user?.firstName
+    ? user.firstName.slice(0, 2).toUpperCase()
+    : user?.email?.slice(0, 2).toUpperCase() || "АД";
+
+  return (
+    <div
+      className="relative cursor-pointer select-none"
+      style={{ perspective: 600, height: 52 }}
+      onClick={() => setFlipped(f => !f)}
+    >
+      <motion.div
+        className="relative w-full h-full"
+        style={{ transformStyle: "preserve-3d" }}
+        animate={{ rotateY: flipped ? 180 : 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+      >
+        {/* Front */}
+        <div
+          className="absolute inset-0 flex items-center gap-2.5 px-2 py-2 rounded-xl"
+          style={{ backfaceVisibility: "hidden",
+            background: "rgba(255,255,255,0.04)",
+            boxShadow: "inset 1px 1px 3px rgba(0,0,0,0.2)" }}
+        >
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[11px] flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #4F46E5, #7c3aed)" }}>
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-white text-[12px] font-medium truncate leading-none">{user?.firstName || "Администратор"}</div>
+            <div className="text-white/35 text-[10px] truncate mt-0.5">{user?.email || "admin@buildflow.kg"}</div>
+          </div>
+          <Settings className="w-3.5 h-3.5 text-white/20" />
+        </div>
+        {/* Back */}
+        <div
+          className="absolute inset-0 flex items-center justify-around px-3 rounded-xl"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)",
+            background: "rgba(255,255,255,0.07)",
+            boxShadow: "inset 1px 1px 3px rgba(0,0,0,0.25)" }}
+        >
+          <button
+            className="flex flex-col items-center gap-1 text-white/50 hover:text-white/80 transition-colors"
+            onClick={(e) => { e.stopPropagation(); }}
+          >
+            <Settings className="w-4 h-4" />
+            <span className="text-[9px]">Профиль</span>
+          </button>
+          <div className="w-px h-6 bg-white/10" />
+          <button
+            className="flex flex-col items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors"
+            onClick={(e) => { e.stopPropagation(); logout(); }}
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="text-[9px]">Выйти</span>
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Main Layout ─────────────────────────────────────────────────────────────
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [modulePickerOpen, setModulePickerOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
   const modulePickerRef = useRef<HTMLDivElement>(null);
-  const createRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (modulePickerRef.current && !modulePickerRef.current.contains(e.target as Node)) {
         setModulePickerOpen(false);
-      }
-      if (createRef.current && !createRef.current.contains(e.target as Node)) {
-        setCreateOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -319,31 +544,106 @@ export function Layout({ children }: { children: ReactNode }) {
   const ModuleIcon = activeModule.icon;
   const quickActions = MODULE_QUICK_ACTIONS[activeModuleId];
 
-  const initials = user?.firstName
-    ? user.firstName.slice(0, 2).toUpperCase()
-    : user?.email?.slice(0, 2).toUpperCase() || "АД";
-
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "#F7F8FC" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#F0F2F8" }}>
 
       {/* ───── SIDEBAR ───── */}
       <aside
-        className="w-[220px] flex-shrink-0 flex flex-col overflow-hidden relative z-20"
-        style={{ background: "linear-gradient(180deg, #0B1020 0%, #121A33 100%)" }}
+        className="w-[216px] flex-shrink-0 flex flex-col overflow-hidden relative z-20"
+        style={{
+          background: "linear-gradient(180deg, #0B0F1F 0%, #111827 60%, #0d1426 100%)",
+          boxShadow: "4px 0 24px rgba(0,0,0,0.35), inset -1px 0 0 rgba(255,255,255,0.04)",
+        }}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#4F46E5" }}>
-            <HardHat className="w-4 h-4 text-white" />
-          </div>
+        {/* Logo area */}
+        <div className="flex items-center gap-3 px-4 py-4 flex-shrink-0"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <motion.div
+            className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
+            style={{ background: activeModule.gradient }}
+            animate={{ background: activeModule.gradient }}
+            transition={{ duration: 0.4 }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <Sparkles className="w-4 h-4 text-white" />
+          </motion.div>
           <div>
-            <div className="text-white font-bold text-sm leading-none">BuildFlow</div>
-            <div className="text-white/40 text-[10px] mt-0.5">Платформа управления</div>
+            <div className="text-white font-bold text-[14px] leading-none tracking-tight">BuildFlow</div>
+            <div className="text-white/30 text-[10px] mt-0.5 tracking-wide">ERP Platform</div>
           </div>
         </div>
 
+        {/* Module Switcher */}
+        <div className="flex-shrink-0 px-3 py-2" ref={modulePickerRef}>
+          <motion.button
+            onClick={() => setModulePickerOpen(o => !o)}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium transition-all"
+            style={modulePickerOpen ? {
+              background: "rgba(255,255,255,0.06)",
+              boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.3)",
+            } : {
+              background: "rgba(255,255,255,0.04)",
+              boxShadow: "2px 2px 6px rgba(0,0,0,0.2), -1px -1px 3px rgba(255,255,255,0.03)",
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <motion.div
+              className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: activeModule.gradient }}
+              animate={{ background: activeModule.gradient }}
+              transition={{ duration: 0.3 }}
+            >
+              <ModuleIcon className="w-3.5 h-3.5 text-white" />
+            </motion.div>
+            <span className="text-white/80 flex-1 text-left truncate">{activeModule.shortLabel}</span>
+            <motion.div
+              animate={{ rotate: modulePickerOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronDown className="w-3.5 h-3.5 text-white/30" />
+            </motion.div>
+          </motion.button>
+
+          <AnimatePresence>
+            {modulePickerOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scaleY: 0.92 }}
+                animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                exit={{ opacity: 0, y: -8, scaleY: 0.92 }}
+                transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                style={{
+                  transformOrigin: "top",
+                  background: "rgba(10,14,30,0.97)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 14,
+                  marginTop: 6,
+                  overflow: "hidden",
+                  backdropFilter: "blur(12px)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                }}
+              >
+                {MODULES.map(m => (
+                  <ModuleTile
+                    key={m.id}
+                    m={m}
+                    active={m.id === activeModuleId}
+                    onClick={() => setModulePickerOpen(false)}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: "rgba(255,255,255,0.05)", margin: "0 12px 8px" }} />
+
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-2 scrollbar-thin" style={{ scrollbarColor: "#ffffff12 transparent" }}>
+        <nav
+          className="flex-1 overflow-y-auto px-2 space-y-0.5"
+          style={{ scrollbarWidth: "none" }}
+        >
           {activeModule.sections.map((section, i) => (
             <SectionGroup
               key={section.title}
@@ -352,38 +652,18 @@ export function Layout({ children }: { children: ReactNode }) {
               defaultOpen={i === 0}
             />
           ))}
+          <div className="h-4" />
         </nav>
 
-        {/* Quick create */}
-        <div className="px-3 pb-2 border-t border-white/10 pt-3">
-          <div className="flex items-center gap-1.5 px-2 mb-1.5">
-            <Zap className="w-3 h-3 text-white/30" />
-            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Быстрое создание</span>
-          </div>
-          {quickActions.map(qa => (
-            <Link key={qa.href} href={qa.href}>
-              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md text-white/50 hover:text-white hover:bg-white/8 text-[12px] cursor-pointer transition-all">
-                <Plus className="w-3 h-3 text-indigo-400 flex-shrink-0" />
-                {qa.label}
-              </div>
-            </Link>
-          ))}
+        {/* FAB Quick Create */}
+        <div className="px-3 pb-3 flex-shrink-0"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 12 }}>
+          <FABBloom actions={quickActions} moduleColor={activeModule.color} />
         </div>
 
-        {/* User */}
-        <div className="px-3 py-3 border-t border-white/10">
-          <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/8 transition-all cursor-pointer group">
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[11px] flex-shrink-0" style={{ background: "#4F46E5" }}>
-              {initials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-white text-[12px] font-medium truncate leading-none">{user?.firstName || "Администратор"}</div>
-              <div className="text-white/40 text-[10px] truncate mt-0.5">{user?.email || "admin@buildflow.kg"}</div>
-            </div>
-            <button onClick={logout} className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <LogOut className="w-3.5 h-3.5 text-white/40 hover:text-white/70" />
-            </button>
-          </div>
+        {/* User Card */}
+        <div className="px-3 pb-3 flex-shrink-0">
+          <UserCard user={user} logout={logout} />
         </div>
       </aside>
 
@@ -391,48 +671,37 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* ── TOP HEADER ── */}
-        <header className="h-14 bg-white border-b border-gray-100 flex items-center px-5 gap-3 flex-shrink-0 relative z-50 shadow-sm">
-
-          {/* Module switcher */}
-          <div className="relative" ref={modulePickerRef}>
-            <button
-              onClick={() => setModulePickerOpen(o => !o)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 text-sm font-medium text-gray-700 bg-white transition-all whitespace-nowrap"
-            >
-              <ModuleIcon className="w-4 h-4 flex-shrink-0" style={{ color: activeModule.color }} />
-              <span>{activeModule.shortLabel}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            </button>
-            {modulePickerOpen && (
-              <div className="absolute top-full left-0 mt-1 bg-white rounded-xl border border-gray-100 shadow-xl py-1 overflow-hidden" style={{ zIndex: 9999, minWidth: "210px" }}>
-                {MODULES.map(m => {
-                  const Icon = m.icon;
-                  const dashboardHref = m.sections[0]?.items[0]?.href || "/dashboard";
-                  return (
-                    <Link key={m.id} href={dashboardHref}>
-                      <div
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm cursor-pointer transition-colors whitespace-nowrap",
-                          m.id === activeModuleId ? "bg-indigo-50 text-indigo-700" : "hover:bg-gray-50 text-gray-700"
-                        )}
-                        onClick={() => setModulePickerOpen(false)}
-                      >
-                        <Icon className="w-4 h-4 flex-shrink-0" style={{ color: m.color }} />
-                        {m.label}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        <header
+          className="h-14 flex items-center px-5 gap-3 flex-shrink-0 relative z-50"
+          style={{
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(12px)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            boxShadow: "0 1px 12px rgba(0,0,0,0.06)",
+          }}
+        >
+          {/* Active module badge */}
+          <motion.div
+            key={activeModuleId}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap flex-shrink-0"
+            style={{
+              background: activeModule.color + "15",
+              color: activeModule.color,
+              border: `1px solid ${activeModule.color}25`,
+            }}
+          >
+            <ModuleIcon className="w-4 h-4" />
+            {activeModule.shortLabel}
+          </motion.div>
 
           {/* Search */}
           <div className="flex-1 max-w-lg relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              className="w-full pl-9 pr-14 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all text-gray-700 placeholder-gray-400"
+              className="w-full pl-9 pr-14 py-1.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all text-gray-700 placeholder-gray-400"
               placeholder="Поиск по проектам, контрагентам, договорам..."
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-mono">⌘К</span>
@@ -440,38 +709,12 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <div className="flex-1" />
 
-          {/* Create button */}
-          <div className="relative" ref={createRef}>
-            <button
-              onClick={() => setCreateOpen(o => !o)}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md whitespace-nowrap"
-              style={{ background: "#4F46E5" }}
-            >
-              <Plus className="w-4 h-4" />
-              Создать
-              <ChevronDown className="w-3.5 h-3.5 ml-0.5 opacity-70" />
-            </button>
-            {createOpen && (
-              <div className="absolute top-full right-0 mt-1 w-52 bg-white rounded-xl border border-gray-100 shadow-xl py-1" style={{ zIndex: 9999 }}>
-                {quickActions.map(qa => (
-                  <Link key={qa.href} href={qa.href}>
-                    <div className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setCreateOpen(false)}>
-                      {qa.label}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Notifications */}
           <NotificationsPanel />
-
           {/* Messages */}
           <ChatPanel />
 
-          {/* Divider */}
-          <div className="w-px h-6 bg-gray-100" />
+          <div className="w-px h-6 bg-gray-200" />
 
           {/* User profile */}
           <UserProfileDropdown />
@@ -479,9 +722,15 @@ export function Layout({ children }: { children: ReactNode }) {
 
         {/* ── CONTENT ── */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-6">
+          <motion.div
+            key={location}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="p-6"
+          >
             {children}
-          </div>
+          </motion.div>
         </main>
       </div>
 
