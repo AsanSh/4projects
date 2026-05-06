@@ -13,7 +13,6 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "@database_url",
     "NODE_ENV": "production",
     "ALLOWED_ORIGINS": "https://proptech-sigma-eight.vercel.app"
   }

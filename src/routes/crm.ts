@@ -12,7 +12,7 @@ import {
   activityLogTable,
   constructionUnitsTable,
   notificationsTable,
-} from "@workspace/db";
+} from "./lib/db";
 
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/auth";
 

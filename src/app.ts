@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { db } from "@workspace/db";
+import { db } from "./lib/db";
 import { generalLimiter, authLimiter, apiLimiter } from "./middleware/rate-limiter";
 import { xssProtection } from "./middleware/validation";
 

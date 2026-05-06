@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, and, SQL } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable } from "./lib/db";
 import { hashPassword, validatePassword } from "../lib/security";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/auth";
 

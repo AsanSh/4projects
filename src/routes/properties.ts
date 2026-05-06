@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, ilike, and, SQL } from "drizzle-orm";
-import { db, propertiesTable } from "@workspace/db";
+import { db, propertiesTable } from "./lib/db";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/auth";
 import { sanitizeLikePattern } from "../lib/security";
 

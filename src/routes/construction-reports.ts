@@ -8,7 +8,7 @@ import {
   constructionBudgetLineItemsTable,
   constructionUnitsTable,
   constructionExpensesTable,
-} from "@workspace/db";
+} from "./lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();

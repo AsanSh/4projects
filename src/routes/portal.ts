@@ -3,7 +3,7 @@ import { eq, and } from "drizzle-orm";
 import {
   db, usersTable, investorsTable, investmentsTable, distributionsTable,
   propertiesTable, tenantsTable, leaseContractsTable, paymentsTable, accrualsTable
-} from "@workspace/db";
+} from "./lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { hashPassword, validatePassword } from "../lib/security";
 

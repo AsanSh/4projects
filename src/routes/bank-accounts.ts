@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, and, SQL } from "drizzle-orm";
-import { db, bankAccountsTable } from "@workspace/db";
+import { db, bankAccountsTable } from "./lib/db";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();
