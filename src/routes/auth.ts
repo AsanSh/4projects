@@ -110,14 +110,14 @@ router.post("/auth/register", validateBody(registerSchema), async (req, res): Pr
     // Хешируем пароль с bcrypt
     const passwordHash = await hashPassword(password);
 
-    // Создаём admin пользователя организации
+    // Создаём company_admin пользователя (владелец организации)
     const [user] = await db.insert(usersTable).values({
       companyId: company.id,
       email,
       passwordHash,
       firstName,
       lastName,
-      role: "admin",
+      role: "company_admin",
       isActive: true,
     }).returning();
 

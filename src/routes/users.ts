@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { eq, and, SQL } from "drizzle-orm";
+import { eq, and, ne, SQL } from "drizzle-orm";
 import { db, usersTable } from "../lib/db";
 import { hashPassword, validatePassword } from "../lib/security";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();
 
-// GET /users — список сотрудников своей организации
+// GET /users — список сотрудников своей организации (без super_admin)
 router.get("/users", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [ne(usersTable.role, "super_admin")];
   if (req.companyId) conditions.push(eq(usersTable.companyId, req.companyId));
   const users = await db.select().from(usersTable)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(usersTable.createdAt);
   const safe = users.map(({ passwordHash: _ph, ...u }) => u);
   res.json(safe);
