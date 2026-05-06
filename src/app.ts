@@ -69,7 +69,8 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        logger.warn({ origin, allowedOrigins }, "CORS blocked request");
+        callback(new Error(`Доступ запрещен. Разрешенные домены: ${allowedOrigins.join(", ")}`));
       }
     },
     credentials: true,
@@ -85,10 +86,10 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(xssProtection);
 
 // Apply rate limiters
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/register", authLimiter);
-app.use("/api/", generalLimiter);
-app.use("/api/", apiLimiter);
+app.use("/auth/login", authLimiter);
+app.use("/auth/register", authLimiter);
+app.use("/", generalLimiter);
+app.use("/", apiLimiter);
 
 // Health check endpoint
 app.get("/health", async (_req, res) => {
@@ -111,7 +112,7 @@ app.get("/health", async (_req, res) => {
 });
 
 // Routes
-app.use("/api", router);
+app.use(router);
 
 // Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -120,11 +121,27 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     "Unhandled error"
   );
 
+  // Provide user-friendly error messages in Russian
+  let userMessage = "Внутренняя ошибка сервера";
+  let statusCode = 500;
+
+  if (err.message.includes("CORS") || err.message.includes("Доступ запрещен")) {
+    userMessage = err.message;
+    statusCode = 403;
+  } else if (err.message.includes("Not authenticated") || err.message.includes("Session expired")) {
+    userMessage = "Сессия истекла. Пожалуйста, войдите снова.";
+    statusCode = 401;
+  } else if (err.message.includes("Not found")) {
+    userMessage = "Запрошенный ресурс не найден";
+    statusCode = 404;
+  }
+
   if (process.env.NODE_ENV === "production") {
-    res.status(500).json({ error: "Internal server error" });
+    res.status(statusCode).json({ error: userMessage });
   } else {
-    res.status(500).json({
-      error: err.message,
+    res.status(statusCode).json({
+      error: userMessage,
+      details: err.message,
       stack: err.stack,
     });
   }
