@@ -8,7 +8,7 @@ import {
   warehouseOutgoingTable,
   warehouseInventoryTable,
   activityLogTable,
-} from "./lib/db";
+} from "../lib/db";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, usersTable, companiesTable, sessionsTable } from "./lib/db";
+import { db, usersTable, companiesTable, sessionsTable } from "../lib/db";
 import {
   hashPassword,
   verifyPassword,

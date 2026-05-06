@@ -3,7 +3,7 @@ import { eq, sql, and, inArray } from "drizzle-orm";
 import {
   db, propertiesTable, tenantsTable, leaseContractsTable, contractsTable,
   counterpartiesTable, accrualsTable, paymentsTable, activityLogTable
-} from "./lib/db";
+} from "../lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { cache, cacheKeys } from "../lib/cache";
 

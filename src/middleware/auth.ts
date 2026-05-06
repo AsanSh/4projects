@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, sessionsTable } from "./lib/db";
+import { db, usersTable, sessionsTable } from "../lib/db";
 
 export interface AuthenticatedRequest extends Request {
   userId?: number;

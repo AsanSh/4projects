@@ -13,7 +13,7 @@ import {
   constructionExpensesTable,
   constructionUnitsTable,
   currencyRatesTable,
-} from "./lib/db";
+} from "../lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { getPaginationParams, createPaginatedResponse, getPaginationQuery } from "../lib/pagination";
 import { validateQuery, commonSchemas } from "../middleware/validation";

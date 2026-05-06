@@ -7,7 +7,7 @@ import {
   constructionBudgetLineItemsTable,
   constructionExpensesTable,
   notificationsTable,
-} from "./lib/db";
+} from "../lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();
