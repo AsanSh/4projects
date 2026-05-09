@@ -6,17 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+import { api } from "@/lib/api";
 
 async function registerOrg(body: Record<string, string>) {
-  const res = await fetch(`${BASE}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Ошибка регистрации");
+  const { data } = await api.post("/auth/register", body);
   return data;
 }
 
@@ -62,10 +55,29 @@ export default function Register() {
       toast({ title: "Ошибка", description: "Введите имя и фамилию", variant: "destructive" });
       return;
     }
-    if (form.password.length < 6) {
-      toast({ title: "Ошибка", description: "Пароль должен быть не менее 6 символов", variant: "destructive" });
+
+    // Валидация пароля
+    if (form.password.length < 12) {
+      toast({ title: "Ошибка", description: "Пароль должен быть не менее 12 символов", variant: "destructive" });
       return;
     }
+    if (!/[A-Z]/.test(form.password)) {
+      toast({ title: "Ошибка", description: "Пароль должен содержать заглавную букву", variant: "destructive" });
+      return;
+    }
+    if (!/[a-z]/.test(form.password)) {
+      toast({ title: "Ошибка", description: "Пароль должен содержать строчную букву", variant: "destructive" });
+      return;
+    }
+    if (!/[0-9]/.test(form.password)) {
+      toast({ title: "Ошибка", description: "Пароль должен содержать цифру", variant: "destructive" });
+      return;
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password)) {
+      toast({ title: "Ошибка", description: "Пароль должен содержать спецсимвол", variant: "destructive" });
+      return;
+    }
+
     if (form.password !== form.confirmPassword) {
       toast({ title: "Ошибка", description: "Пароли не совпадают", variant: "destructive" });
       return;
@@ -73,6 +85,9 @@ export default function Register() {
 
     setLoading(true);
     try {
+      // First clear any existing token
+      localStorage.removeItem("auth_token");
+
       const data = await registerOrg({
         companyName: form.companyName,
         legalName: form.legalName,
@@ -84,11 +99,25 @@ export default function Register() {
         lastName: form.lastName,
         password: form.password,
       });
+
+      console.log("Registration successful:", data);
+
+      // Set new token
       login(data.token);
+
       toast({ title: "Регистрация завершена", description: `Добро пожаловать, ${form.firstName}!` });
-      setLocation("/dashboard");
+
+      // Navigate after a short delay to allow auth state to update
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 500);
     } catch (err: any) {
-      toast({ title: "Ошибка регистрации", description: err.message, variant: "destructive" });
+      console.error("Registration error details:", err);
+      toast({
+        title: "Ошибка регистрации",
+        description: err.message || "Неизвестная ошибка",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -102,7 +131,7 @@ export default function Register() {
         style={{ background: "linear-gradient(160deg, #1e3a5f 0%, #0d1f3c 100%)" }}
       >
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-blue-500 rounded-xl flex items-center justify-center">
+          <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center">
             <Building2 className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -154,7 +183,7 @@ export default function Register() {
           <div className="flex items-center gap-3 mb-6">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === "company" ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}>1</div>
             <div className="flex-1 h-px bg-gray-200" />
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === "admin" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400"}`}>2</div>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === "admin" ? "bg-blue-600 text-white" : "bg-gray-100 text-white"}`}>2</div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
@@ -286,10 +315,13 @@ export default function Register() {
                       type="password"
                       value={form.password}
                       onChange={set("password")}
-                      placeholder="Минимум 6 символов"
+                      placeholder="Минимум 12 символов"
                       required
                       className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Требования: 12+ символов, заглавная, строчная, цифра, спецсимвол
+                    </p>
                   </div>
 
                   <div>
@@ -317,7 +349,7 @@ export default function Register() {
 
             <p className="text-center text-sm text-gray-500 mt-5">
               Уже зарегистрированы?{" "}
-              <a href={`${BASE}/login`} className="text-blue-600 font-medium hover:underline">
+              <a href="/login" className="text-blue-600 font-medium hover:underline">
                 Войти в систему
               </a>
             </p>
@@ -327,3 +359,4 @@ export default function Register() {
     </div>
   );
 }
+

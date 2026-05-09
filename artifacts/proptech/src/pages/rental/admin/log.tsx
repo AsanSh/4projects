@@ -21,9 +21,9 @@ interface LogEntry {
 }
 
 const ACTION_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string; border: string }> = {
-  create:  { label: "Создание",       icon: Plus,       color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200" },
+  create:  { label: "Создание",       icon: Plus,       color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200" },
   update:  { label: "Изменение",      icon: Pencil,     color: "text-blue-700",   bg: "bg-blue-50",   border: "border-blue-200" },
-  delete:  { label: "Удаление",       icon: Trash2,     color: "text-red-700",    bg: "bg-red-50",    border: "border-red-200" },
+  delete:  { label: "Удаление",       icon: Trash2,     color: "text-rose-700",    bg: "bg-rose-50",    border: "border-rose-200" },
   restore: { label: "Восстановление", icon: RotateCcw,  color: "text-indigo-700", bg: "bg-indigo-50", border: "border-indigo-200" },
   other:   { label: "Действие",       icon: CheckCircle2,color: "text-gray-600",  bg: "bg-gray-50",   border: "border-gray-200" },
 };
@@ -61,7 +61,7 @@ function groupByDate(entries: LogEntry[]): { date: string; items: LogEntry[] }[]
 
 function SnapshotViewer({ snapshot }: { snapshot: string }) {
   let data: any = {};
-  try { data = JSON.parse(snapshot); } catch { return <p className="text-xs text-red-400">Не удалось прочитать данные</p>; }
+  try { data = JSON.parse(snapshot); } catch { return <p className="text-xs text-rose-600">Не удалось прочитать данные</p>; }
   return (
     <div className="mt-2 rounded-lg bg-gray-50 border border-gray-200 p-3 max-h-48 overflow-y-auto">
       <table className="w-full text-xs">
@@ -262,13 +262,13 @@ export default function RentalOperationsLog() {
             <div className="text-xs text-gray-500">Всего записей</div>
           </div>
         </div>
-        <div className="rounded-xl border border-red-100 bg-red-50 p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center">
-            <Trash2 className="w-4.5 h-4.5 text-red-500" />
+        <div className="rounded-xl border border-rose-100 bg-rose-50 p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-rose-100 flex items-center justify-center">
+            <Trash2 className="w-4.5 h-4.5 text-rose-600" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-red-700">{deleteCount}</div>
-            <div className="text-xs text-red-600">Удалений ({restorableCount} можно вернуть)</div>
+            <div className="text-2xl font-bold text-rose-700">{deleteCount}</div>
+            <div className="text-xs text-rose-600">Удалений ({restorableCount} можно вернуть)</div>
           </div>
         </div>
         <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 flex items-center gap-3">

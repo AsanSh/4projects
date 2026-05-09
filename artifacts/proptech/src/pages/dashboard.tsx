@@ -99,12 +99,18 @@ export default function Dashboard() {
   });
 
   // KPI calculations
-  const income = ops.filter((o: any) => o.type === "income").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
-  const expense = ops.filter((o: any) => o.type === "expense").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
+  const opsArray = Array.isArray(ops) ? ops : [];
+  const accountsArray = Array.isArray(accounts) ? accounts : [];
+  const accrualsArray = Array.isArray(accruals) ? accruals : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+  const projectsArray = Array.isArray(projects) ? projects : [];
+
+  const income = opsArray.filter((o: any) => o.type === "income").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
+  const expense = opsArray.filter((o: any) => o.type === "expense").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
   const netProfit = income - expense;
   const margin = income > 0 ? (netProfit / income * 100) : 0;
-  const cashBalance = accounts.filter((a: any) => a.currency === "KGS").reduce((s: number, a: any) => s + parseFloat(a.currentBalance || "0"), 0);
-  const overdueAccruals = accruals.filter((a: any) => a.status !== "paid" && new Date(a.dueDate) < new Date());
+  const cashBalance = accountsArray.filter((a: any) => a.currency === "KGS").reduce((s: number, a: any) => s + parseFloat(a.currentBalance || "0"), 0);
+  const overdueAccruals = accrualsArray.filter((a: any) => a.status !== "paid" && new Date(a.dueDate) < new Date());
   const overdueDebt = overdueAccruals.reduce((s: number, a: any) => s + parseFloat(a.remainingAmount || "0"), 0);
   const overdueCount = overdueAccruals.length;
 
@@ -116,14 +122,14 @@ export default function Dashboard() {
   });
   const monthlyData = last6.map(m => ({
     m,
-    inc: ops.filter((o: any) => o.type === "income" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0),
-    exp: ops.filter((o: any) => o.type === "expense" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0),
+    inc: opsArray.filter((o: any) => o.type === "income" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0),
+    exp: opsArray.filter((o: any) => o.type === "expense" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0),
   }));
   const maxMonth = Math.max(...monthlyData.map(d => Math.max(d.inc, d.exp)), 1);
 
   // Expense by category
   const expByCat: Record<string, number> = {};
-  ops.filter((o: any) => o.type === "expense").forEach((o: any) => {
+  opsArray.filter((o: any) => o.type === "expense").forEach((o: any) => {
     const cat = o.category || "Прочее";
     expByCat[cat] = (expByCat[cat] || 0) + parseFloat(o.amountKgs || "0");
   });
@@ -132,12 +138,12 @@ export default function Dashboard() {
   // Top projects
   const projectIncome: Record<number, number> = {};
   const projectExpense: Record<number, number> = {};
-  ops.forEach((o: any) => {
+  opsArray.forEach((o: any) => {
     if (!o.projectId) return;
     if (o.type === "income") projectIncome[o.projectId] = (projectIncome[o.projectId] || 0) + parseFloat(o.amountKgs || "0");
     if (o.type === "expense") projectExpense[o.projectId] = (projectExpense[o.projectId] || 0) + parseFloat(o.amountKgs || "0");
   });
-  const topProjects = projects
+  const topProjects = projectsArray
     .map((p: any) => {
       const inc = projectIncome[p.id] || 0;
       const exp = projectExpense[p.id] || 0;
@@ -147,17 +153,17 @@ export default function Dashboard() {
     .slice(0, 3);
 
   // Upcoming accruals (next 30 days)
-  const upcomingAccruals = accruals.filter((a: any) => {
+  const upcomingAccruals = accrualsArray.filter((a: any) => {
     if (a.status === "paid") return false;
     const d = new Date(a.dueDate);
     return d >= now && d <= new Date(now.getTime() + 30 * 86400000);
   }).slice(0, 3);
 
   // Recent ops
-  const recentOps = [...ops].sort((a: any, b: any) => (b.date || "").localeCompare(a.date || "")).slice(0, 5);
+  const recentOps = [...opsArray].sort((a: any, b: any) => (b.date || "").localeCompare(a.date || "")).slice(0, 5);
 
   // Cost per sqm (mock calculation)
-  const totalSqm = contracts.reduce((s: number, c: any) => s + parseFloat(c.squareMeters || "0"), 0);
+  const totalSqm = contractsArray.reduce((s: number, c: any) => s + parseFloat(c.squareMeters || "0"), 0);
   const costPerSqm = totalSqm > 0 && expense > 0 ? expense / totalSqm : 0;
 
   // Today string
@@ -214,7 +220,7 @@ export default function Dashboard() {
                 <div className="text-[18px] font-bold text-gray-900 leading-tight tabular-nums">{c.value}</div>
                 {c.currency && <div className="text-[10px] text-gray-400 mt-0.5">{c.currency}</div>}
                 {c.delta && (
-                  <div className={`text-[10px] mt-1 font-medium ${c.up ? "text-emerald-500" : "text-red-500"}`}>
+                  <div className={`text-[10px] mt-1 font-medium ${c.up ? "text-emerald-500" : "text-rose-600"}`}>
                     {c.delta} <span className="text-gray-400 font-normal">vs прошлый мес.</span>
                   </div>
                 )}
@@ -231,7 +237,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <div className="font-semibold text-gray-800 text-sm">Динамика доходов и расходов</div>
               <div className="flex items-center gap-4 text-xs text-gray-500">
-                <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-blue-500 rounded" />Доходы</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-blue-600 rounded" />Доходы</div>
                 <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-red-400 rounded" />Расходы</div>
                 <button className="flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1 hover:border-gray-300">По месяцам <ChevronDown className="w-3 h-3" /></button>
               </div>
@@ -343,13 +349,13 @@ export default function Dashboard() {
             { label: "Себестоимость проекта", value: fmt(expense), sub: "KGS всего", delta: expense > 0 ? "-1.3%" : "" },
             { label: "Отклонение от бюджета", value: fmt(netProfit), sub: "KGS", delta: netProfit < 0 ? "-6.2%" : "+0%", neg: netProfit < 0 },
             { label: "Самый доходный клиент", value: contracts[0]?.buyerName?.split(" ")[0] || "—", sub: contracts[0] ? fmt(contracts[0].paidAmount) + " KGS" : "" },
-            { label: "Топ контрагент по расходам", value: ops.filter((o: any) => o.type === "expense")[0]?.description?.split(" ").slice(0, 2).join(" ") || "—", sub: "" },
+            { label: "Топ контрагент по расходам", value: opsArray.filter((o: any) => o.type === "expense")[0]?.description?.split(" ").slice(0, 2).join(" ") || "—", sub: "" },
           ].map(c => (
             <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow">
               <div className="text-[10px] text-gray-400 font-medium mb-1.5 leading-tight">{c.label}</div>
               <div className="text-base font-bold text-gray-900 truncate">{c.value}</div>
               {c.sub && <div className="text-[10px] text-gray-400 mt-0.5 truncate">{c.sub}</div>}
-              {c.delta && <div className={`text-[10px] mt-1 font-medium ${(c as any).neg ? "text-red-500" : "text-emerald-500"}`}>{c.delta}</div>}
+              {c.delta && <div className={`text-[10px] mt-1 font-medium ${(c as any).neg ? "text-rose-600" : "text-emerald-500"}`}>{c.delta}</div>}
             </div>
           ))}
         </div>
@@ -363,7 +369,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm text-gray-800">Просрочки платежей</span>
                 {overdueAccruals.length > 0 && (
-                  <span className="w-5 h-5 bg-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center rounded-full">{Math.min(9, overdueAccruals.length)}</span>
+                  <span className="w-5 h-5 bg-rose-100 text-rose-600 text-[10px] font-bold flex items-center justify-center rounded-full">{Math.min(9, overdueAccruals.length)}</span>
                 )}
               </div>
               <Link href="/construction/planning/overdue">
@@ -384,13 +390,13 @@ export default function Dashboard() {
                 <tbody>
                   {overdueAccruals.slice(0, 3).map((a: any) => {
                     const days = Math.ceil((now.getTime() - new Date(a.dueDate).getTime()) / 86400000);
-                    const contract = contracts.find((c: any) => c.id === a.contractId);
+                    const contract = contractsArray.find((c: any) => c.id === a.contractId);
                     return (
-                      <tr key={a.id} className="border-b border-gray-50 hover:bg-red-50/30 transition-colors">
+                      <tr key={a.id} className="border-b border-gray-50 hover:bg-rose-50/30 transition-colors">
                         <td className="px-4 py-2.5 text-xs font-medium text-gray-700 truncate max-w-[100px]">{contract?.buyerName || "—"}</td>
-                        <td className="px-4 py-2.5 text-xs text-right font-mono text-red-600">{fmt(a.remainingAmount)}</td>
+                        <td className="px-4 py-2.5 text-xs text-right font-mono text-rose-600">{fmt(a.remainingAmount)}</td>
                         <td className="px-4 py-2.5 text-right">
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${days > 30 ? "bg-red-100 text-red-600" : "bg-yellow-100 text-yellow-700"}`}>{days}</span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${days > 30 ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-700"}`}>{days}</span>
                         </td>
                       </tr>
                     );
@@ -426,7 +432,7 @@ export default function Dashboard() {
                 </tr></thead>
                 <tbody>
                   {upcomingAccruals.map((a: any) => {
-                    const contract = contracts.find((c: any) => c.id === a.contractId);
+                    const contract = contractsArray.find((c: any) => c.id === a.contractId);
                     return (
                       <tr key={a.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
                         <td className="px-4 py-2.5 text-xs font-medium text-gray-700 truncate max-w-[100px]">{contract?.buyerName || "—"}</td>
@@ -484,7 +490,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <CheckSquare className="w-4 h-4 text-indigo-500" />
               <span className="font-semibold text-sm text-gray-800">Мои задачи</span>
-              <span className="w-5 h-5 bg-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center rounded-full">
+              <span className="w-5 h-5 bg-rose-100 text-rose-600 text-[10px] font-bold flex items-center justify-center rounded-full">
                 {tasks.filter(t => !t.done).length}
               </span>
             </div>
@@ -521,7 +527,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-indigo-500" />
               <span className="font-semibold text-sm text-gray-800">Уведомления</span>
-              <span className="w-5 h-5 bg-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center rounded-full">
+              <span className="w-5 h-5 bg-rose-100 text-rose-600 text-[10px] font-bold flex items-center justify-center rounded-full">
                 {MOCK_NOTIFICATIONS.length}
               </span>
             </div>

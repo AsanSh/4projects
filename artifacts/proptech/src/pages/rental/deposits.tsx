@@ -3,7 +3,7 @@ import {
   useListDeposits,
   useListLeaseContracts,
   getListDepositsQueryKey,
-} from "@workspace/api-client-react";
+} from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
@@ -19,9 +19,9 @@ import { api } from "@/lib/api";
 
 const statusColors: Record<string, string> = {
   held: "bg-blue-100 text-blue-800",
-  partially_returned: "bg-yellow-100 text-yellow-800",
-  returned: "bg-green-100 text-green-800",
-  forfeited: "bg-red-100 text-red-800",
+  partially_returned: "bg-amber-100 text-amber-800",
+  returned: "bg-emerald-100 text-emerald-800",
+  forfeited: "bg-rose-100 text-rose-800",
 };
 
 const statusLabels: Record<string, string> = {
@@ -50,6 +50,7 @@ function DepositDialog({ open, onClose }: DepositDialogProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: leases } = useListLeaseContracts();
+  const leasesArray = Array.isArray(leases) ? leases : [];
   const [loading, setLoading] = useState(false);
 
   const { data: accounts = [] } = useQuery<any[]>({
@@ -102,7 +103,7 @@ function DepositDialog({ open, onClose }: DepositDialogProps) {
                 <SelectValue placeholder="Выберите договор" />
               </SelectTrigger>
               <SelectContent>
-                {(leases || []).map((l) => (
+                {leasesArray.map((l) => (
                   <SelectItem key={l.id} value={String(l.id)}>
                     {l.contractNumber} — {l.tenantName || `#${l.tenantId}`}
                   </SelectItem>
@@ -174,6 +175,7 @@ function DepositDialog({ open, onClose }: DepositDialogProps) {
 
 export default function Deposits() {
   const { data: deposits, isLoading } = useListDeposits();
+  const depositsArray = Array.isArray(deposits) ? deposits : [];
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
@@ -209,14 +211,14 @@ export default function Deposits() {
                   ))}
                 </TableRow>
               ))
-            ) : !deposits?.length ? (
+            ) : !depositsArray.length ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Депозиты не найдены
                 </TableCell>
               </TableRow>
             ) : (
-              deposits.map((deposit) => (
+              depositsArray.map((deposit) => (
                 <TableRow key={deposit.id}>
                   <TableCell>Договор #{deposit.leaseContractId}</TableCell>
                   <TableCell>{formatDate(deposit.receivedDate)}</TableCell>
@@ -240,3 +242,4 @@ export default function Deposits() {
     </div>
   );
 }
+

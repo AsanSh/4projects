@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { eq, and, SQL } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
-import { hashPassword } from "./auth";
+import { eq, and, ne, SQL } from "drizzle-orm";
+import { db, usersTable } from "../lib/db";
+import { hashPassword, validatePassword } from "../lib/security";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();
 
-// GET /users — список сотрудников своей организации
+// GET /users — список сотрудников своей организации (без super_admin)
 router.get("/users", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [ne(usersTable.role, "super_admin")];
   if (req.companyId) conditions.push(eq(usersTable.companyId, req.companyId));
   const users = await db.select().from(usersTable)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(usersTable.createdAt);
   const safe = users.map(({ passwordHash: _ph, ...u }) => u);
   res.json(safe);
@@ -24,8 +24,9 @@ router.post("/users", requireAuth, requireRole("admin"), async (req: Authenticat
     res.status(400).json({ error: "Заполните все обязательные поля" });
     return;
   }
-  if (password.length < 6) {
-    res.status(400).json({ error: "Пароль должен быть не менее 6 символов" });
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    res.status(400).json({ error: passwordValidation.error });
     return;
   }
 
@@ -37,7 +38,7 @@ router.post("/users", requireAuth, requireRole("admin"), async (req: Authenticat
 
   const [user] = await db.insert(usersTable).values({
     email,
-    passwordHash: hashPassword(password),
+    passwordHash: await hashPassword(password),
     firstName,
     lastName,
     role,
@@ -77,14 +78,21 @@ router.patch("/users/:id", requireAuth, requireRole("admin"), async (req: Authen
 router.patch("/users/:id/password", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const { password } = req.body;
-  if (!password || password.length < 6) {
-    res.status(400).json({ error: "Пароль должен быть не менее 6 символов" });
+  if (!password) {
+    res.status(400).json({ error: "Пароль обязателен" });
     return;
   }
+
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    res.status(400).json({ error: passwordValidation.error });
+    return;
+  }
+
   const conditions: SQL[] = [eq(usersTable.id, id)];
   if (req.companyId) conditions.push(eq(usersTable.companyId, req.companyId));
   const [user] = await db.update(usersTable)
-    .set({ passwordHash: hashPassword(password) })
+    .set({ passwordHash: await hashPassword(password) })
     .where(and(...conditions)).returning();
   if (!user) { res.status(404).json({ error: "Not found" }); return; }
   res.json({ success: true });

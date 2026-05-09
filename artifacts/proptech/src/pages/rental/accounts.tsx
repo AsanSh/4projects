@@ -16,7 +16,7 @@ const typeLabels: Record<string, string> = {
   bank: "Банковский счёт", cash: "Касса", card: "Карта",
 };
 const typeColors: Record<string, string> = {
-  bank: "bg-blue-100 text-blue-800", cash: "bg-green-100 text-green-800", card: "bg-purple-100 text-purple-800",
+  bank: "bg-blue-100 text-blue-800", cash: "bg-emerald-100 text-emerald-800", card: "bg-blue-100 text-indigo-800",
 };
 const typeIcons: Record<string, JSX.Element> = {
   bank: <Building2 className="w-4 h-4" />, cash: <Wallet className="w-4 h-4" />, card: <CreditCard className="w-4 h-4" />,
@@ -182,7 +182,7 @@ export default function RentalAccounts() {
         </div>
         <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Суммарный баланс (KGS)</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">{fmt(totalBalance, "KGS")}</p>
+          <p className="text-2xl font-bold text-emerald-600 mt-1">{fmt(totalBalance, "KGS")}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Активных счетов</p>
@@ -243,7 +243,7 @@ export default function RentalAccounts() {
                     ) : <span className="text-gray-600">{acc.currency}</span>}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
-                    <span className={parseFloat(acc.currentBalance || "0") >= 0 ? "text-green-600" : "text-red-600"}>
+                    <span className={parseFloat(acc.currentBalance || "0") >= 0 ? "text-emerald-600" : "text-rose-600"}>
                       {fmt(acc.currentBalance, acc.currency)}
                     </span>
                   </TableCell>
@@ -254,7 +254,7 @@ export default function RentalAccounts() {
                       </Button>
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
                         disabled={deleting === acc.id} onClick={() => handleDelete(acc.id)}>
-                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                        <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                       </Button>
                     </div>
                   </TableCell>
@@ -446,3 +446,4 @@ export default function RentalAccounts() {
     </div>
   );
 }
+

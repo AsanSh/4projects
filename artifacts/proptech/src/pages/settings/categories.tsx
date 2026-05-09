@@ -155,12 +155,12 @@ function CategoryRow({ cat, children, onEdit, onDelete, onAddChild, level = 0 }:
           <button onClick={() => onEdit(cat)} className="p-1 hover:bg-gray-200 rounded-md">
             <Pencil className="w-3.5 h-3.5 text-gray-500" />
           </button>
-          <button onClick={() => onDelete(cat)} className="p-1 hover:bg-red-100 rounded-md">
-            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+          <button onClick={() => onDelete(cat)} className="p-1 hover:bg-rose-100 rounded-md">
+            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
           </button>
         </div>
         <Badge variant="outline"
-          className={`text-[10px] flex-shrink-0 ${cat.type === "income" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}>
+          className={`text-[10px] flex-shrink-0 ${cat.type === "income" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-rose-100 text-rose-700 border-rose-200"}`}>
           {cat.type === "income" ? "Доход" : "Расход"}
         </Badge>
       </div>
@@ -239,11 +239,11 @@ export default function SettingsCategories() {
         </div>
         <div className="flex gap-2">
           <Button onClick={() => openNew("income")} size="sm" variant="outline"
-            className="text-green-700 border-green-200 hover:bg-green-50 gap-1.5">
+            className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 gap-1.5">
             <TrendingUp className="w-4 h-4" /> Добавить доход
           </Button>
           <Button onClick={() => openNew("expense")} size="sm"
-            className="bg-blue-600 hover:bg-blue-700 gap-1.5">
+            className="bg-emerald-600 hover:bg-emerald-700 gap-1.5">
             <TrendingDown className="w-4 h-4" /> Добавить расход
           </Button>
         </div>
@@ -276,14 +276,14 @@ export default function SettingsCategories() {
           {/* Income section */}
           {(filterType === "all" || filterType === "income") && (
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 bg-green-50 border-b border-green-100">
+              <div className="flex items-center justify-between px-4 py-3 bg-emerald-50 border-b border-emerald-100">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-semibold text-green-800">Статьи доходов</span>
-                  <span className="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full">{incomeRoots.length}</span>
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm font-semibold text-emerald-800">Статьи доходов</span>
+                  <span className="text-xs bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full">{incomeRoots.length}</span>
                 </div>
                 <Button size="sm" variant="ghost" onClick={() => openNew("income")}
-                  className="text-green-700 hover:bg-green-100 h-7 text-xs gap-1">
+                  className="text-emerald-700 hover:bg-emerald-100 h-7 text-xs gap-1">
                   <Plus className="w-3.5 h-3.5" /> Добавить
                 </Button>
               </div>
@@ -305,14 +305,14 @@ export default function SettingsCategories() {
           {/* Expense section */}
           {(filterType === "all" || filterType === "expense") && (
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 bg-red-50 border-b border-red-100">
+              <div className="flex items-center justify-between px-4 py-3 bg-rose-50 border-b border-rose-100">
                 <div className="flex items-center gap-2">
-                  <TrendingDown className="w-4 h-4 text-red-500" />
-                  <span className="text-sm font-semibold text-red-800">Статьи расходов</span>
-                  <span className="text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded-full">{expenseRoots.length}</span>
+                  <TrendingDown className="w-4 h-4 text-rose-600" />
+                  <span className="text-sm font-semibold text-rose-800">Статьи расходов</span>
+                  <span className="text-xs bg-rose-200 text-rose-800 px-2 py-0.5 rounded-full">{expenseRoots.length}</span>
                 </div>
                 <Button size="sm" variant="ghost" onClick={() => openNew("expense")}
-                  className="text-red-600 hover:bg-red-100 h-7 text-xs gap-1">
+                  className="text-rose-600 hover:bg-rose-100 h-7 text-xs gap-1">
                   <Plus className="w-3.5 h-3.5" /> Добавить
                 </Button>
               </div>

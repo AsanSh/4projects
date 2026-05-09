@@ -26,35 +26,40 @@ export default function RentalSummary() {
     queryFn: () => api.get("/rental/tenants").then(r => r.data),
   });
 
-  const total = properties.length;
-  const rented = properties.filter((p: any) => p.rentalStatus === "rented").length;
-  const vacant = properties.filter((p: any) => p.rentalStatus === "vacant").length;
+  const propertiesArray = Array.isArray(properties) ? properties : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+  const paymentsArray = Array.isArray(payments) ? payments : [];
+  const tenantsArray = Array.isArray(tenants) ? tenants : [];
+
+  const total = propertiesArray.length;
+  const rented = propertiesArray.filter((p: any) => p.rentalStatus === "rented").length;
+  const vacant = propertiesArray.filter((p: any) => p.rentalStatus === "vacant").length;
   const occupancy = total > 0 ? Math.round((rented / total) * 100) : 0;
 
-  const activeContracts = contracts.filter((c: any) => c.status === "active");
+  const activeContracts = contractsArray.filter((c: any) => c.status === "active");
 
   const curYear = new Date().getFullYear().toString();
   const curMonth = new Date().getMonth() + 1;
 
-  const thisMonthPayments = payments.filter((p: any) => {
+  const thisMonthPayments = paymentsArray.filter((p: any) => {
     const d = p.paymentDate || "";
     return d.startsWith(curYear) && parseInt(d.slice(5, 7)) === curMonth;
   });
-  const thisMonthIncome = thisMonthPayments.reduce((s: number, p: any) => s + parseFloat(p.amount || "0"), 0);
+  const thisMonthIncome = thisMonthPayments.reduce((s: number, p: any) => s + (parseFloat(p.amount || "0") || 0), 0);
 
-  const yearPayments = payments.filter((p: any) => (p.paymentDate || "").startsWith(curYear));
-  const yearIncome = yearPayments.reduce((s: number, p: any) => s + parseFloat(p.amount || "0"), 0);
+  const yearPayments = paymentsArray.filter((p: any) => (p.paymentDate || "").startsWith(curYear));
+  const yearIncome = yearPayments.reduce((s: number, p: any) => s + (parseFloat(p.amount || "0") || 0), 0);
 
   const avgRent = activeContracts.length > 0
-    ? activeContracts.reduce((s: number, c: any) => s + parseFloat(c.rentAmount || "0"), 0) / activeContracts.length
+    ? activeContracts.reduce((s: number, c: any) => s + (parseFloat(c.rentAmount || "0") || 0), 0) / activeContracts.length
     : 0;
 
   // Top properties by revenue
   const propRevenue: Record<number, { address: string; total: number }> = {};
-  payments.forEach((p: any) => {
-    const contract = contracts.find((c: any) => c.id === p.leaseContractId);
+  paymentsArray.forEach((p: any) => {
+    const contract = contractsArray.find((c: any) => c.id === p.leaseContractId);
     if (!contract) return;
-    const prop = properties.find((pr: any) => pr.id === contract.propertyId);
+    const prop = propertiesArray.find((pr: any) => pr.id === contract.propertyId);
     if (!prop) return;
     if (!propRevenue[prop.id]) propRevenue[prop.id] = { address: prop.address, total: 0 };
     propRevenue[prop.id].total += parseFloat(p.amount || "0");
@@ -71,7 +76,7 @@ export default function RentalSummary() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Home className="w-4 h-4 text-blue-500" />
+            <Home className="w-4 h-4 text-blue-600" />
             <span className="text-xs text-gray-500">Всего объектов</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{total}</p>
@@ -79,27 +84,27 @@ export default function RentalSummary() {
         </div>
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Percent className="w-4 h-4 text-green-500" />
+            <Percent className="w-4 h-4 text-emerald-600" />
             <span className="text-xs text-gray-500">Заполняемость</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{occupancy}%</p>
           <div className="mt-2 bg-gray-100 rounded-full h-1.5">
-            <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${occupancy}%` }} />
+            <div className="bg-emerald-700 h-1.5 rounded-full" style={{ width: `${occupancy}%` }} />
           </div>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-purple-500" />
+            <TrendingUp className="w-4 h-4 text-blue-600" />
             <span className="text-xs text-gray-500">Доход в этом месяце</span>
           </div>
-          <p className="text-2xl font-bold text-purple-600">{fmtFull(thisMonthIncome)}</p>
+          <p className="text-2xl font-bold text-blue-600">{fmtFull(thisMonthIncome)}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Users className="w-4 h-4 text-orange-500" />
+            <Users className="w-4 h-4 text-amber-600" />
             <span className="text-xs text-gray-500">Арендаторов</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{tenants.length}</p>
+          <p className="text-2xl font-bold text-gray-900">{tenantsArray.length}</p>
           <p className="text-xs text-gray-400 mt-0.5">{activeContracts.length} активных дог.</p>
         </div>
       </div>
@@ -111,8 +116,8 @@ export default function RentalSummary() {
             {[
               { label: "Доход за год", val: fmtFull(yearIncome), color: "text-blue-600" },
               { label: "Средняя аренда", val: fmtFull(avgRent) + "/мес", color: "text-gray-900" },
-              { label: "Активных договоров", val: String(activeContracts.length), color: "text-green-600" },
-              { label: "Всего арендаторов", val: String(tenants.length), color: "text-gray-900" },
+              { label: "Активных договоров", val: String(activeContracts.length), color: "text-emerald-600" },
+              { label: "Всего арендаторов", val: String(tenantsArray.length), color: "text-gray-900" },
             ].map(({ label, val, color }) => (
               <div key={label} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                 <span className="text-sm text-gray-500">{label}</span>
@@ -135,7 +140,7 @@ export default function RentalSummary() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 truncate">{p.address}</p>
                     <div className="mt-1 bg-gray-100 rounded-full h-1">
-                      <div className="bg-blue-400 h-1 rounded-full"
+                      <div className="bg-blue-600 h-1 rounded-full"
                         style={{ width: `${Math.round((p.total / (topProps[0]?.total || 1)) * 100)}%` }} />
                     </div>
                   </div>
@@ -151,9 +156,9 @@ export default function RentalSummary() {
         <h3 className="font-semibold text-gray-800 mb-4">Статусы объектов</h3>
         <div className="flex gap-3 flex-wrap">
           {[
-            { label: "Арендуется", count: rented, color: "bg-green-100 text-green-800" },
+            { label: "Арендуется", count: rented, color: "bg-emerald-100 text-emerald-800" },
             { label: "Свободно", count: vacant, color: "bg-gray-100 text-gray-700" },
-            { label: "На обслуживании", count: properties.filter((p: any) => p.rentalStatus === "maintenance").length, color: "bg-orange-100 text-orange-800" },
+            { label: "На обслуживании", count: propertiesArray.filter((p: any) => p.rentalStatus === "maintenance").length, color: "bg-amber-100 text-amber-800" },
           ].map(({ label, count, color }) => (
             <div key={label} className={`px-4 py-2 rounded-lg ${color} text-sm`}>
               <span className="font-semibold">{count}</span> {label}

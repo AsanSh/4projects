@@ -30,11 +30,11 @@ const STATUS_ICONS: Record<string, React.ElementType> = {
   todo: Circle, in_progress: Clock, review: AlertCircle, done: CheckCircle2,
 };
 const STATUS_COLORS: Record<string, string> = {
-  todo: "text-gray-400", in_progress: "text-blue-500", review: "text-yellow-500", done: "text-green-500",
+  todo: "text-gray-400", in_progress: "text-blue-500", review: "text-amber-600", done: "text-emerald-600",
 };
 const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-gray-100 text-gray-600", medium: "bg-blue-100 text-blue-700",
-  high: "bg-orange-100 text-orange-700", critical: "bg-red-100 text-red-700",
+  low: "bg-gray-100 text-white", medium: "bg-blue-100 text-blue-700",
+  high: "bg-amber-100 text-amber-700", critical: "bg-rose-100 text-rose-700",
 };
 
 interface Task {
@@ -62,7 +62,7 @@ function TaskDialog({ task, projects, onClose, onSaved }: { task: Task | null | 
     if (!form.title || !form.projectId) { toast({ title: "Заполните обязательные поля", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/construction/tasks/${init!.id}` : `${BASE}/api/construction/tasks`;
+      const url = isEdit ? `${BASE}/construction/tasks/${init!.id}` : `${BASE}/construction/tasks`;
       await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: ah(), body: JSON.stringify({ ...form, projectId: parseInt(form.projectId) }) });
       toast({ title: isEdit ? "Задача обновлена" : "Задача добавлена" });
       onSaved(); onClose();
@@ -104,7 +104,7 @@ function TaskDialog({ task, projects, onClose, onSaved }: { task: Task | null | 
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -126,13 +126,13 @@ export default function ConstructionTasks() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить задачу?")) return;
-    await fetch(`${BASE}/api/construction/tasks/${id}`, { method: "DELETE", headers: ah() });
+    await fetch(`${BASE}/construction/tasks/${id}`, { method: "DELETE", headers: ah() });
     toast({ title: "Удалено" });
     qc.invalidateQueries({ queryKey: ["construction-tasks"] });
   };
 
   const quickStatus = async (task: Task, status: string) => {
-    await fetch(`${BASE}/api/construction/tasks/${task.id}`, { method: "PATCH", headers: ah(), body: JSON.stringify({ ...task, status }) });
+    await fetch(`${BASE}/construction/tasks/${task.id}`, { method: "PATCH", headers: ah(), body: JSON.stringify({ ...task, status }) });
     qc.invalidateQueries({ queryKey: ["construction-tasks"] });
   };
 
@@ -147,17 +147,17 @@ export default function ConstructionTasks() {
           <h1 className="text-2xl font-bold text-gray-900">Задачи</h1>
           <p className="text-sm text-gray-500 mt-0.5">{tasks.length} задач · {tasks.filter(t => t.status === "done").length} выполнено</p>
         </div>
-        <Button onClick={() => setDialog("new")} className="bg-orange-500 hover:bg-orange-600 gap-2">
+        <Button onClick={() => setDialog("new")} className="bg-amber-500 hover:bg-orange-600 gap-2">
           <Plus className="w-4 h-4" /> Добавить задачу
         </Button>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>
           Все
         </button>
         {projects.map(p => (
-          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>
             {p.name}
           </button>
         ))}
@@ -176,10 +176,10 @@ export default function ConstructionTasks() {
                 </div>
                 <div className="space-y-2">
                   {col.tasks.map(t => (
-                    <div key={t.id} className="bg-white rounded-lg border border-gray-200 p-3 hover:border-orange-200 transition-colors group">
+                    <div key={t.id} className="bg-white rounded-lg border border-gray-200 p-3 hover:border-amber-200 transition-colors group">
                       <div className="flex items-start justify-between gap-1 mb-1.5">
                         <p className="text-xs font-medium text-gray-900 leading-snug">{t.title}</p>
-                        <button onClick={() => handleDelete(t.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-red-400 flex-shrink-0">
+                        <button onClick={() => handleDelete(t.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-rose-600 flex-shrink-0">
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
@@ -193,7 +193,7 @@ export default function ConstructionTasks() {
                       <div className="flex gap-1 mt-2">
                         {col.value !== "done" && (
                           <button onClick={() => quickStatus(t, col.value === "todo" ? "in_progress" : col.value === "in_progress" ? "review" : "done")}
-                            className="text-[10px] text-orange-500 hover:text-orange-600">
+                            className="text-[10px] text-amber-600 hover:text-amber-600">
                             → {col.value === "todo" ? "В работу" : col.value === "in_progress" ? "На проверку" : "Готово"}
                           </button>
                         )}
@@ -212,3 +212,4 @@ export default function ConstructionTasks() {
     </div>
   );
 }
+

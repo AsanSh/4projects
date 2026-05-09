@@ -88,9 +88,9 @@ async function fetchHistory(): Promise<ImportJob[]> {
 }
 
 const statusColors: Record<string, string> = {
-  completed: "bg-green-100 text-green-800",
-  partial: "bg-yellow-100 text-yellow-800",
-  failed: "bg-red-100 text-red-800",
+  completed: "bg-emerald-100 text-emerald-800",
+  partial: "bg-amber-100 text-amber-800",
+  failed: "bg-rose-100 text-rose-800",
   processing: "bg-blue-100 text-blue-800",
 };
 const statusLabels: Record<string, string> = {
@@ -175,7 +175,8 @@ export default function ImportCenter() {
   };
 
   const columns = preview?.preview?.length ? Object.keys(preview.preview[0]) : [];
-  const errorRowNumbers = new Set((preview?.errors || []).map(e => e.row));
+  const errorsArray = Array.isArray(preview?.errors) ? preview.errors : [];
+  const errorRowNumbers = new Set(errorsArray.map(e => e.row));
 
   return (
     <div className="space-y-4">
@@ -232,8 +233,8 @@ export default function ImportCenter() {
                       {new Date(job.createdAt).toLocaleString("ru-KG")}
                     </TableCell>
                     <TableCell>{job.totalRows}</TableCell>
-                    <TableCell className="text-green-600 font-medium">{job.successRows}</TableCell>
-                    <TableCell className={job.errorRows > 0 ? "text-red-600 font-medium" : "text-gray-400"}>
+                    <TableCell className="text-emerald-600 font-medium">{job.successRows}</TableCell>
+                    <TableCell className={job.errorRows > 0 ? "text-rose-600 font-medium" : "text-gray-400"}>
                       {job.errorRows}
                     </TableCell>
                     <TableCell>
@@ -255,7 +256,7 @@ export default function ImportCenter() {
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                   step === s ? "bg-blue-600 text-white" :
-                  arr.indexOf(step) > i ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"
+                  arr.indexOf(step) > i ? "bg-emerald-600 text-white" : "bg-gray-200 text-white"
                 }`}>
                   {arr.indexOf(step) > i ? "✓" : i + 1}
                 </div>
@@ -328,29 +329,29 @@ export default function ImportCenter() {
                   <p className="text-xs text-gray-500 mt-1">Всего строк</p>
                 </div>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-                  <p className="text-2xl font-bold text-green-600">{preview.validRows}</p>
+                  <p className="text-2xl font-bold text-emerald-600">{preview.validRows}</p>
                   <p className="text-xs text-gray-500 mt-1">Корректных</p>
                 </div>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-                  <p className="text-2xl font-bold text-red-500">{preview.errorRows}</p>
+                  <p className="text-2xl font-bold text-rose-600">{preview.errorRows}</p>
                   <p className="text-xs text-gray-500 mt-1">С ошибками</p>
                 </div>
               </div>
 
               {/* Errors */}
               {preview.errors.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                  <p className="text-sm font-semibold text-red-800 mb-2 flex items-center gap-1.5">
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+                  <p className="text-sm font-semibold text-rose-800 mb-2 flex items-center gap-1.5">
                     <AlertCircle className="w-4 h-4" /> Ошибки валидации
                   </p>
                   <ul className="space-y-1">
                     {preview.errors.slice(0, 10).map((e, i) => (
-                      <li key={i} className="text-xs text-red-700">
+                      <li key={i} className="text-xs text-rose-700">
                         Строка {e.row}: {e.field && <strong>{e.field}</strong>} — {e.message}
                       </li>
                     ))}
                     {preview.errors.length > 10 && (
-                      <li className="text-xs text-red-500">... и ещё {preview.errors.length - 10} ошибок</li>
+                      <li className="text-xs text-rose-600">... и ещё {preview.errors.length - 10} ошибок</li>
                     )}
                   </ul>
                 </div>
@@ -374,7 +375,7 @@ export default function ImportCenter() {
                     </TableHeader>
                     <TableBody>
                       {preview.preview.map((row, idx) => (
-                        <TableRow key={idx} className={errorRowNumbers.has(idx + 1) ? "bg-red-50" : ""}>
+                        <TableRow key={idx} className={errorRowNumbers.has(idx + 1) ? "bg-rose-50" : ""}>
                           <TableCell className="text-gray-400 text-xs">{idx + 1}</TableCell>
                           {columns.map((col) => (
                             <TableCell key={col} className="text-sm max-w-40 truncate">
@@ -383,9 +384,9 @@ export default function ImportCenter() {
                           ))}
                           <TableCell>
                             {errorRowNumbers.has(idx + 1) ? (
-                              <XCircle className="w-4 h-4 text-red-400" />
+                              <XCircle className="w-4 h-4 text-rose-600" />
                             ) : (
-                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                             )}
                           </TableCell>
                         </TableRow>
@@ -418,10 +419,10 @@ export default function ImportCenter() {
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">Подтвердите импорт</h2>
                 <p className="text-gray-500 text-sm">
-                  Будет импортировано <strong className="text-green-600">{preview.validRows}</strong> корректных строк
+                  Будет импортировано <strong className="text-emerald-600">{preview.validRows}</strong> корректных строк
                   из {preview.totalRows} общих.
                   {preview.errorRows > 0 && (
-                    <span className="text-red-500"> Строки с ошибками ({preview.errorRows}) будут пропущены.</span>
+                    <span className="text-rose-600"> Строки с ошибками ({preview.errorRows}) будут пропущены.</span>
                   )}
                 </p>
                 <p className="text-xs text-gray-400">Тип данных: <strong>{typeLabels[importType]}</strong></p>
@@ -445,11 +446,11 @@ export default function ImportCenter() {
           {step === "result" && resultJob && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-5 max-w-md mx-auto">
               {resultJob.status === "completed" ? (
-                <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
+                <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
               ) : resultJob.status === "partial" ? (
-                <AlertCircle className="w-14 h-14 text-yellow-500 mx-auto" />
+                <AlertCircle className="w-14 h-14 text-amber-600 mx-auto" />
               ) : (
-                <XCircle className="w-14 h-14 text-red-500 mx-auto" />
+                <XCircle className="w-14 h-14 text-rose-600 mx-auto" />
               )}
               <div>
                 <h2 className="text-lg font-bold text-gray-900 mb-1">
@@ -457,8 +458,8 @@ export default function ImportCenter() {
                    resultJob.status === "partial" ? "Импорт выполнен частично" : "Импорт не выполнен"}
                 </h2>
                 <p className="text-gray-500 text-sm">
-                  Импортировано: <strong className="text-green-600">{resultJob.successRows}</strong> из {resultJob.totalRows} строк
-                  {resultJob.errorRows > 0 && <span className="text-red-500"> ({resultJob.errorRows} пропущено)</span>}
+                  Импортировано: <strong className="text-emerald-600">{resultJob.successRows}</strong> из {resultJob.totalRows} строк
+                  {resultJob.errorRows > 0 && <span className="text-rose-600"> ({resultJob.errorRows} пропущено)</span>}
                 </p>
               </div>
               <Button onClick={reset} className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -471,3 +472,4 @@ export default function ImportCenter() {
     </div>
   );
 }
+

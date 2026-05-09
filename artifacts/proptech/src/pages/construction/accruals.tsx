@@ -9,9 +9,9 @@ import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   pending:  { label: "Ожидает",    color: "bg-gray-100 text-gray-600 border-gray-200", icon: Clock },
-  partial:  { label: "Частично",   color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: DollarSign },
+  partial:  { label: "Частично",   color: "bg-amber-100 text-amber-700 border-amber-200", icon: DollarSign },
   paid:     { label: "Оплачен",    color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-  overdue:  { label: "Просрочен",  color: "bg-red-100 text-red-700 border-red-200", icon: AlertTriangle },
+  overdue:  { label: "Просрочен",  color: "bg-rose-100 text-rose-700 border-rose-200", icon: AlertTriangle },
 };
 
 function fmt(n: any) {
@@ -43,7 +43,9 @@ export default function ConstructionAccruals() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["construction-accruals"] }); toast.success("Начисление обновлено"); },
   });
 
-  const filtered = accruals
+  const accrualsArray = Array.isArray(accruals) ? accruals : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+  const filtered = accrualsArray
     .map((a: any) => ({ ...a, isOverdue: isOverdue(a.dueDate, a.status) }))
     .filter((a: any) => {
       const statusKey = a.isOverdue ? "overdue" : a.status;
@@ -77,11 +79,11 @@ export default function ConstructionAccruals() {
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Просрочено</div>
-          <div className="text-xl font-bold text-red-600">{fmt(totalOverdue)}</div>
+          <div className="text-xl font-bold text-rose-600">{fmt(totalOverdue)}</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Просроченных</div>
-          <div className="text-xl font-bold text-red-500">{countOverdue} шт.</div>
+          <div className="text-xl font-bold text-rose-600">{countOverdue} шт.</div>
         </div>
       </div>
 
@@ -90,7 +92,7 @@ export default function ConstructionAccruals() {
         <div className="flex gap-2">
           {["all", "pending", "partial", "paid", "overdue"].map(s => (
             <button key={s} onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${filterStatus === s ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${filterStatus === s ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>
               {s === "all" ? "Все" : s === "pending" ? "Ожидает" : s === "partial" ? "Частично" : s === "paid" ? "Оплачен" : "Просрочен"}
             </button>
           ))}
@@ -99,7 +101,7 @@ export default function ConstructionAccruals() {
           <SelectTrigger className="w-48 h-8 text-xs"><SelectValue placeholder="Все договоры" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все договоры</SelectItem>
-            {contracts.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.contractNumber} — {c.buyerName}</SelectItem>)}
+            {contractsArray.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.contractNumber} — {c.buyerName}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -132,19 +134,19 @@ export default function ConstructionAccruals() {
               const statusKey = a.isOverdue && a.status !== "paid" ? "overdue" : a.status;
               const sc = STATUS_CONFIG[statusKey] || STATUS_CONFIG.pending;
               const Icon = sc.icon;
-              const contract = contracts.find((c: any) => c.id === a.contractId);
+              const contract = contractsArray.find((c: any) => c.id === a.contractId);
               const pct = a.amount > 0 ? Math.round(parseFloat(a.paidAmount || "0") / parseFloat(a.amount) * 100) : 0;
               return (
-                <tr key={a.id} className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${a.isOverdue && a.status !== "paid" ? "bg-red-50/30" : ""}`}>
+                <tr key={a.id} className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${a.isOverdue && a.status !== "paid" ? "bg-rose-50/30" : ""}`}>
                   <td className="px-4 py-3 text-gray-500 text-xs">{a.installmentNumber}</td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900 text-xs font-mono">{contract?.contractNumber || `#${a.contractId}`}</div>
                     <div className="text-xs text-gray-400">{contract?.buyerName}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className={a.isOverdue && a.status !== "paid" ? "text-red-600 font-medium" : "text-gray-600"}>{a.dueDate}</div>
+                    <div className={a.isOverdue && a.status !== "paid" ? "text-rose-600 font-medium" : "text-gray-600"}>{a.dueDate}</div>
                     {a.isOverdue && a.status !== "paid" && (
-                      <div className="text-xs text-red-400">
+                      <div className="text-xs text-rose-600">
                         {Math.ceil((new Date().getTime() - new Date(a.dueDate).getTime()) / 86400000)} дн. просрочки
                       </div>
                     )}
@@ -161,7 +163,7 @@ export default function ConstructionAccruals() {
                       <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-orange-600">{fmt(a.remainingAmount)}</td>
+                  <td className="px-4 py-3 text-right font-mono font-bold text-amber-600">{fmt(a.remainingAmount)}</td>
                   <td className="px-4 py-3">
                     {a.status !== "paid" && (
                       <Button size="sm" variant="outline" className="h-7 text-xs"
@@ -179,3 +181,4 @@ export default function ConstructionAccruals() {
     </div>
   );
 }
+

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 const TYPE_CONFIG = {
   cash:  { label: "Наличные",  icon: Banknote,    color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   bank:  { label: "Банк",      icon: Landmark,    color: "bg-blue-100 text-blue-700 border-blue-200" },
-  card:  { label: "Карта",     icon: CreditCard,  color: "bg-violet-100 text-violet-700 border-violet-200" },
+  card:  { label: "Карта",     icon: CreditCard,  color: "bg-indigo-100 text-indigo-700 border-violet-200" },
 };
 
 function fmt(n: any) {
@@ -45,7 +45,8 @@ export default function ConstructionAccounts() {
     setForm({ name: "", type: "cash", bank: "", bik: "", accountNumber: "", currency: "KGS", openingBalance: "0", notes: "" });
   }
 
-  const totalBalance = accounts.reduce((s: number, a: any) => {
+  const accountsArray = Array.isArray(accounts) ? accounts : [];
+  const totalBalance = accountsArray.reduce((s: number, a: any) => {
     if (a.currency === "KGS") return s + parseFloat(a.currentBalance || "0");
     return s;
   }, 0);
@@ -57,7 +58,7 @@ export default function ConstructionAccounts() {
           <h1 className="text-2xl font-bold text-gray-900">Счета</h1>
           <p className="text-gray-500 text-sm mt-0.5">Банковские счета, кассы и платёжные методы</p>
         </div>
-        <Button onClick={() => setOpen(true)} className="bg-orange-500 hover:bg-orange-600">
+        <Button onClick={() => setOpen(true)} className="bg-amber-500 hover:bg-orange-600">
           <Plus className="w-4 h-4 mr-2" /> Добавить счёт
         </Button>
       </div>
@@ -76,12 +77,12 @@ export default function ConstructionAccounts() {
       <div className="grid grid-cols-3 gap-4">
         {isLoading ? (
           <div className="col-span-3 text-center py-12 text-gray-400">Загрузка...</div>
-        ) : accounts.length === 0 ? (
+        ) : accountsArray.length === 0 ? (
           <div className="col-span-3 text-center py-12 text-gray-400">
             <Landmark className="w-12 h-12 mx-auto mb-3 text-gray-200" />
             <p>Нет счетов. Нажмите «Добавить счёт»</p>
           </div>
-        ) : accounts.map((acc: any) => {
+        ) : accountsArray.map((acc: any) => {
           const tc = TYPE_CONFIG[acc.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.cash;
           const Icon = tc.icon;
           return (
@@ -158,7 +159,7 @@ export default function ConstructionAccounts() {
             </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => { setOpen(false); resetForm(); }}>Отмена</Button>
-              <Button className="flex-1 bg-orange-500 hover:bg-orange-600"
+              <Button className="flex-1 bg-amber-500 hover:bg-orange-600"
                 disabled={createMut.isPending || !form.name}
                 onClick={() => createMut.mutate({ ...form, currentBalance: form.openingBalance })}>
                 {createMut.isPending ? "Сохранение..." : "Добавить счёт"}
@@ -170,3 +171,4 @@ export default function ConstructionAccounts() {
     </div>
   );
 }
+

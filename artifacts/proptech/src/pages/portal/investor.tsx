@@ -61,7 +61,7 @@ export default function InvestorPortal() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -80,7 +80,7 @@ export default function InvestorPortal() {
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Welcome */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-2xl p-6 text-white">
           <p className="text-sm opacity-80 mb-1">Добро пожаловать,</p>
           <h1 className="text-2xl font-bold">{investor?.fullName || userName}</h1>
           <p className="text-sm opacity-70 mt-1">Личный инвестиционный портал</p>
@@ -88,10 +88,10 @@ export default function InvestorPortal() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 gap-4">
-          <KPI icon={<Wallet className="w-6 h-6 text-purple-600" />} label="Инвестировано"
-            value={`${fmt(totalInvested)} KGS`} sub={`${investments.length} объект(а)`} color="bg-purple-50" />
-          <KPI icon={<TrendingUp className="w-6 h-6 text-green-600" />} label="Получено выплат"
-            value={`${fmt(totalReceived)} KGS`} sub={`${distributions.length} транзакций`} color="bg-green-50" />
+          <KPI icon={<Wallet className="w-6 h-6 text-blue-600" />} label="Инвестировано"
+            value={`${fmt(totalInvested)} KGS`} sub={`${investments.length} объект(а)`} color="bg-blue-50" />
+          <KPI icon={<TrendingUp className="w-6 h-6 text-emerald-600" />} label="Получено выплат"
+            value={`${fmt(totalReceived)} KGS`} sub={`${distributions.length} транзакций`} color="bg-emerald-50" />
           <KPI icon={<BadgeDollarSign className="w-6 h-6 text-amber-600" />} label="ROI"
             value={`${roi.toFixed(1)}%`} sub="возврат на инвестиции" color="bg-amber-50" />
           <KPI icon={<Percent className="w-6 h-6 text-blue-600" />} label="Объектов в портфеле"
@@ -164,13 +164,13 @@ export default function InvestorPortal() {
                     <tr key={d.id} className="border-b last:border-0 hover:bg-gray-50">
                       <td className="px-6 py-3.5 text-gray-500 text-xs">{fmtDate(d.distributionDate || d.createdAt)}</td>
                       <td className="px-6 py-3.5">
-                        <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
                           {d.type === "dividend" ? "Дивиденд" : d.type === "profit_share" ? "Доля прибыли" : "Выплата"}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 text-right font-bold text-green-700">+{fmt(d.amount)} KGS</td>
+                      <td className="px-6 py-3.5 text-right font-bold text-emerald-700">+{fmt(d.amount)} KGS</td>
                       <td className="px-6 py-3.5">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
                           {d.status === "paid" ? "Выплачено" : "Ожидает"}
                         </span>
                       </td>
@@ -180,7 +180,7 @@ export default function InvestorPortal() {
                 <tfoot>
                   <tr className="bg-gray-50 border-t-2 font-bold">
                     <td colSpan={2} className="px-6 py-3 text-gray-700">ИТОГО</td>
-                    <td className="px-6 py-3 text-right text-green-700">+{fmt(totalReceived)} KGS</td>
+                    <td className="px-6 py-3 text-right text-emerald-700">+{fmt(totalReceived)} KGS</td>
                     <td className="px-6 py-3"></td>
                   </tr>
                 </tfoot>

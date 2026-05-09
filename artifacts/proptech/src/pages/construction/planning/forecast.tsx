@@ -112,10 +112,10 @@ export default function ConstructionForecast() {
               const contract = contracts.find((c: any) => c.id === a.contractId);
               const isOvd = new Date(a.dueDate) < new Date();
               return (
-                <tr key={a.id} className={`border-b border-gray-50 hover:bg-gray-50/50 ${isOvd ? "bg-red-50/30" : ""}`}>
-                  <td className="px-4 py-2.5 font-mono text-xs font-medium text-orange-600">{contract?.contractNumber || `#${a.contractId}`}</td>
+                <tr key={a.id} className={`border-b border-gray-50 hover:bg-gray-50/50 ${isOvd ? "bg-rose-50/30" : ""}`}>
+                  <td className="px-4 py-2.5 font-mono text-xs font-medium text-amber-600">{contract?.contractNumber || `#${a.contractId}`}</td>
                   <td className="px-4 py-2.5 text-gray-600">{contract?.buyerName || "—"}</td>
-                  <td className={`px-4 py-2.5 ${isOvd ? "text-red-600 font-medium" : "text-gray-600"}`}>{a.dueDate}</td>
+                  <td className={`px-4 py-2.5 ${isOvd ? "text-rose-600 font-medium" : "text-gray-600"}`}>{a.dueDate}</td>
                   <td className="px-4 py-2.5 text-gray-400">#{a.installmentNumber}</td>
                   <td className="px-4 py-2.5 text-right font-mono font-bold text-blue-600">{fmtFull(a.remainingAmount)}</td>
                 </tr>

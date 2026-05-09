@@ -6,7 +6,7 @@ import {
   Tenant,
   TenantStatus,
   CreateTenantBodyStatus,
-} from "@workspace/api-client-react";
+} from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit2, ExternalLink } from "lucide-react";
@@ -18,13 +18,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListTenantsQueryKey } from "@workspace/api-client-react";
+import { getListTenantsQueryKey } from "@/api-client";
 import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<string, string> = {
-  active: "bg-green-100 text-green-800",
+  active: "bg-emerald-100 text-emerald-800",
   inactive: "bg-gray-100 text-gray-800",
-  blacklisted: "bg-red-100 text-red-800",
+  blacklisted: "bg-rose-100 text-rose-800",
 };
 
 const statusLabels: Record<string, string> = {
@@ -186,6 +186,7 @@ function TenantDialog({ open, onClose, tenant }: TenantDialogProps) {
 
 export default function RentalTenants() {
   const { data: tenants, isLoading } = useListTenants();
+  const tenantsArray = Array.isArray(tenants) ? tenants : [];
   const [, navigate] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | undefined>();
@@ -234,14 +235,14 @@ export default function RentalTenants() {
                   ))}
                 </TableRow>
               ))
-            ) : !tenants?.length ? (
+            ) : !tenantsArray.length ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Арендаторы не найдены
                 </TableCell>
               </TableRow>
             ) : (
-              tenants.map((tenant) => (
+              tenantsArray.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">{tenant.fullName}</TableCell>
                   <TableCell>{tenant.iin || "—"}</TableCell>
@@ -277,3 +278,4 @@ export default function RentalTenants() {
     </div>
   );
 }
+

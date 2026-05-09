@@ -40,6 +40,9 @@ function AddDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
   const { data: investors = [] } = useQuery<Investor[]>({ queryKey: ["investors"], queryFn: () => api.get("/rental/investors").then(r => r.data) });
   const { data: properties = [] } = useQuery<Property[]>({ queryKey: ["properties"], queryFn: () => api.get("/properties").then(r => r.data) });
 
+  const investorsArray = Array.isArray(investors) ? investors : [];
+  const propertiesArray = Array.isArray(properties) ? properties : [];
+
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +52,7 @@ function AddDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}/api/rental/investments`, {
+      const res = await fetch(`${BASE}/rental/investments`, {
         method: "POST", headers: authHeaders(),
         body: JSON.stringify({ ...form, propertyId: parseInt(form.propertyId), investorId: parseInt(form.investorId) }),
       });
@@ -71,7 +74,7 @@ function AddDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
             <Select value={form.propertyId} onValueChange={v => set("propertyId", v)}>
               <SelectTrigger className="mt-1"><SelectValue placeholder="Выберите объект" /></SelectTrigger>
               <SelectContent>
-                {properties.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.projectName} — {p.unitNumber}</SelectItem>)}
+                {propertiesArray.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.projectName} — {p.unitNumber}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -80,7 +83,7 @@ function AddDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
             <Select value={form.investorId} onValueChange={v => set("investorId", v)}>
               <SelectTrigger className="mt-1"><SelectValue placeholder="Выберите инвестора" /></SelectTrigger>
               <SelectContent>
-                {investors.map(i => <SelectItem key={i.id} value={String(i.id)}>{i.fullName}</SelectItem>)}
+                {investorsArray.map(i => <SelectItem key={i.id} value={String(i.id)}>{i.fullName}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -122,11 +125,12 @@ export default function Investments() {
     queryFn: () => api.get("/rental/investments").then(r => r.data),
   });
 
-  const totalCapital = investments.reduce((s, i) => s + parseFloat(i.capitalInvested || "0"), 0);
+  const investmentsArray = Array.isArray(investments) ? investments : [];
+  const totalCapital = investmentsArray.reduce((s, i) => s + (parseFloat(i.capitalInvested || "0") || 0), 0);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить инвестицию?")) return;
-    await fetch(`${BASE}/api/rental/investments/${id}`, { method: "DELETE", headers: authHeaders() });
+    await fetch(`${BASE}/rental/investments/${id}`, { method: "DELETE", headers: authHeaders() });
     toast({ title: "Запись удалена" });
     queryClient.invalidateQueries({ queryKey: ["investments"] });
   };
@@ -147,12 +151,12 @@ export default function Investments() {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs text-gray-500 mb-1">Всего инвестиций</p>
-          <p className="text-2xl font-bold text-blue-600">{investments.length}</p>
+          <p className="text-2xl font-bold text-blue-600">{investmentsArray.length}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs text-gray-500 mb-1">Уникальных объектов</p>
-          <p className="text-2xl font-bold text-violet-600">
-            {new Set(investments.map(i => i.propertyId)).size}
+          <p className="text-2xl font-bold text-indigo-600">
+            {new Set(investmentsArray.map(i => i.propertyId)).size}
           </p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -180,14 +184,14 @@ export default function Investments() {
                   {Array.from({ length: 6 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
                 </TableRow>
               ))
-            ) : investments.length === 0 ? (
+            ) : investmentsArray.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12 text-gray-400">
                   <PieChart className="w-10 h-10 mx-auto mb-2 opacity-30" />
                   <p>Инвестиций пока нет</p>
                 </TableCell>
               </TableRow>
-            ) : investments.map(inv => (
+            ) : investmentsArray.map(inv => (
               <TableRow key={inv.id} className="hover:bg-gray-50">
                 <TableCell>
                   <div>
@@ -204,7 +208,7 @@ export default function Investments() {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, parseFloat(inv.sharePercent))}%` }} />
+                      <div className="h-full bg-blue-600 rounded-full" style={{ width: `${Math.min(100, parseFloat(inv.sharePercent))}%` }} />
                     </div>
                     <span className="font-semibold text-blue-600 text-sm">{parseFloat(inv.sharePercent)}%</span>
                   </div>
@@ -217,7 +221,7 @@ export default function Investments() {
                 </TableCell>
                 <TableCell className="text-center">
                   <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(inv.id)}>
-                    <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                    <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -230,3 +234,4 @@ export default function Investments() {
     </div>
   );
 }
+

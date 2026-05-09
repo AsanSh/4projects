@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePreviewImport, useCommitImport, ImportPreviewBodyType, CommitImportBodyType } from "@workspace/api-client-react";
+import { usePreviewImport, useCommitImport, ImportPreviewBodyType, CommitImportBodyType } from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -106,7 +106,7 @@ export default function ImportData() {
             <div className="space-y-4">
               <div className="flex gap-4">
                 <Badge variant="outline">Total: {previewData.totalRows}</Badge>
-                <Badge className="bg-green-500">Valid: {previewData.validRows}</Badge>
+                <Badge className="bg-emerald-600">Valid: {previewData.validRows}</Badge>
                 <Badge variant="destructive">Errors: {previewData.errorRows}</Badge>
               </div>
 

@@ -43,7 +43,7 @@ function ContractorDialog({ contractor, onClose, onSaved }: { contractor: Contra
     if (!form.fullName) { toast({ title: "Укажите название", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/construction/contractors/${init!.id}` : `${BASE}/api/construction/contractors`;
+      const url = isEdit ? `${BASE}/construction/contractors/${init!.id}` : `${BASE}/construction/contractors`;
       await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: ah(), body: JSON.stringify(form) });
       toast({ title: isEdit ? "Подрядчик обновлён" : "Подрядчик добавлен" });
       onSaved(); onClose();
@@ -102,7 +102,7 @@ function ContractorDialog({ contractor, onClose, onSaved }: { contractor: Contra
           <div><Label>Заметки</Label><Input className="mt-1" value={form.notes} onChange={e => set("notes", e.target.value)} /></div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -121,7 +121,7 @@ export default function ConstructionContractors() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить подрядчика?")) return;
-    await fetch(`${BASE}/api/construction/contractors/${id}`, { method: "DELETE", headers: ah() });
+    await fetch(`${BASE}/construction/contractors/${id}`, { method: "DELETE", headers: ah() });
     toast({ title: "Удалено" });
     qc.invalidateQueries({ queryKey: ["construction-contractors"] });
   };
@@ -130,7 +130,7 @@ export default function ConstructionContractors() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-gray-900">Подрядчики</h1><p className="text-sm text-gray-500 mt-0.5">Подрядные организации и ИП</p></div>
-        <Button onClick={() => setDialog("new")} className="bg-orange-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" /> Добавить</Button>
+        <Button onClick={() => setDialog("new")} className="bg-amber-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" /> Добавить</Button>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -157,7 +157,7 @@ export default function ConstructionContractors() {
                 <TableRow key={c.id} className="hover:bg-gray-50">
                   <TableCell>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 text-xs font-bold">{c.fullName.charAt(0)}</div>
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold">{c.fullName.charAt(0)}</div>
                       <div><p className="font-medium text-sm text-gray-900">{c.fullName}</p><p className="text-xs text-gray-400">{c.type === "company" ? "Компания" : "ИП"}</p></div>
                     </div>
                   </TableCell>
@@ -176,14 +176,14 @@ export default function ConstructionContractors() {
                     ) : <span className="text-gray-400 text-sm">—</span>}
                   </TableCell>
                   <TableCell>
-                    <Badge className={c.status === "active" ? "bg-green-100 text-green-800" : c.status === "blacklisted" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600"} variant="secondary">
+                    <Badge className={c.status === "active" ? "bg-emerald-100 text-emerald-800" : c.status === "blacklisted" ? "bg-rose-100 text-rose-800" : "bg-gray-100 text-white"} variant="secondary">
                       {c.status === "active" ? "Активен" : c.status === "blacklisted" ? "Чёрный список" : "Неактивен"}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-center">
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDialog(c)}><Edit2 className="w-3.5 h-3.5 text-gray-400" /></Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(c.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" /></Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(c.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -196,3 +196,4 @@ export default function ConstructionContractors() {
     </div>
   );
 }
+

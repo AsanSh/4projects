@@ -124,14 +124,14 @@ export default function ConstructionCashier() {
                 const hasOverdue = pendingAcc.some((a: any) => new Date(a.dueDate) < new Date());
                 return (
                   <div key={c.id} onClick={() => selectContract(c)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? "border-orange-400 bg-orange-50" : "border-gray-100 hover:border-orange-200 hover:bg-orange-50/30"}`}>
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? "border-orange-400 bg-amber-50" : "border-gray-100 hover:border-amber-200 hover:bg-amber-50/30"}`}>
                     <div className="flex items-center justify-between">
-                      <div className="font-mono text-xs font-semibold text-orange-600">{c.contractNumber}</div>
-                      {hasOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-400" />}
+                      <div className="font-mono text-xs font-semibold text-amber-600">{c.contractNumber}</div>
+                      {hasOverdue && <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />}
                     </div>
                     <div className="font-medium text-sm mt-0.5">{c.buyerName}</div>
                     <div className="flex items-center justify-between mt-1 text-xs text-gray-500">
-                      <span>Остаток: <strong className="text-orange-600">{fmt(c.remainingAmount)}</strong> {c.currency}</span>
+                      <span>Остаток: <strong className="text-amber-600">{fmt(c.remainingAmount)}</strong> {c.currency}</span>
                       <span>{pendingAcc.length} платежей</span>
                     </div>
                   </div>
@@ -175,7 +175,7 @@ export default function ConstructionCashier() {
                 <Button variant="outline" className="flex-1" onClick={() => { setSuccess(null); setSelectedContract(null); setSearch(""); }}>
                   Новый платёж
                 </Button>
-                <Button className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={() => window.print()}>
+                <Button className="flex-1 bg-amber-500 hover:bg-orange-600" onClick={() => window.print()}>
                   <Receipt className="w-4 h-4 mr-2" /> Распечатать квитанцию
                 </Button>
               </div>
@@ -185,10 +185,10 @@ export default function ConstructionCashier() {
               <div className="text-sm font-semibold text-gray-700">2. Оформить платёж</div>
 
               {/* Contract info */}
-              <div className="bg-orange-50 rounded-xl p-3 text-sm grid grid-cols-3 gap-2 text-center">
+              <div className="bg-amber-50 rounded-xl p-3 text-sm grid grid-cols-3 gap-2 text-center">
                 <div><div className="text-xs text-gray-500">Сумма договора</div><div className="font-bold">{fmt(selectedContract.totalAmount)} {selectedContract.currency}</div></div>
                 <div><div className="text-xs text-gray-500">Оплачено</div><div className="font-bold text-emerald-600">{fmt(selectedContract.paidAmount)}</div></div>
-                <div><div className="text-xs text-gray-500">Остаток</div><div className="font-bold text-orange-600">{fmt(selectedContract.remainingAmount)}</div></div>
+                <div><div className="text-xs text-gray-500">Остаток</div><div className="font-bold text-amber-600">{fmt(selectedContract.remainingAmount)}</div></div>
               </div>
 
               {/* Accrual selection */}
@@ -277,7 +277,7 @@ export default function ConstructionCashier() {
                 <Textarea value={paymentForm.notes} onChange={e => setPaymentForm(f => ({ ...f, notes: e.target.value }))} className="mt-1 text-sm resize-none" rows={2} />
               </div>
 
-              <Button className="w-full bg-emerald-500 hover:bg-emerald-600 h-11 text-base font-semibold"
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 text-base font-medium"
                 disabled={payMut.isPending || !paymentForm.amount || parseFloat(paymentForm.amount) <= 0}
                 onClick={handlePay}>
                 <DollarSign className="w-5 h-5 mr-2" />
@@ -290,3 +290,4 @@ export default function ConstructionCashier() {
     </div>
   );
 }
+

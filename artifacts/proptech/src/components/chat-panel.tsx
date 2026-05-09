@@ -151,8 +151,8 @@ export default function ChatPanel() {
 
   const typeBadge: Record<ContactType, string> = {
     employee: "bg-blue-100 text-blue-700",
-    tenant: "bg-green-100 text-green-700",
-    investor: "bg-purple-100 text-purple-700",
+    tenant: "bg-emerald-100 text-emerald-700",
+    investor: "bg-indigo-100 text-indigo-700",
     counterparty: "bg-gray-100 text-gray-700",
   };
 
@@ -177,7 +177,7 @@ export default function ChatPanel() {
       <button onClick={() => setOpen(v => !v)} className="relative w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors">
         <MessageCircle className="w-[18px] h-[18px] text-gray-500" />
         {totalUnread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-blue-500 text-white text-[9px] flex items-center justify-center rounded-full font-bold leading-none px-0.5">
+          <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-blue-600 text-white text-[9px] flex items-center justify-center rounded-full font-bold leading-none px-0.5">
             {totalUnread > 99 ? "99+" : totalUnread}
           </span>
         )}
@@ -209,14 +209,14 @@ export default function ChatPanel() {
                 <div className="space-y-3">
                   {activeContact.phone && (
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Phone className="w-4 h-4 text-green-600" />
+                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Phone className="w-4 h-4 text-emerald-600" />
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-gray-500">Телефон</p>
                         <p className="text-sm font-medium text-gray-900">{activeContact.phone}</p>
                       </div>
-                      <a href={`tel:${activeContact.phone}`} className="text-xs text-green-600 hover:underline font-medium">Позвонить</a>
+                      <a href={`tel:${activeContact.phone}`} className="text-xs text-emerald-600 hover:underline font-medium">Позвонить</a>
                     </div>
                   )}
                   {activeContact.email && (
@@ -296,7 +296,7 @@ export default function ChatPanel() {
                       )}
                       <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[72%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-blue-600 text-white rounded-br-sm" : "bg-gray-100 text-gray-800 rounded-bl-sm"}`}>
+                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-blue-600 text-white rounded-br-sm" : "bg-gray-100 text-white rounded-bl-sm"}`}>
                             {m.content}
                           </div>
                           <span className="text-[10px] text-gray-400 mt-0.5 px-1">{fullTime(m.createdAt)}</span>
@@ -425,7 +425,7 @@ export default function ChatPanel() {
                           {getInitials(c.partner)}
                         </div>
                         {c.unreadCount > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-blue-500 text-white text-[9px] flex items-center justify-center rounded-full font-bold px-0.5">
+                          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-blue-600 text-white text-[9px] flex items-center justify-center rounded-full font-bold px-0.5">
                             {c.unreadCount}
                           </span>
                         )}
@@ -449,3 +449,4 @@ export default function ChatPanel() {
     </div>
   );
 }
+

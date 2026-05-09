@@ -110,9 +110,9 @@ export default function RentalForecast() {
 
   function cellStyle(status: string) {
     switch (status) {
-      case "paid": return "bg-green-100 text-green-800";
+      case "paid": return "bg-emerald-100 text-emerald-800";
       case "partial": return "bg-amber-100 text-amber-800";
-      case "overdue": return "bg-red-100 text-red-800";
+      case "overdue": return "bg-rose-100 text-rose-800";
       case "pending": return "bg-blue-100 text-blue-800";
       case "future": return "bg-gray-50 text-gray-400";
       default: return "text-gray-300";
@@ -148,33 +148,33 @@ export default function RentalForecast() {
         </div>
         <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <CalendarClock className="w-4 h-4 text-green-500" />
+            <CalendarClock className="w-4 h-4 text-emerald-600" />
             <span className="text-xs text-gray-500">Активных договоров</span>
           </div>
-          <p className="text-xl font-bold text-green-600">{rows.length}</p>
+          <p className="text-xl font-bold text-emerald-600">{rows.length}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircle className="w-4 h-4 text-green-500" />
+            <CheckCircle className="w-4 h-4 text-emerald-600" />
             <span className="text-xs text-gray-500">Оплачено периодов</span>
           </div>
-          <p className="text-xl font-bold text-green-600">{paidCount}</p>
+          <p className="text-xl font-bold text-emerald-600">{paidCount}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <AlertTriangle className="w-4 h-4 text-rose-600" />
             <span className="text-xs text-gray-500">Просроченных</span>
           </div>
-          <p className="text-xl font-bold text-red-500">{overdueCount}</p>
+          <p className="text-xl font-bold text-rose-600">{overdueCount}</p>
         </div>
       </div>
 
       {/* Legend */}
       <div className="flex items-center gap-4 mb-3 text-xs">
         {[
-          { label: "Оплачено", cls: "bg-green-100 text-green-800" },
+          { label: "Оплачено", cls: "bg-emerald-100 text-emerald-800" },
           { label: "Частично", cls: "bg-amber-100 text-amber-800" },
-          { label: "Просрочено", cls: "bg-red-100 text-red-800" },
+          { label: "Просрочено", cls: "bg-rose-100 text-rose-800" },
           { label: "Ожидается", cls: "bg-blue-100 text-blue-800" },
           { label: "Прогноз", cls: "bg-gray-50 text-gray-400 border" },
         ].map(l => (
@@ -189,7 +189,7 @@ export default function RentalForecast() {
             <tr className="bg-gray-50 border-b">
               <th className="text-left p-3 font-semibold text-gray-700 sticky left-0 bg-gray-50 min-w-[180px]">Арендатор / Объект</th>
               {cols.map(col => (
-                <th key={col.key} className={`text-center p-3 font-medium text-gray-600 min-w-[110px] ${col.key === todayKey ? "bg-blue-50 text-blue-700" : ""}`}>
+                <th key={col.key} className={`text-center p-3 font-medium text-white min-w-[110px] ${col.key === todayKey ? "bg-blue-50 text-blue-700" : ""}`}>
                   {col.label}
                   {col.key === todayKey && <div className="text-[10px] text-blue-500 font-normal">текущий</div>}
                 </th>

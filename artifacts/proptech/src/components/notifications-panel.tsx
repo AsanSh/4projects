@@ -17,12 +17,12 @@ function timeAgo(ts: string) {
 
 const typeConfig: Record<string, { icon: ReactElement; color: string; bg: string }> = {
   info:     { icon: <Info className="w-4 h-4" />, color: "text-blue-600", bg: "bg-blue-50" },
-  success:  { icon: <CheckCircle className="w-4 h-4" />, color: "text-green-600", bg: "bg-green-50" },
-  warning:  { icon: <AlertTriangle className="w-4 h-4" />, color: "text-orange-500", bg: "bg-orange-50" },
-  error:    { icon: <AlertTriangle className="w-4 h-4" />, color: "text-red-600", bg: "bg-red-50" },
-  payment:  { icon: <CreditCard className="w-4 h-4" />, color: "text-purple-600", bg: "bg-purple-50" },
+  success:  { icon: <CheckCircle className="w-4 h-4" />, color: "text-emerald-600", bg: "bg-emerald-50" },
+  warning:  { icon: <AlertTriangle className="w-4 h-4" />, color: "text-amber-600", bg: "bg-amber-50" },
+  error:    { icon: <AlertTriangle className="w-4 h-4" />, color: "text-rose-600", bg: "bg-rose-50" },
+  payment:  { icon: <CreditCard className="w-4 h-4" />, color: "text-indigo-600", bg: "bg-indigo-50" },
   contract: { icon: <FileText className="w-4 h-4" />, color: "text-teal-600", bg: "bg-teal-50" },
-  overdue:  { icon: <AlertTriangle className="w-4 h-4" />, color: "text-red-600", bg: "bg-red-50" },
+  overdue:  { icon: <AlertTriangle className="w-4 h-4" />, color: "text-rose-600", bg: "bg-rose-50" },
 };
 
 export default function NotificationsPanel() {
@@ -79,7 +79,7 @@ export default function NotificationsPanel() {
       >
         <Bell className="w-[18px] h-[18px] text-gray-500" />
         {unread.length > 0 && (
-          <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] flex items-center justify-center rounded-full font-bold leading-none px-0.5">
+          <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-rose-600 text-white text-[9px] flex items-center justify-center rounded-full font-bold leading-none px-0.5">
             {unread.length > 99 ? "99+" : unread.length}
           </span>
         )}
@@ -92,7 +92,7 @@ export default function NotificationsPanel() {
             <div className="flex items-center gap-2">
               <span className="font-semibold text-gray-900 text-sm">Уведомления</span>
               {unread.length > 0 && (
-                <span className="bg-red-100 text-red-700 text-xs font-semibold px-1.5 py-0.5 rounded-full">{unread.length}</span>
+                <span className="bg-rose-100 text-rose-700 text-xs font-semibold px-1.5 py-0.5 rounded-full">{unread.length}</span>
               )}
             </div>
             <div className="flex items-center gap-1">
@@ -115,7 +115,7 @@ export default function NotificationsPanel() {
                 className={`flex-1 py-2 text-xs font-medium transition-colors ${tab === key ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-500 hover:text-gray-700"}`}>
                 {label}
                 {key === "unread" && unread.length > 0 && (
-                  <span className="ml-1 bg-red-100 text-red-600 text-[10px] px-1.5 rounded-full">{unread.length}</span>
+                  <span className="ml-1 bg-rose-100 text-rose-600 text-[10px] px-1.5 rounded-full">{unread.length}</span>
                 )}
               </button>
             ))}
@@ -154,7 +154,7 @@ export default function NotificationsPanel() {
                     {n.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.body}</p>}
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[10px] text-gray-400">{timeAgo(n.createdAt)}</span>
-                      {!n.isRead && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />}
+                      {!n.isRead && <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />}
                     </div>
                   </div>
                 </div>
@@ -166,3 +166,4 @@ export default function NotificationsPanel() {
     </div>
   );
 }
+

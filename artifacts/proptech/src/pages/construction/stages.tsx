@@ -21,8 +21,8 @@ const STATUS_OPTS = [
   { value: "paused", label: "Приостановлен" },
 ];
 const STATUS_COLORS: Record<string, string> = {
-  planned: "bg-gray-100 text-gray-700", active: "bg-blue-100 text-blue-700",
-  completed: "bg-green-100 text-green-700", paused: "bg-yellow-100 text-yellow-700",
+  planned: "bg-gray-100 text-white", active: "bg-blue-100 text-blue-700",
+  completed: "bg-emerald-100 text-emerald-700", paused: "bg-amber-100 text-amber-700",
 };
 
 interface Stage {
@@ -53,7 +53,7 @@ function StageDialog({ stage, projects, onClose, onSaved }: {
     if (!form.name || !form.projectId) { toast({ title: "Заполните обязательные поля", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/construction/stages/${init!.id}` : `${BASE}/api/construction/stages`;
+      const url = isEdit ? `${BASE}/construction/stages/${init!.id}` : `${BASE}/construction/stages`;
       await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: ah(), body: JSON.stringify({ ...form, projectId: parseInt(form.projectId), progress: parseInt(form.progress) }) });
       toast({ title: isEdit ? "Этап обновлён" : "Этап добавлен" });
       onSaved(); onClose();
@@ -93,7 +93,7 @@ function StageDialog({ stage, projects, onClose, onSaved }: {
           <div><Label>Бюджет этапа (KGS)</Label><Input className="mt-1" type="number" value={form.budgetAmount} onChange={e => set("budgetAmount", e.target.value)} /></div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -115,7 +115,7 @@ export default function ConstructionStages() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить этап?")) return;
-    await fetch(`${BASE}/api/construction/stages/${id}`, { method: "DELETE", headers: ah() });
+    await fetch(`${BASE}/construction/stages/${id}`, { method: "DELETE", headers: ah() });
     toast({ title: "Удалено" });
     qc.invalidateQueries({ queryKey: ["construction-stages"] });
   };
@@ -129,17 +129,17 @@ export default function ConstructionStages() {
           <h1 className="text-2xl font-bold text-gray-900">Этапы работ</h1>
           <p className="text-sm text-gray-500 mt-0.5">Плановые этапы строительных проектов</p>
         </div>
-        <Button onClick={() => setDialog("new")} className="bg-orange-500 hover:bg-orange-600 gap-2">
+        <Button onClick={() => setDialog("new")} className="bg-amber-500 hover:bg-orange-600 gap-2">
           <Plus className="w-4 h-4" /> Добавить этап
         </Button>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>
           Все проекты
         </button>
         {projects.map(p => (
-          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>
             {p.name}
           </button>
         ))}
@@ -153,7 +153,7 @@ export default function ConstructionStages() {
               <p>Этапов нет. Добавьте первый.</p>
             </div>
           ) : stages.map(s => (
-            <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-orange-200 transition-colors">
+            <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-amber-200 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -167,7 +167,7 @@ export default function ConstructionStages() {
                 </div>
                 <div className="flex gap-1 ml-3">
                   <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDialog(s)}><Edit2 className="w-3.5 h-3.5 text-gray-400" /></Button>
-                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" /></Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" /></Button>
                 </div>
               </div>
               <div className="space-y-1">
@@ -175,7 +175,7 @@ export default function ConstructionStages() {
                   <span>Прогресс</span><span className="font-medium">{s.progress}%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${s.progress >= 100 ? "bg-green-500" : s.progress >= 50 ? "bg-blue-500" : "bg-orange-400"}`} style={{ width: `${s.progress}%` }} />
+                  <div className={`h-full rounded-full transition-all ${s.progress >= 100 ? "bg-emerald-600" : s.progress >= 50 ? "bg-blue-600" : "bg-orange-400"}`} style={{ width: `${s.progress}%` }} />
                 </div>
               </div>
               <div className="flex gap-4 mt-2 text-xs text-gray-400">
@@ -191,3 +191,4 @@ export default function ConstructionStages() {
     </div>
   );
 }
+

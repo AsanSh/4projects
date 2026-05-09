@@ -139,7 +139,7 @@ export default function UserProfileDropdown() {
 
             <div className="border-t py-1">
               <button onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-sm text-red-600 transition-colors">
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-rose-50 text-sm text-rose-600 transition-colors">
                 <LogOut className="w-4 h-4" />
                 Выйти из системы
               </button>
@@ -150,7 +150,7 @@ export default function UserProfileDropdown() {
 
       {/* Edit Profile Modal */}
       {modal === "profile" && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h2 className="font-semibold text-gray-900">Редактировать профиль</h2>
@@ -176,9 +176,9 @@ export default function UserProfileDropdown() {
                 <Input className="mt-1 h-9 opacity-60" value={u?.email || ""} disabled />
                 <p className="text-[10px] text-gray-400 mt-1">Email нельзя изменить</p>
               </div>
-              {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+              {error && <p className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-lg">{error}</p>}
               {success && (
-                <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">
                   <Check className="w-4 h-4" /> {success}
                 </div>
               )}
@@ -195,7 +195,7 @@ export default function UserProfileDropdown() {
 
       {/* Change Password Modal */}
       {modal === "password" && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h2 className="font-semibold text-gray-900">Изменить пароль</h2>
@@ -220,9 +220,9 @@ export default function UserProfileDropdown() {
                 <Input className="mt-1 h-9" type="password" placeholder="Повторите пароль"
                   value={pwForm.confirm} onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))} />
               </div>
-              {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+              {error && <p className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-lg">{error}</p>}
               {success && (
-                <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">
                   <Check className="w-4 h-4" /> {success}
                 </div>
               )}
@@ -239,3 +239,4 @@ export default function UserProfileDropdown() {
     </>
   );
 }
+

@@ -7,12 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Building2, Save, User, Shield, Loader2, LayoutGrid, Home, BarChart3, Bell, Users, Wrench, TrendingUp, FileText, CheckCircle2, XCircle, Eye, EyeOff, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { getApiBase } from "@/lib/api-base";
 
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+const BASE = getApiBase();
 
 async function apiFetch(path: string, options?: RequestInit) {
   const token = localStorage.getItem("auth_token");
-  const res = await fetch(`${BASE}/api${path}`, {
+  const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -53,7 +54,14 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<"org" | "profile" | "modules">("org");
-  const isAdmin = (user as any)?.role === "admin";
+  const userRole = user?.role;
+  const isAdmin = userRole === "super_admin" || userRole === "company_admin" || userRole === "admin";
+
+  // Debug: log user role for troubleshooting
+  useEffect(() => {
+    console.log('Settings page - full user object:', user);
+    console.log('Settings page - user role:', userRole, 'isAdmin:', isAdmin);
+  }, [user, userRole, isAdmin]);
 
   const [org, setOrg] = useState<Company | null>(null);
   const [form, setForm] = useState({ name: "", legalName: "", bin: "", phone: "", email: "", address: "" });
@@ -67,6 +75,14 @@ export default function Settings() {
   const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
+    // Verify user role by checking API directly
+    apiFetch("/auth/me")
+      .then((data: any) => {
+        console.log("Settings - User from API:", data);
+        console.log("Settings - User role from API:", data.role);
+      })
+      .catch(err => console.error("Failed to fetch user:", err));
+
     apiFetch("/companies/my")
       .then((data: Company) => {
         setOrg(data);
@@ -275,7 +291,7 @@ export default function Settings() {
               <div>
                 <p className="font-semibold text-gray-900 text-lg">{profileForm.firstName} {profileForm.lastName}</p>
                 <p className="text-sm text-gray-500">{(user as any)?.email}</p>
-                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${isAdmin ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
+                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${isAdmin ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-white"}`}>
                   <Shield className="h-3 w-3" />
                   {isAdmin ? "Администратор" : "Сотрудник"}
                 </span>
@@ -357,7 +373,7 @@ export default function Settings() {
                   className="mt-1.5 h-11 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
                 />
                 {passwordForm.confirm && passwordForm.next !== passwordForm.confirm && (
-                  <p className="text-xs text-red-500 mt-1">Пароли не совпадают</p>
+                  <p className="text-xs text-rose-600 mt-1">Пароли не совпадают</p>
                 )}
               </div>
               <div className="pt-1">
@@ -378,9 +394,10 @@ export default function Settings() {
             <p className="text-blue-600 text-xs">Включайте только нужные функции. Данные сохраняются при отключении модуля.</p>
           </div>
           {!isAdmin && (
-            <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
-              Управление модулями доступно только администраторам. Ниже отображены текущие настройки.
-            </p>
+            <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
+              <p className="font-medium">Управление модулями доступно только администраторам.</p>
+              <p className="text-xs mt-1 text-amber-500">Ваша текущая роль: {userRole || "не определена"}. Обратитесь к администратору для изменения роли.</p>
+            </div>
           )}
           {modulesLoading ? (
             <div className="space-y-3">
@@ -396,9 +413,9 @@ export default function Settings() {
               ))}
             </div>
           ) : modulesError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-sm text-red-800">
+            <div className="bg-rose-50 border border-rose-200 rounded-xl px-5 py-4 text-sm text-rose-800">
               <p className="font-medium">Не удалось загрузить модули</p>
-              <p className="text-red-600 text-xs mt-1">Попробуйте обновить страницу.</p>
+              <p className="text-rose-600 text-xs mt-1">Попробуйте обновить страницу.</p>
             </div>
           ) : modules.length === 0 ? (
             <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-8 text-center text-sm text-gray-500">
@@ -434,7 +451,7 @@ export default function Settings() {
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         {m.isEnabled ? (
-                          <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Включён
                           </span>
                         ) : (
@@ -469,3 +486,4 @@ export default function Settings() {
     </div>
   );
 }
+

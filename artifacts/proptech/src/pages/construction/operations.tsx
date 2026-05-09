@@ -97,10 +97,11 @@ export default function ConstructionOperations() {
     return true;
   });
 
-  const sortedOps = [...filtered].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const filteredArray = Array.isArray(filtered) ? filtered : [];
+  const sortedOps = [...filteredArray].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  const totalIncome = filtered.filter((o: any) => o.type === "income").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
-  const totalExpense = filtered.filter((o: any) => o.type === "expense").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
+  const totalIncome = filteredArray.filter((o: any) => o.type === "income").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
+  const totalExpense = filteredArray.filter((o: any) => o.type === "expense").reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
 
   const periodLabel = filterType === "month" ? "за текущий месяц" : filterType === "all" ? "за всё время" : filterType === "income" ? "— приходы" : filterType === "expense" ? "— расходы" : "— переводы";
 
@@ -108,33 +109,37 @@ export default function ConstructionOperations() {
     <div className="flex h-full relative">
       {/* Main */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${panelType ? "mr-80" : ""}`}>
-        <div className="mb-4">
-          <h1 className="text-xl font-bold text-gray-900">Операции {periodLabel}</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Операции {periodLabel}</h1>
+          <p className="text-sm text-gray-500 mt-1">Управление приходами, расходами и переводами</p>
         </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 mb-4">
           <Button onClick={() => openPanel("income")}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white h-8 px-4 text-sm font-medium rounded-lg shadow-sm">
-            <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> Приход
+            variant="outline"
+            className="h-9 px-4 text-sm font-medium rounded-xl border-emerald-200 text-gray-700 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all">
+            <TrendingUp className="w-4 h-4 mr-2 text-emerald-600" /> Приход
           </Button>
           <Button onClick={() => openPanel("expense")}
-            className="bg-red-500 hover:bg-red-600 text-white h-8 px-4 text-sm font-medium rounded-lg shadow-sm">
-            <TrendingDown className="w-3.5 h-3.5 mr-1.5" /> Расход
+            variant="outline"
+            className="h-9 px-4 text-sm font-medium rounded-xl border-rose-200 text-gray-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition-all">
+            <TrendingDown className="w-4 h-4 mr-2 text-rose-600" /> Расход
           </Button>
           <Button onClick={() => openPanel("transfer")}
-            variant="outline" className="h-8 px-4 text-sm font-medium rounded-lg border-gray-200">
-            <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" /> Перевод
+            variant="outline"
+            className="h-9 px-4 text-sm font-medium rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300">
+            <ArrowLeftRight className="w-4 h-4 mr-2 text-gray-500" /> Перевод
           </Button>
           <div className="flex-1" />
-          <Button variant="outline" className="h-8 px-3 text-sm border-gray-200 text-gray-500">
-            <Filter className="w-3.5 h-3.5 mr-1.5" /> Фильтр
+          <Button variant="outline" className="h-9 px-3 text-sm border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl">
+            <Filter className="w-4 h-4 mr-1.5" /> Фильтр
           </Button>
-          <Button variant="outline" className="h-8 px-3 text-sm border-gray-200 text-gray-500">
-            <Upload className="w-3.5 h-3.5 mr-1.5" /> Импорт
+          <Button variant="outline" className="h-9 px-3 text-sm border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl">
+            <Upload className="w-4 h-4 mr-1.5" /> Импорт
           </Button>
-          <Button variant="outline" className="h-8 px-3 text-sm border-gray-200 text-gray-500">
-            <Download className="w-3.5 h-3.5 mr-1.5" /> Экспорт
+          <Button variant="outline" className="h-9 px-3 text-sm border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl">
+            <Download className="w-4 h-4 mr-1.5" /> Экспорт
           </Button>
         </div>
 
@@ -160,14 +165,26 @@ export default function ConstructionOperations() {
         </div>
 
         {/* Summary row */}
-        {filtered.length > 0 && (
-          <div className="flex items-center gap-6 px-4 py-2 bg-gray-50 rounded-lg mb-3 text-sm">
-            <span className="text-gray-400">Итого за период:</span>
-            <span className="text-emerald-600 font-mono font-semibold">+{fmt(totalIncome)}</span>
-            <span className="text-red-600 font-mono font-semibold">−{fmt(totalExpense)}</span>
-            <span className={`font-mono font-bold ${totalIncome - totalExpense >= 0 ? "text-gray-700" : "text-red-600"}`}>
-              = {totalIncome - totalExpense >= 0 ? "+" : ""}{fmt(totalIncome - totalExpense)}
-            </span>
+        {filteredArray.length > 0 && (
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <p className="text-xs font-medium text-gray-500 mb-1">Приходы</p>
+              <p className="text-xl font-bold text-emerald-600 font-mono">+{fmt(totalIncome)}</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <p className="text-xs font-medium text-gray-500 mb-1">Расходы</p>
+              <p className="text-xl font-bold text-rose-600 font-mono">−{fmt(totalExpense)}</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <p className="text-xs font-medium text-gray-500 mb-1">Баланс</p>
+              <p className={`text-xl font-bold font-mono ${totalIncome - totalExpense >= 0 ? "text-gray-900" : "text-rose-600"}`}>
+                {totalIncome - totalExpense >= 0 ? "+" : ""}{fmt(totalIncome - totalExpense)}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-xs font-medium text-blue-700 mb-1">Операций</p>
+              <p className="text-xl font-bold text-blue-900">{filteredArray.length}</p>
+            </div>
           </div>
         )}
 
@@ -196,7 +213,8 @@ export default function ConstructionOperations() {
                   </div>
                 </td></tr>
               ) : sortedOps.map((op: any) => {
-                const proj = projects.find((p: any) => p.id === op.projectId);
+                const projectsArray = Array.isArray(projects) ? projects : [];
+                const proj = projectsArray.find((p: any) => p.id === op.projectId);
                 const isIncome = op.type === "income";
                 const isTransfer = op.type === "transfer";
                 return (
@@ -243,11 +261,11 @@ export default function ConstructionOperations() {
             <div className="grid grid-cols-3 gap-1.5">
               {(["income", "expense", "transfer"] as const).map(t => (
                 <button key={t} onClick={() => { setPanelType(t); setForm(f => ({ ...f, type: t, category: "" })); }}
-                  className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${panelType === t
-                    ? t === "income" ? "bg-emerald-500 text-white border-emerald-500"
-                    : t === "expense" ? "bg-red-500 text-white border-red-500"
-                    : "bg-blue-500 text-white border-blue-500"
-                    : "border-gray-200 text-gray-500 hover:border-gray-300"}`}>
+                  className={`py-1.5 rounded-lg text-xs font-medium border transition-colors ${panelType === t
+                    ? t === "income" ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                    : t === "expense" ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                    : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"}`}>
                   {t === "income" ? "Приход" : t === "expense" ? "Расход" : "Перевод"}
                 </button>
               ))}
@@ -290,7 +308,7 @@ export default function ConstructionOperations() {
                 <SelectTrigger className="mt-1 h-9 text-sm border-gray-200"><SelectValue placeholder="Выберите счёт" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Не указан</SelectItem>
-                  {accounts.map((a: any) => (
+                  {(Array.isArray(accounts) ? accounts : []).map((a: any) => (
                     <SelectItem key={a.id} value={String(a.id)}>
                       {a.name} ({fmt(a.currentBalance)} {a.currency})
                     </SelectItem>
@@ -326,7 +344,7 @@ export default function ConstructionOperations() {
                 <SelectTrigger className="mt-1 h-9 text-sm border-gray-200"><SelectValue placeholder="Выберите проект..." /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Не привязан</SelectItem>
-                  {projects.map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
+                  {(Array.isArray(projects) ? projects : []).map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -361,7 +379,7 @@ export default function ConstructionOperations() {
 
           <div className="px-5 py-4 border-t border-gray-100 bg-gray-50">
             <Button
-              className={`w-full h-9 text-sm font-semibold ${panelType === "income" ? "bg-emerald-500 hover:bg-emerald-600" : panelType === "expense" ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}`}
+              className={`w-full h-9 text-sm font-medium ${panelType === "income" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : panelType === "expense" ? "bg-rose-600 hover:bg-rose-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}`}
               disabled={createMut.isPending || !form.description || !form.amount}
               onClick={() => createMut.mutate({
                 ...form,
@@ -377,3 +395,4 @@ export default function ConstructionOperations() {
     </div>
   );
 }
+

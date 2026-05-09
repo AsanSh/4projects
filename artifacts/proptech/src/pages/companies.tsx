@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useListCompanies, useCreateCompany, useUpdateCompany, Company } from "@workspace/api-client-react";
+import { useListCompanies, useCreateCompany, useUpdateCompany, Company } from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit2 } from "lucide-react";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListCompaniesQueryKey } from "@workspace/api-client-react";
+import { getListCompaniesQueryKey } from "@/api-client";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Companies() {
@@ -62,14 +62,14 @@ export default function Companies() {
                   <TableCell className="text-right"><Skeleton className="h-8 w-8 inline-block" /></TableCell>
                 </TableRow>
               ))
-            ) : companies?.length === 0 ? (
+            ) : !companies || companies.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No companies found. Create one to get started.
                 </TableCell>
               </TableRow>
             ) : (
-              companies?.map((company) => (
+              (Array.isArray(companies) ? companies : []).map((company) => (
                 <TableRow key={company.id}>
                   <TableCell className="font-medium">{company.name}</TableCell>
                   <TableCell>{company.legalName || "-"}</TableCell>

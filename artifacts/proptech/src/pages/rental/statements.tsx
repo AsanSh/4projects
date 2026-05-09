@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { RefreshCw, TrendingUp, TrendingDown, FileText, Printer, X } from "lucide-react";
-import { useListProperties } from "@workspace/api-client-react";
+import { useListProperties } from "@/api-client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -57,6 +57,7 @@ export default function OwnerStatements() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedStatement, setSelectedStatement] = useState<OwnerStatement | null>(null);
   const { data: properties } = useListProperties();
+  const propertiesArray = Array.isArray(properties) ? properties : [];
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -64,11 +65,13 @@ export default function OwnerStatements() {
     queryKey: ["owner-statements", propertyFilter, monthFilter],
     queryFn: () => fetchStatements(propertyFilter, monthFilter),
   });
+  const statementsArray = Array.isArray(statements) ? statements : [];
 
   const { data: expenses = [] } = useQuery<any[]>({
     queryKey: ["rental-expenses"],
     queryFn: () => api.get("/rental/expenses").then(r => r.data),
   });
+  const expensesArray = Array.isArray(expenses) ? expenses : [];
 
   const handleGenerate = async () => {
     if (propertyFilter === "all") {
@@ -87,10 +90,10 @@ export default function OwnerStatements() {
     }
   };
 
-  const totalCharged = (statements || []).reduce((s, r) => s + parseFloat(r.rentCharged), 0);
-  const totalReceived = (statements || []).reduce((s, r) => s + parseFloat(r.rentReceived), 0);
-  const totalExpenses = (statements || []).reduce((s, r) => s + parseFloat(r.expenses), 0);
-  const totalNet = (statements || []).reduce((s, r) => s + parseFloat(r.netIncome), 0);
+  const totalCharged = statementsArray.reduce((s, r) => s + parseFloat(String(r.rentCharged || 0)), 0);
+  const totalReceived = statementsArray.reduce((s, r) => s + parseFloat(String(r.rentReceived || 0)), 0);
+  const totalExpenses = statementsArray.reduce((s, r) => s + parseFloat(String(r.expenses || 0)), 0);
+  const totalNet = statementsArray.reduce((s, r) => s + parseFloat(String(r.netIncome || 0)), 0);
 
   return (
     <div className="space-y-5">
@@ -111,7 +114,7 @@ export default function OwnerStatements() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все объекты</SelectItem>
-              {(properties || []).map((p) => (
+              {propertiesArray.map((p) => (
                 <SelectItem key={p.id} value={String(p.id)}>
                   {p.projectName} — {p.unitNumber}
                 </SelectItem>
@@ -149,13 +152,13 @@ export default function OwnerStatements() {
       </div>
 
       {/* KPIs */}
-      {!isLoading && (statements || []).length > 0 && (
+      {!isLoading && statementsArray.length > 0 && (
         <div className="grid grid-cols-4 gap-4">
           {[
             { label: "Начислено", value: totalCharged, color: "text-blue-600", bg: "bg-blue-50" },
-            { label: "Собрано", value: totalReceived, color: "text-green-600", bg: "bg-green-50" },
-            { label: "Расходы", value: totalExpenses, color: "text-red-500", bg: "bg-red-50" },
-            { label: "Чистый доход", value: totalNet, color: totalNet >= 0 ? "text-green-700" : "text-red-600", bg: totalNet >= 0 ? "bg-green-50" : "bg-red-50" },
+            { label: "Собрано", value: totalReceived, color: "text-emerald-600", bg: "bg-emerald-50" },
+            { label: "Расходы", value: totalExpenses, color: "text-rose-600", bg: "bg-rose-50" },
+            { label: "Чистый доход", value: totalNet, color: totalNet >= 0 ? "text-emerald-700" : "text-rose-600", bg: totalNet >= 0 ? "bg-emerald-50" : "bg-rose-50" },
           ].map((stat, i) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
@@ -189,7 +192,7 @@ export default function OwnerStatements() {
                   ))}
                 </TableRow>
               ))
-            ) : !(statements?.length) ? (
+            ) : !statementsArray.length ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-gray-400 py-14 text-sm">
                   <FileText className="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -197,7 +200,7 @@ export default function OwnerStatements() {
                 </TableCell>
               </TableRow>
             ) : (
-              statements.map((s) => {
+              statementsArray.map((s) => {
                 const charged = parseFloat(s.rentCharged);
                 const received = parseFloat(s.rentReceived);
                 const exp = parseFloat(s.expenses);
@@ -209,11 +212,11 @@ export default function OwnerStatements() {
                     <TableCell className="text-gray-600">{fmtPeriod(s.period)}</TableCell>
                     <TableCell className="text-right text-blue-600 font-medium">{fmtKGS(charged)}</TableCell>
                     <TableCell className="text-right">
-                      <span className="text-green-600 font-medium">{fmtKGS(received)}</span>
+                      <span className="text-emerald-600 font-medium">{fmtKGS(received)}</span>
                       <span className="text-xs text-gray-400 ml-1">{collectionPct}%</span>
                     </TableCell>
-                    <TableCell className="text-right text-red-500">{fmtKGS(exp)}</TableCell>
-                    <TableCell className={`text-right font-semibold ${net >= 0 ? "text-green-700" : "text-red-600"}`}>
+                    <TableCell className="text-right text-rose-600">{fmtKGS(exp)}</TableCell>
+                    <TableCell className={`text-right font-semibold ${net >= 0 ? "text-emerald-700" : "text-rose-600"}`}>
                       {net >= 0 ? "+" : ""}{fmtKGS(net)}
                     </TableCell>
                     <TableCell className="text-xs text-gray-400">
@@ -234,7 +237,7 @@ export default function OwnerStatements() {
 
       {/* Reconciliation act modal */}
       {selectedStatement && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 pt-12 overflow-auto">
+        <div className="fixed inset-0 bg-slate-950/50 z-50 flex items-start justify-center p-4 pt-12 overflow-auto">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b no-print">
               <h2 className="font-bold text-gray-900">Акт сверки расчётов</h2>
@@ -271,9 +274,9 @@ export default function OwnerStatements() {
                     <td className="px-3 py-3 text-gray-700 font-medium">Начислено аренды</td>
                     <td className="px-3 py-3 text-right font-bold text-blue-700">{fmtKGS(selectedStatement.rentCharged)}</td>
                   </tr>
-                  <tr className="border-b bg-green-50/30">
+                  <tr className="border-b bg-emerald-50/30">
                     <td className="px-3 py-3 text-gray-700">Оплачено (собрано)</td>
-                    <td className="px-3 py-3 text-right font-bold text-green-700">+{fmtKGS(selectedStatement.rentReceived)}</td>
+                    <td className="px-3 py-3 text-right font-bold text-emerald-700">+{fmtKGS(selectedStatement.rentReceived)}</td>
                   </tr>
                   <tr className="border-b">
                     <td className="px-3 py-3 text-gray-500 pl-8 text-xs">— Задолженность арендатора</td>
@@ -281,12 +284,12 @@ export default function OwnerStatements() {
                       {fmtKGS(parseFloat(selectedStatement.rentCharged) - parseFloat(selectedStatement.rentReceived))}
                     </td>
                   </tr>
-                  <tr className="border-b bg-red-50/30">
+                  <tr className="border-b bg-rose-50/30">
                     <td className="px-3 py-3 text-gray-700">Расходы по объекту</td>
-                    <td className="px-3 py-3 text-right font-bold text-red-600">-{fmtKGS(selectedStatement.expenses)}</td>
+                    <td className="px-3 py-3 text-right font-bold text-rose-600">-{fmtKGS(selectedStatement.expenses)}</td>
                   </tr>
                   {/* Expense breakdown from rental expenses */}
-                  {expenses
+                  {expensesArray
                     .filter((e: any) => {
                       const [year, month] = selectedStatement.period.split("-");
                       const eDate = e.expenseDate || e.createdAt || "";
@@ -295,12 +298,12 @@ export default function OwnerStatements() {
                     .map((e: any) => (
                       <tr key={e.id} className="border-b text-xs">
                         <td className="px-3 py-2 text-gray-400 pl-8">— {e.description || e.category || "Расход"}</td>
-                        <td className="px-3 py-2 text-right text-red-400">{fmtKGS(e.amount)}</td>
+                        <td className="px-3 py-2 text-right text-rose-600">{fmtKGS(e.amount)}</td>
                       </tr>
                     ))}
                   <tr className="bg-gray-100 border-t-2">
                     <td className="px-3 py-3 font-bold text-gray-900">ЧИСТЫЙ ДОХОД</td>
-                    <td className={`px-3 py-3 text-right font-bold text-lg ${parseFloat(selectedStatement.netIncome) >= 0 ? "text-green-700" : "text-red-600"}`}>
+                    <td className={`px-3 py-3 text-right font-bold text-lg ${parseFloat(selectedStatement.netIncome) >= 0 ? "text-emerald-700" : "text-rose-600"}`}>
                       {parseFloat(selectedStatement.netIncome) >= 0 ? "+" : ""}{fmtKGS(selectedStatement.netIncome)}
                     </td>
                   </tr>
@@ -330,3 +333,4 @@ export default function OwnerStatements() {
     </div>
   );
 }
+

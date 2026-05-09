@@ -42,7 +42,7 @@ function WorkerDialog({ worker, projects, onClose, onSaved }: { worker: Worker |
     if (!form.fullName) { toast({ title: "Укажите ФИО", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/construction/workers/${init!.id}` : `${BASE}/api/construction/workers`;
+      const url = isEdit ? `${BASE}/construction/workers/${init!.id}` : `${BASE}/construction/workers`;
       await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: ah(), body: JSON.stringify({ ...form, projectId: form.projectId ? parseInt(form.projectId) : null }) });
       toast({ title: isEdit ? "Рабочий обновлён" : "Рабочий добавлен" });
       onSaved(); onClose();
@@ -91,7 +91,7 @@ function WorkerDialog({ worker, projects, onClose, onSaved }: { worker: Worker |
           <div><Label>Заметки</Label><Input className="mt-1" value={form.notes} onChange={e => set("notes", e.target.value)} /></div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -113,7 +113,7 @@ export default function ConstructionWorkers() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить рабочего?")) return;
-    await fetch(`${BASE}/api/construction/workers/${id}`, { method: "DELETE", headers: ah() });
+    await fetch(`${BASE}/construction/workers/${id}`, { method: "DELETE", headers: ah() });
     toast({ title: "Удалено" });
     qc.invalidateQueries({ queryKey: ["construction-workers"] });
   };
@@ -125,15 +125,15 @@ export default function ConstructionWorkers() {
           <h1 className="text-2xl font-bold text-gray-900">Бригады и рабочие</h1>
           <p className="text-sm text-gray-500 mt-0.5">{workers.filter(w => w.status === "active").length} активных рабочих</p>
         </div>
-        <Button onClick={() => setDialog("new")} className="bg-orange-500 hover:bg-orange-600 gap-2">
+        <Button onClick={() => setDialog("new")} className="bg-amber-500 hover:bg-orange-600 gap-2">
           <Plus className="w-4 h-4" /> Добавить
         </Button>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Всего рабочих", value: workers.length, color: "text-orange-500" },
-          { label: "Активных", value: workers.filter(w => w.status === "active").length, color: "text-green-600" },
+          { label: "Всего рабочих", value: workers.length, color: "text-amber-600" },
+          { label: "Активных", value: workers.filter(w => w.status === "active").length, color: "text-emerald-600" },
           { label: "Бригад", value: new Set(workers.map(w => w.brigade).filter(Boolean)).size, color: "text-blue-600" },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4">
@@ -167,7 +167,7 @@ export default function ConstructionWorkers() {
                 <TableRow key={w.id} className="hover:bg-gray-50">
                   <TableCell>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 text-xs font-bold flex-shrink-0">{w.fullName.charAt(0)}</div>
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold flex-shrink-0">{w.fullName.charAt(0)}</div>
                       <div>
                         <p className="font-medium text-sm text-gray-900">{w.fullName}</p>
                         {w.phone && <div className="flex items-center gap-1 text-xs text-gray-400"><Phone className="w-3 h-3" />{w.phone}</div>}
@@ -178,11 +178,11 @@ export default function ConstructionWorkers() {
                   <TableCell className="text-sm text-gray-600">{w.specialization || "—"}</TableCell>
                   <TableCell className="text-sm text-gray-500">{w.projectId ? projectMap[w.projectId] || "—" : "—"}</TableCell>
                   <TableCell className="text-right text-sm font-medium text-gray-800">{w.dailyRate ? `${parseFloat(w.dailyRate).toLocaleString("ru-KG")} ₸` : "—"}</TableCell>
-                  <TableCell><Badge className={w.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"} variant="secondary">{w.status === "active" ? "Активен" : "Неактивен"}</Badge></TableCell>
+                  <TableCell><Badge className={w.status === "active" ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-white"} variant="secondary">{w.status === "active" ? "Активен" : "Неактивен"}</Badge></TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-center">
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDialog(w)}><Edit2 className="w-3.5 h-3.5 text-gray-400" /></Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(w.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" /></Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(w.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -195,3 +195,4 @@ export default function ConstructionWorkers() {
     </div>
   );
 }
+

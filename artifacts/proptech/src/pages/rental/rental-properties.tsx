@@ -1,12 +1,12 @@
-import { useListRentalProperties } from "@workspace/api-client-react";
+import { useListRentalProperties } from "@/api-client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const statusColors: Record<string, string> = {
-  free: "bg-green-100 text-green-800",
+  free: "bg-emerald-100 text-emerald-800",
   rented: "bg-blue-100 text-blue-800",
-  overdue: "bg-red-100 text-red-800",
+  overdue: "bg-rose-100 text-rose-800",
   archived: "bg-gray-100 text-gray-800",
 };
 
@@ -23,6 +23,7 @@ function formatCurrency(amount: number, currency: string) {
 
 export default function RentalProperties() {
   const { data: properties, isLoading } = useListRentalProperties();
+  const propertiesArray = Array.isArray(properties) ? properties : [];
 
   return (
     <div className="p-6 space-y-4">
@@ -53,14 +54,14 @@ export default function RentalProperties() {
                   ))}
                 </TableRow>
               ))
-            ) : !properties?.length ? (
+            ) : !propertiesArray.length ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Объекты не найдены
                 </TableCell>
               </TableRow>
             ) : (
-              properties.map((p) => (
+              propertiesArray.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.projectName}</TableCell>
                   <TableCell>{p.unitNumber}</TableCell>
@@ -86,3 +87,4 @@ export default function RentalProperties() {
     </div>
   );
 }
+

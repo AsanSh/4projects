@@ -66,24 +66,24 @@ export default function CashflowReport() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="w-5 h-5 text-green-500" />
+            <TrendingUp className="w-5 h-5 text-emerald-600" />
             <p className="text-sm text-gray-500">Поступления</p>
           </div>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(summary?.totalInflow ?? 0)}</p>
+          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(summary?.totalInflow ?? 0)}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingDown className="w-5 h-5 text-red-500" />
+            <TrendingDown className="w-5 h-5 text-rose-600" />
             <p className="text-sm text-gray-500">Расходы</p>
           </div>
-          <p className="text-2xl font-bold text-red-500">{formatCurrency(summary?.totalOutflow ?? 0)}</p>
+          <p className="text-2xl font-bold text-rose-600">{formatCurrency(summary?.totalOutflow ?? 0)}</p>
         </div>
-        <div className={cn("rounded-xl border p-5", (summary?.netCashflow ?? 0) >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200")}>
+        <div className={cn("rounded-xl border p-5", (summary?.netCashflow ?? 0) >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200")}>
           <div className="flex items-center gap-3 mb-2">
             <Activity className="w-5 h-5 text-gray-500" />
             <p className="text-sm text-gray-500">Чистый поток</p>
           </div>
-          <p className={cn("text-2xl font-bold", (summary?.netCashflow ?? 0) >= 0 ? "text-green-700" : "text-red-700")}>
+          <p className={cn("text-2xl font-bold", (summary?.netCashflow ?? 0) >= 0 ? "text-emerald-700" : "text-rose-700")}>
             {formatCurrency(summary?.netCashflow ?? 0)}
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function CashflowReport() {
                   </div>
                 </div>
                 <div className="w-24 text-right flex-shrink-0">
-                  <span className={cn("text-xs font-medium", row.net >= 0 ? "text-green-600" : "text-red-500")}>
+                  <span className={cn("text-xs font-medium", row.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
                     {row.net >= 0 ? "+" : ""}{formatCurrency(row.net)}
                   </span>
                 </div>
@@ -140,7 +140,7 @@ export default function CashflowReport() {
                   <p className="text-sm font-medium text-gray-800">{formatDate(p.paymentDate)}</p>
                   <p className="text-xs text-gray-400">{p.paymentMethod || "Без метода"}</p>
                 </div>
-                <span className="text-sm font-semibold text-green-600">{formatCurrency(parseFloat(p.amount))}</span>
+                <span className="text-sm font-semibold text-emerald-600">{formatCurrency(parseFloat(p.amount))}</span>
               </div>
             ))}
             {(recentPayments ?? []).length === 0 && (
@@ -160,7 +160,7 @@ export default function CashflowReport() {
                   <p className="text-sm font-medium text-gray-800">{e.description || "Расход"}</p>
                   <p className="text-xs text-gray-400">{formatDate(e.expenseDate)}</p>
                 </div>
-                <span className="text-sm font-semibold text-red-500">{formatCurrency(parseFloat(e.amount))}</span>
+                <span className="text-sm font-semibold text-rose-600">{formatCurrency(parseFloat(e.amount))}</span>
               </div>
             ))}
             {(recentExpenses ?? []).length === 0 && (

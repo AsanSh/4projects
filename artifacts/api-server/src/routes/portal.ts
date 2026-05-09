@@ -3,9 +3,9 @@ import { eq, and } from "drizzle-orm";
 import {
   db, usersTable, investorsTable, investmentsTable, distributionsTable,
   propertiesTable, tenantsTable, leaseContractsTable, paymentsTable, accrualsTable
-} from "@workspace/db";
+} from "../lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
-import { hashPassword } from "./auth";
+import { hashPassword, validatePassword } from "../lib/security";
 
 const router: ReturnType<typeof Router> = Router();
 
@@ -32,10 +32,16 @@ router.post("/portal/create-investor-account", requireAuth, async (req: Authenti
     res.status(409).json({ error: "Email уже зарегистрирован" }); return;
   }
 
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    res.status(400).json({ error: passwordValidation.error });
+    return;
+  }
+
   const [user] = await db.insert(usersTable).values({
     companyId: req.companyId!,
     email,
-    passwordHash: hashPassword(password),
+    passwordHash: await hashPassword(password),
     firstName,
     lastName,
     role: "investor",
@@ -67,10 +73,16 @@ router.post("/portal/create-tenant-account", requireAuth, async (req: Authentica
     res.status(409).json({ error: "Email уже зарегистрирован" }); return;
   }
 
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    res.status(400).json({ error: passwordValidation.error });
+    return;
+  }
+
   const [user] = await db.insert(usersTable).values({
     companyId: req.companyId!,
     email,
-    passwordHash: hashPassword(password),
+    passwordHash: await hashPassword(password),
     firstName,
     lastName,
     role: "tenant",

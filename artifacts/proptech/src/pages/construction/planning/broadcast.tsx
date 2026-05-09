@@ -30,8 +30,8 @@ export default function ConstructionBroadcast() {
   const CHANNELS = [
     { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, color: "text-emerald-500" },
     { id: "telegram", label: "Telegram", icon: Send, color: "text-blue-500" },
-    { id: "email", label: "Email", icon: Mail, color: "text-orange-500" },
-    { id: "sms", label: "SMS", icon: Phone, color: "text-purple-500" },
+    { id: "email", label: "Email", icon: Mail, color: "text-amber-600" },
+    { id: "sms", label: "SMS", icon: Phone, color: "text-blue-500" },
   ];
 
   const LOG = [
@@ -75,8 +75,8 @@ export default function ConstructionBroadcast() {
                     const Icon = ch.icon;
                     return (
                       <button key={ch.id} onClick={() => setChannel(ch.id)}
-                        className={`flex flex-col items-center py-2 rounded-lg border text-xs transition-all ${channel === ch.id ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:border-gray-300"}`}>
-                        <Icon className={`w-4 h-4 mb-0.5 ${channel === ch.id ? "text-orange-500" : ch.color}`} />
+                        className={`flex flex-col items-center py-2 rounded-lg border text-xs transition-all ${channel === ch.id ? "border-orange-400 bg-amber-50" : "border-gray-200 hover:border-gray-300"}`}>
+                        <Icon className={`w-4 h-4 mb-0.5 ${channel === ch.id ? "text-amber-600" : ch.color}`} />
                         {ch.label}
                       </button>
                     );
@@ -101,7 +101,7 @@ export default function ConstructionBroadcast() {
                 </div>
               </div>
 
-              <Button className="w-full bg-orange-500 hover:bg-orange-600" disabled={activeContracts.length === 0}>
+              <Button className="w-full bg-amber-500 hover:bg-orange-600" disabled={activeContracts.length === 0}>
                 <Send className="w-4 h-4 mr-2" />
                 Отправить {activeContracts.length > 0 ? `(${activeContracts.length} получателей)` : ""}
               </Button>

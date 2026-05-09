@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User } from "@workspace/api-client-react";
-import { useGetMe, setAuthTokenGetter } from "@workspace/api-client-react";
+import { User } from "@/api-client";
+import { useGetMe, setAuthTokenGetter } from "@/api-client";
 
 interface AuthContextType {
   user: User | null;
@@ -24,21 +24,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token]);
 
-  const { data: user, isLoading, isError } = useGetMe({
+  const { data: user, isLoading, isError, refetch } = useGetMe({
     query: {
       enabled: !!token,
       retry: false,
+      staleTime: 0, // Don't cache
+      cacheTime: 0, // Don't keep in cache
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
     }
   });
 
   useEffect(() => {
+    if (user) {
+      console.log("AuthProvider - User loaded successfully:", {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        companyId: user.companyId
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (isError) {
+      console.error("AuthProvider - Auth error, clearing token");
       setToken(null);
     }
   }, [isError]);
 
+  useEffect(() => {
+    if (token && !isLoading && !user && !isError) {
+      console.warn("AuthProvider - Token exists but no user data. Refetching...");
+      refetch();
+    }
+  }, [token, isLoading, user, isError, refetch]);
+
   const login = (newToken: string) => {
+    console.log("AuthProvider - Login called with new token");
     setToken(newToken);
+    // Force refetch user data after setting token
+    setTimeout(() => {
+      refetch();
+    }, 100);
   };
 
   const logout = () => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { useLogin } from "@workspace/api-client-react";
+import { useLogin } from "@/api-client";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export default function Login() {
         style={{ background: "linear-gradient(160deg, #1e3a5f 0%, #0d1f3c 100%)" }}
       >
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-blue-500 rounded-xl flex items-center justify-center">
+          <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center">
             <Building2 className="h-6 w-6 text-white" />
           </div>
           <div>

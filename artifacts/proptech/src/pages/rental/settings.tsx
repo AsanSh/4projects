@@ -45,17 +45,17 @@ const TAX_REGIMES = [
 
 const DOC_TEMPLATES: { id: string; Icon: React.ElementType; color: string; label: string; desc: string }[] = [
   { id: "lease", Icon: FileSignature, color: "text-blue-600 bg-blue-50", label: "Договор аренды", desc: "Стандартный договор аренды помещения" },
-  { id: "act_handover", Icon: ClipboardCheck, color: "text-green-600 bg-green-50", label: "Акт приёма-передачи", desc: "Приём-передача объекта арендатору" },
+  { id: "act_handover", Icon: ClipboardCheck, color: "text-emerald-600 bg-emerald-50", label: "Акт приёма-передачи", desc: "Приём-передача объекта арендатору" },
   { id: "invoice", Icon: Receipt, color: "text-amber-600 bg-amber-50", label: "Счёт на оплату", desc: "Счёт за аренду с реквизитами" },
-  { id: "reconciliation", Icon: FileBarChart, color: "text-purple-600 bg-purple-50", label: "Акт сверки расчётов", desc: "Сводный акт по начислениям и платежам" },
-  { id: "termination", Icon: XCircle, color: "text-red-600 bg-red-50", label: "Соглашение о расторжении", desc: "Досрочное расторжение договора аренды" },
+  { id: "reconciliation", Icon: FileBarChart, color: "text-blue-600 bg-blue-50", label: "Акт сверки расчётов", desc: "Сводный акт по начислениям и платежам" },
+  { id: "termination", Icon: XCircle, color: "text-rose-600 bg-rose-50", label: "Соглашение о расторжении", desc: "Досрочное расторжение договора аренды" },
   { id: "addendum", Icon: FilePlus2, color: "text-indigo-600 bg-indigo-50", label: "Доп. соглашение", desc: "Изменение условий действующего договора" },
 ];
 
 const CHANNEL_INFO: Record<string, { icon: React.ElementType; color: string; requirements: string[]; note: string }> = {
   sms: {
     icon: Phone,
-    color: "text-green-600",
+    color: "text-emerald-600",
     requirements: [
       "API-ключ SMS-провайдера (МегаКом, О!, Beeline KG)",
       "Зарегистрированное имя отправителя (Sender ID)",
@@ -65,7 +65,7 @@ const CHANNEL_INFO: Record<string, { icon: React.ElementType; color: string; req
   },
   whatsapp: {
     icon: MessageCircle,
-    color: "text-green-500",
+    color: "text-emerald-600",
     requirements: [
       "WhatsApp Business API аккаунт",
       "Зарегистрированный номер телефона бизнеса",
@@ -85,7 +85,7 @@ const CHANNEL_INFO: Record<string, { icon: React.ElementType; color: string; req
   },
   all: {
     icon: Bell,
-    color: "text-purple-600",
+    color: "text-blue-600",
     requirements: [
       "Настройки для всех трёх каналов: SMS, WhatsApp, Email",
     ],
@@ -431,3 +431,4 @@ export default function RentalSettings() {
     </div>
   );
 }
+

@@ -32,13 +32,17 @@ export default function RentalDebt() {
     queryFn: () => api.get("/rental/tenants").then(r => r.data),
   });
 
+  const accrualsArray = Array.isArray(accruals) ? accruals : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+  const tenantsArray = Array.isArray(tenants) ? tenants : [];
+
   const today = new Date().toISOString().split("T")[0];
 
-  const overdue = accruals
+  const overdue = accrualsArray
     .filter(a => parseFloat(a.balance || "0") > 0 && a.dueDate < today)
     .map(a => {
-      const contract = contracts.find((c: any) => c.id === a.leaseContractId);
-      const tenant = contract ? tenants.find((t: any) => t.id === contract.tenantId) : null;
+      const contract = contractsArray.find((c: any) => c.id === a.leaseContractId);
+      const tenant = contract ? tenantsArray.find((t: any) => t.id === contract.tenantId) : null;
       const days = daysOverdue(a.dueDate);
       return { ...a, contract, tenant, days };
     })
@@ -53,14 +57,14 @@ export default function RentalDebt() {
     })
     .sort((a, b) => b.days - a.days);
 
-  const totalDebt = overdue.reduce((s, a) => s + parseFloat(a.balance || "0"), 0);
+  const totalDebt = overdue.reduce((s, a) => s + (parseFloat(a.balance || "0") || 0), 0);
   const critical = overdue.filter(a => a.days > 30).length;
   const mild = overdue.filter(a => a.days <= 10).length;
 
   function debtBadge(days: number) {
-    if (days > 60) return <Badge className="bg-red-100 text-red-800">Критично 60+ дн.</Badge>;
-    if (days > 30) return <Badge className="bg-orange-100 text-orange-800">30+ дн.</Badge>;
-    if (days > 14) return <Badge className="bg-yellow-100 text-yellow-800">14+ дн.</Badge>;
+    if (days > 60) return <Badge className="bg-rose-100 text-rose-800">Критично 60+ дн.</Badge>;
+    if (days > 30) return <Badge className="bg-amber-100 text-amber-800">30+ дн.</Badge>;
+    if (days > 14) return <Badge className="bg-amber-100 text-amber-800">14+ дн.</Badge>;
     return <Badge className="bg-blue-100 text-blue-800">до 14 дн.</Badge>;
   }
 
@@ -82,21 +86,21 @@ export default function RentalDebt() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingDown className="w-4 h-4 text-red-500" />
+            <TrendingDown className="w-4 h-4 text-rose-600" />
             <span className="text-sm text-gray-500">Общий долг</span>
           </div>
-          <p className="text-xl font-bold text-red-600">{fmtFull(totalDebt)}</p>
+          <p className="text-xl font-bold text-rose-700">{fmtFull(totalDebt)}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="w-4 h-4 text-orange-500" />
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
             <span className="text-sm text-gray-500">Критичных (30+ дн.)</span>
           </div>
-          <p className="text-xl font-bold text-orange-600">{critical}</p>
+          <p className="text-xl font-bold text-amber-600">{critical}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Clock className="w-4 h-4 text-blue-500" />
+            <Clock className="w-4 h-4 text-blue-600" />
             <span className="text-sm text-gray-500">Недавних (до 10 дн.)</span>
           </div>
           <p className="text-xl font-bold text-blue-600">{mild}</p>
@@ -133,7 +137,7 @@ export default function RentalDebt() {
                 </td>
                 <td className="p-3 text-gray-600">{a.period}</td>
                 <td className="p-3 text-right text-gray-700">{fmtFull(a.amount)}</td>
-                <td className="p-3 text-right font-semibold text-red-600">{fmtFull(a.balance)}</td>
+                <td className="p-3 text-right font-semibold text-rose-700">{fmtFull(a.balance)}</td>
                 <td className="p-3 text-gray-600">
                   {new Date(a.dueDate).toLocaleDateString("ru-KG")}
                 </td>

@@ -3,7 +3,7 @@ import {
   useListExpenses,
   useListProperties,
   getListExpensesQueryKey,
-} from "@workspace/api-client-react";
+} from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
@@ -44,12 +44,15 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: properties } = useListProperties();
+  const propertiesArray = Array.isArray(properties) ? properties : [];
   const [loading, setLoading] = useState(false);
 
   const { data: accounts = [] } = useQuery<any[]>({
     queryKey: ["rental-accounts"],
     queryFn: () => api.get("/rental/accounts").then(r => r.data),
   });
+
+  const accountsArray = Array.isArray(accounts) ? accounts : [];
 
   const [formData, setFormData] = useState({
     propertyId: "",
@@ -98,7 +101,7 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
                 <SelectValue placeholder="Выберите объект" />
               </SelectTrigger>
               <SelectContent>
-                {(properties || []).map((p) => (
+                {propertiesArray.map((p) => (
                   <SelectItem key={p.id} value={String(p.id)}>
                     {p.projectName} — {p.unitNumber}
                   </SelectItem>
@@ -154,7 +157,7 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
               <SelectTrigger className="mt-1"><SelectValue placeholder="Выберите счёт (необязательно)" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">— Без привязки к счёту —</SelectItem>
-                {(accounts as any[]).map((a: any) => (
+                {accountsArray.map((a: any) => (
                   <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -182,6 +185,7 @@ function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
 
 export default function Expenses() {
   const { data: expenses, isLoading } = useListExpenses();
+  const expensesArray = Array.isArray(expenses) ? expenses : [];
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
@@ -217,14 +221,14 @@ export default function Expenses() {
                   ))}
                 </TableRow>
               ))
-            ) : !expenses?.length ? (
+            ) : !expensesArray.length ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Расходы не найдены
                 </TableCell>
               </TableRow>
             ) : (
-              expenses.map((expense) => (
+              expensesArray.map((expense) => (
                 <TableRow key={expense.id}>
                   <TableCell>Объект #{expense.propertyId}</TableCell>
                   <TableCell>{categoryLabels[expense.category] || expense.category}</TableCell>
@@ -242,3 +246,4 @@ export default function Expenses() {
     </div>
   );
 }
+

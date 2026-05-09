@@ -22,8 +22,8 @@ const UNITS = ["м³", "м²", "м.п.", "кг", "т", "шт", "л", "упак",
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
   planned: { label: "Запланировано", color: "bg-gray-100 text-gray-700" },
   ordered: { label: "Заказано", color: "bg-blue-100 text-blue-700" },
-  delivered: { label: "Доставлено", color: "bg-green-100 text-green-700" },
-  used: { label: "Использовано", color: "bg-purple-100 text-purple-700" },
+  delivered: { label: "Доставлено", color: "bg-emerald-100 text-emerald-700" },
+  used: { label: "Использовано", color: "bg-blue-100 text-blue-700" },
 };
 
 interface Material {
@@ -55,7 +55,7 @@ function MaterialDialog({ material, projects, onClose, onSaved }: { material: Ma
     if (!form.name) { toast({ title: "Укажите название", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/construction/materials/${init!.id}` : `${BASE}/api/construction/materials`;
+      const url = isEdit ? `${BASE}/construction/materials/${init!.id}` : `${BASE}/construction/materials`;
       await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: ah(), body: JSON.stringify({ ...form, projectId: form.projectId ? parseInt(form.projectId) : null }) });
       toast({ title: isEdit ? "Обновлено" : "Материал добавлен" });
       onSaved(); onClose();
@@ -105,7 +105,7 @@ function MaterialDialog({ material, projects, onClose, onSaved }: { material: Ma
             </div>
           </div>
           {total > 0 && (
-            <div className="bg-orange-50 p-2.5 rounded-lg text-sm text-orange-700 font-medium">
+            <div className="bg-amber-50 p-2.5 rounded-lg text-sm text-amber-700 font-medium">
               Итого: {fmtNum(total)} {form.currency}
             </div>
           )}
@@ -115,7 +115,7 @@ function MaterialDialog({ material, projects, onClose, onSaved }: { material: Ma
           <div><Label>Заметки</Label><Input className="mt-1" value={form.notes} onChange={e => set("notes", e.target.value)} /></div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -141,7 +141,7 @@ export default function ConstructionMaterials() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить материал?")) return;
-    await fetch(`${BASE}/api/construction/materials/${id}`, { method: "DELETE", headers: ah() });
+    await fetch(`${BASE}/construction/materials/${id}`, { method: "DELETE", headers: ah() });
     toast({ title: "Удалено" });
     qc.invalidateQueries({ queryKey: ["construction-materials"] });
   };
@@ -150,19 +150,19 @@ export default function ConstructionMaterials() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-gray-900">Материалы</h1><p className="text-sm text-gray-500 mt-0.5">Стройматериалы и поставки</p></div>
-        <Button onClick={() => setDialog("new")} className="bg-orange-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" /> Добавить материал</Button>
+        <Button onClick={() => setDialog("new")} className="bg-amber-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" /> Добавить материал</Button>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500 mb-1">Позиций</p><p className="text-2xl font-bold text-orange-500">{materials.length}</p></div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500 mb-1">Доставлено</p><p className="text-2xl font-bold text-green-600">{materials.filter(m => m.status === "delivered").length}</p></div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500 mb-1">Позиций</p><p className="text-2xl font-bold text-amber-600">{materials.length}</p></div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500 mb-1">Доставлено</p><p className="text-2xl font-bold text-emerald-600">{materials.filter(m => m.status === "delivered").length}</p></div>
         <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500 mb-1">Общая сумма</p><p className="text-xl font-bold text-blue-600">{fmtNum(totalCost)} ₸</p></div>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>Все</button>
+        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>Все</button>
         {projects.map(p => (
-          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{p.name}</button>
+          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>{p.name}</button>
         ))}
       </div>
 
@@ -189,7 +189,7 @@ export default function ConstructionMaterials() {
               ) : filtered.map(m => (
                 <TableRow key={m.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium text-sm text-gray-900">{m.name}</TableCell>
-                  <TableCell><Badge variant="secondary" className="text-[10px] bg-orange-50 text-orange-700">{m.category || "—"}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700">{m.category || "—"}</Badge></TableCell>
                   <TableCell className="text-right text-sm text-gray-600">{fmtNum(m.quantity)} {m.unit}</TableCell>
                   <TableCell className="text-right text-sm text-gray-600">{fmtNum(m.unitPrice)} ₸</TableCell>
                   <TableCell className="text-right text-sm font-semibold text-gray-800">{fmtNum(m.totalPrice)} ₸</TableCell>
@@ -197,7 +197,7 @@ export default function ConstructionMaterials() {
                   <TableCell>
                     <div className="flex gap-1 justify-center">
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDialog(m)}><Edit2 className="w-3.5 h-3.5 text-gray-400" /></Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(m.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" /></Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(m.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -210,3 +210,4 @@ export default function ConstructionMaterials() {
     </div>
   );
 }
+

@@ -77,7 +77,7 @@ function ExpenseDialog({ expense, projects, contractors, onClose, onSaved }: {
     if (!form.description || !form.amount || !form.projectId) { toast({ title: "Заполните обязательные поля", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/construction/expenses/${init!.id}` : `${BASE}/api/construction/expenses`;
+      const url = isEdit ? `${BASE}/construction/expenses/${init!.id}` : `${BASE}/construction/expenses`;
       await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: ah(), body: JSON.stringify({ ...form, projectId: parseInt(form.projectId), contractorId: form.contractorId ? parseInt(form.contractorId) : null }) });
       toast({ title: isEdit ? "Расход обновлён" : "Расход добавлен" });
       onSaved(); onClose();
@@ -95,7 +95,7 @@ function ExpenseDialog({ expense, projects, contractors, onClose, onSaved }: {
               <Label>Проект *</Label>
               <Select value={form.projectId} onValueChange={v => set("projectId", v)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{projects.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{projectsArray.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
@@ -132,7 +132,7 @@ function ExpenseDialog({ expense, projects, contractors, onClose, onSaved }: {
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Не указан" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Не указан</SelectItem>
-                  {contractors.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.fullName}</SelectItem>)}
+                  {contractorsArray.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.fullName}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -146,12 +146,12 @@ function ExpenseDialog({ expense, projects, contractors, onClose, onSaved }: {
             <div className="col-span-2"><Label>Дата</Label><Input className="mt-1" type="date" value={form.date} onChange={e => set("date", e.target.value)} /></div>
           </div>
           {amountKgs > 0 && form.currency !== "KGS" && (
-            <div className="bg-orange-50 p-2.5 rounded-lg text-sm text-orange-700 font-medium">≈ {fmtKgs(amountKgs)}</div>
+            <div className="bg-amber-50 p-2.5 rounded-lg text-sm text-amber-700 font-medium">≈ {fmtKgs(amountKgs)}</div>
           )}
           <div><Label>Заметки</Label><Input className="mt-1" value={form.notes} onChange={e => set("notes", e.target.value)} /></div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -172,11 +172,14 @@ export default function ConstructionExpenses() {
     queryFn: () => api.get("/construction/expenses", { params: projectFilter !== "all" ? { projectId: projectFilter } : undefined }).then(r => r.data),
   });
 
-  const totalKgs = expenses.reduce((s, e) => s + parseFloat(e.amountKgs || e.amount), 0);
+  const expensesArray = Array.isArray(expenses) ? expenses : [];
+  const projectsArray = Array.isArray(projects) ? projects : [];
+  const contractorsArray = Array.isArray(contractors) ? contractors : [];
+  const totalKgs = expensesArray.reduce((s, e) => s + parseFloat(e.amountKgs || e.amount), 0);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить расход?")) return;
-    await fetch(`${BASE}/api/construction/expenses/${id}`, { method: "DELETE", headers: ah() });
+    await fetch(`${BASE}/construction/expenses/${id}`, { method: "DELETE", headers: ah() });
     toast({ title: "Удалено" });
     qc.invalidateQueries({ queryKey: ["construction-expenses"] });
   };
@@ -188,18 +191,18 @@ export default function ConstructionExpenses() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-gray-900">Расходы строительства</h1><p className="text-sm text-gray-500 mt-0.5">Фактические затраты по проектам</p></div>
-        <Button onClick={() => setDialog("new")} className="bg-orange-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" /> Добавить расход</Button>
+        <Button onClick={() => setDialog("new")} className="bg-amber-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" /> Добавить расход</Button>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500 mb-1">Всего расходов</p><p className="text-2xl font-bold text-orange-500">{expenses.length}</p></div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 col-span-2"><p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><TrendingDown className="w-3.5 h-3.5" /> Общая сумма в KGS</p><p className="text-xl font-bold text-red-500">{fmtKgs(totalKgs)}</p></div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500 mb-1">Всего расходов</p><p className="text-2xl font-bold text-amber-600">{expensesArray.length}</p></div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 col-span-2"><p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><TrendingDown className="w-3.5 h-3.5" /> Общая сумма в KGS</p><p className="text-xl font-bold text-rose-600">{fmtKgs(totalKgs)}</p></div>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>Все</button>
-        {projects.map(p => (
-          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{p.name}</button>
+        <button onClick={() => setProjectFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === "all" ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>Все</button>
+        {projectsArray.map(p => (
+          <button key={p.id} onClick={() => setProjectFilter(String(p.id))} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectFilter === String(p.id) ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>{p.name}</button>
         ))}
       </div>
 
@@ -220,20 +223,20 @@ export default function ConstructionExpenses() {
           </TableHeader>
           <TableBody>
             {isLoading ? Array.from({length:5}).map((_,i) => <TableRow key={i}>{Array.from({length:9}).map((_,j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>) :
-              expenses.length === 0 ? (
+              expensesArray.length === 0 ? (
                 <TableRow><TableCell colSpan={9} className="text-center py-12 text-gray-400"><Receipt className="w-10 h-10 mx-auto mb-2 opacity-20" /><p>Расходов нет</p></TableCell></TableRow>
-              ) : expenses.map(e => (
+              ) : expensesArray.map(e => (
                 <TableRow key={e.id} className="hover:bg-gray-50">
                   <TableCell className="text-sm text-gray-600 whitespace-nowrap">{new Date(e.date).toLocaleDateString("ru-KG")}</TableCell>
                   <TableCell className="text-xs text-gray-500 max-w-[100px] truncate">{e.projectName || `#${e.projectId}`}</TableCell>
-                  <TableCell><Badge variant="secondary" className="text-[10px] bg-orange-50 text-orange-700">{e.category}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700">{e.category}</Badge></TableCell>
                   <TableCell className="text-sm text-gray-800 max-w-[150px] truncate">{e.description}</TableCell>
                   <TableCell className="text-xs text-gray-500">{e.contractorName || "—"}</TableCell>
                   <TableCell className="text-right text-sm font-medium text-gray-800 whitespace-nowrap">{parseFloat(e.amount).toLocaleString("ru-KG")} {e.currency}</TableCell>
-                  <TableCell className="text-right text-sm font-semibold text-red-500 whitespace-nowrap">{fmtKgs(e.amountKgs || e.amount)}</TableCell>
+                  <TableCell className="text-right text-sm font-semibold text-rose-600 whitespace-nowrap">{fmtKgs(e.amountKgs || e.amount)}</TableCell>
                   <TableCell className="text-xs text-gray-400">{e.currency !== "KGS" ? RATE_LABELS[e.exchangeRateSource] || e.exchangeRateSource : "—"}</TableCell>
                   <TableCell className="text-center">
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(e.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" /></Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(e.id)}><Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -245,3 +248,4 @@ export default function ConstructionExpenses() {
     </div>
   );
 }
+

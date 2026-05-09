@@ -1,4 +1,4 @@
-import { useListLeaseContracts, useListAccruals, useListPayments, useListTenants, useListProperties } from "@workspace/api-client-react";
+import { useListLeaseContracts, useListAccruals, useListPayments, useListTenants, useListProperties } from "@/api-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, Users, FileText, Receipt, TrendingUp, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { Link } from "wouter";
@@ -29,10 +29,10 @@ function KpiCard({
 }) {
   const colors: Record<string, { bg: string; icon: string }> = {
     blue: { bg: "bg-blue-50", icon: "text-blue-600" },
-    green: { bg: "bg-green-50", icon: "text-green-600" },
-    yellow: { bg: "bg-yellow-50", icon: "text-yellow-600" },
-    red: { bg: "bg-red-50", icon: "text-red-500" },
-    purple: { bg: "bg-purple-50", icon: "text-purple-600" },
+    green: { bg: "bg-emerald-50", icon: "text-emerald-600" },
+    yellow: { bg: "bg-amber-50", icon: "text-amber-600" },
+    red: { bg: "bg-rose-50", icon: "text-rose-600" },
+    purple: { bg: "bg-blue-50", icon: "text-blue-600" },
   };
   const c = colors[color] || colors.blue;
   return (
@@ -62,19 +62,26 @@ export default function RentalDashboard() {
   const { data: tenants, isLoading: tenantsLoading } = useListTenants();
   const { data: properties } = useListProperties();
 
-  const activeLeases = (leases || []).filter((l) => l.status === "active");
-  const pendingAccruals = (accruals || []).filter((a) => a.status === "pending");
-  const overdueAccruals = (accruals || []).filter((a) => a.status === "overdue");
-  const totalCharged = (accruals || []).reduce((s, a) => s + parseFloat(String(a.amount)), 0);
-  const totalPaid = (payments || []).reduce((s, p) => s + parseFloat(String(p.amount)), 0);
-  const totalBalance = (accruals || []).reduce((s, a) => s + parseFloat(String(a.balance)), 0);
-  const rentedProps = (properties || []).filter((p) => p.rentalStatus === "rented").length;
+  // Безопасное преобразование данных в массивы
+  const leasesArray = Array.isArray(leases) ? leases : [];
+  const accrualsArray = Array.isArray(accruals) ? accruals : [];
+  const paymentsArray = Array.isArray(payments) ? payments : [];
+  const tenantsArray = Array.isArray(tenants) ? tenants : [];
+  const propertiesArray = Array.isArray(properties) ? properties : [];
 
-  const recentPayments = [...(payments || [])].sort(
+  const activeLeases = leasesArray.filter((l) => l.status === "active");
+  const pendingAccruals = accrualsArray.filter((a) => a.status === "pending");
+  const overdueAccruals = accrualsArray.filter((a) => a.status === "overdue");
+  const totalCharged = accrualsArray.reduce((s, a) => s + parseFloat(String(a.amount || 0)), 0);
+  const totalPaid = paymentsArray.reduce((s, p) => s + parseFloat(String(p.amount || 0)), 0);
+  const totalBalance = accrualsArray.reduce((s, a) => s + parseFloat(String(a.balance || 0)), 0);
+  const rentedProps = propertiesArray.filter((p) => p.rentalStatus === "rented").length;
+
+  const recentPayments = [...paymentsArray].sort(
     (a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
   ).slice(0, 5);
 
-  const leaseMap = Object.fromEntries((leases || []).map((l) => [l.id, l.contractNumber]));
+  const leaseMap = Object.fromEntries(leasesArray.map((l) => [l.id, l.contractNumber]));
 
   return (
     <div className="space-y-6">
@@ -88,14 +95,14 @@ export default function RentalDashboard() {
         <KpiCard
           label="Активных договоров"
           value={activeLeases.length}
-          sub={`из ${(leases || []).length} всего`}
+          sub={`из ${leasesArray.length} всего`}
           icon={FileText}
           color="blue"
           loading={leasesLoading}
         />
         <KpiCard
           label="Арендаторов"
-          value={(tenants || []).filter((t) => t.status === "active").length}
+          value={tenantsArray.filter((t) => t.status === "active").length}
           sub="активных"
           icon={Users}
           color="purple"
@@ -104,7 +111,7 @@ export default function RentalDashboard() {
         <KpiCard
           label="Сдаётся объектов"
           value={rentedProps}
-          sub={`из ${(properties || []).length} в портфеле`}
+          sub={`из ${propertiesArray.length} в портфеле`}
           icon={Building2}
           color="green"
         />
@@ -151,7 +158,7 @@ export default function RentalDashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h2 className="text-sm font-semibold text-gray-900">Ожидают подтверждения</h2>
-            <span className="bg-yellow-100 text-yellow-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
+            <span className="bg-amber-100 text-amber-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
               {pendingAccruals.length}
             </span>
           </div>
@@ -161,7 +168,7 @@ export default function RentalDashboard() {
             </div>
           ) : pendingAccruals.length === 0 ? (
             <div className="py-10 text-center text-gray-400 text-sm">
-              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-400" />
+              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-600" />
               Все начисления подтверждены
             </div>
           ) : (
@@ -172,7 +179,7 @@ export default function RentalDashboard() {
                     <p className="text-sm text-gray-800">Договор #{a.leaseContractId} — {a.period}</p>
                     <p className="text-xs text-gray-400">До {new Date(a.dueDate).toLocaleDateString("ru-KG")}</p>
                   </div>
-                  <p className="text-sm font-semibold text-yellow-600">
+                  <p className="text-sm font-semibold text-amber-600">
                     {formatCurrency(parseFloat(String(a.amount)))}
                   </p>
                 </li>
@@ -215,7 +222,7 @@ export default function RentalDashboard() {
                       {new Date(p.paymentDate).toLocaleDateString("ru-KG")}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-green-600">
+                  <p className="text-sm font-semibold text-emerald-600">
                     +{formatCurrency(parseFloat(String(p.amount)))}
                   </p>
                 </li>
@@ -261,3 +268,4 @@ export default function RentalDashboard() {
     </div>
   );
 }
+

@@ -26,11 +26,11 @@ const roleLabels: Record<string, string> = {
   accountant: "Бухгалтер",
 };
 const roleColors: Record<string, string> = {
-  admin: "bg-red-100 text-red-800",
+  admin: "bg-rose-100 text-rose-800",
   manager: "bg-blue-100 text-blue-800",
-  owner: "bg-purple-100 text-purple-800",
+  owner: "bg-blue-100 text-indigo-800",
   staff: "bg-gray-100 text-gray-700",
-  accountant: "bg-green-100 text-green-800",
+  accountant: "bg-emerald-100 text-emerald-800",
 };
 
 const AVATAR_COLORS = ["#4F46E5", "#0EA5E9", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
@@ -105,11 +105,11 @@ export default function RentalEmployees() {
         </div>
         <div className="bg-white border rounded-lg p-4">
           <p className="text-sm text-gray-500">Активных</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">{active.length}</p>
+          <p className="text-2xl font-bold text-emerald-600 mt-1">{active.length}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <p className="text-sm text-gray-500">Администраторов</p>
-          <p className="text-2xl font-bold text-red-500 mt-1">
+          <p className="text-2xl font-bold text-rose-600 mt-1">
             {users.filter(u => u.role === "admin").length}
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function RentalEmployees() {
               )}
               {!u.isActive && (
                 <div className="mt-2">
-                  <Badge className="bg-red-100 text-red-700 text-[10px]">Неактивный</Badge>
+                  <Badge className="bg-rose-100 text-rose-700 text-[10px]">Неактивный</Badge>
                 </div>
               )}
             </div>
@@ -178,7 +178,7 @@ export default function RentalEmployees() {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export default function RentalEmployees() {
                 </Select>
               </div>
 
-              {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+              {error && <p className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-lg">{error}</p>}
             </div>
 
             <div className="flex justify-end gap-2 px-5 py-4 border-t">
@@ -258,3 +258,4 @@ export default function RentalEmployees() {
     </div>
   );
 }
+

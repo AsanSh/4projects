@@ -27,7 +27,7 @@ const typeLabels: Record<string, string> = {
   individual: "Физ. лицо", company: "Юр. лицо",
 };
 const statusColors: Record<string, string> = {
-  active: "bg-green-100 text-green-800", inactive: "bg-gray-100 text-gray-600",
+  active: "bg-emerald-100 text-emerald-800", inactive: "bg-gray-100 text-gray-600",
 };
 
 interface Investor {
@@ -54,7 +54,7 @@ function InvestorDialog({ investor, onClose, onSaved }: { investor: Investor | n
     if (!form.fullName.trim()) { toast({ title: "Введите имя", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/rental/investors/${(init as Investor).id}` : `${BASE}/api/rental/investors`;
+      const url = isEdit ? `${BASE}/rental/investors/${(init as Investor).id}` : `${BASE}/rental/investors`;
       const method = isEdit ? "PATCH" : "POST";
       const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(form) });
       if (!res.ok) throw new Error("Ошибка сохранения");
@@ -138,14 +138,16 @@ export default function Investors() {
     queryFn: () => api.get("/rental/investors").then(r => r.data),
   });
 
-  const filtered = investors.filter(i =>
+  const investorsArray = Array.isArray(investors) ? investors : [];
+
+  const filtered = investorsArray.filter(i =>
     !search || i.fullName.toLowerCase().includes(search.toLowerCase()) ||
     i.phone?.includes(search) || i.email?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Удалить инвестора "${name}"?`)) return;
-    await fetch(`${BASE}/api/rental/investors/${id}`, { method: "DELETE", headers: authHeaders() });
+    await fetch(`${BASE}/rental/investors/${id}`, { method: "DELETE", headers: authHeaders() });
     toast({ title: "Инвестор удалён" });
     queryClient.invalidateQueries({ queryKey: ["investors"] });
   };
@@ -165,9 +167,9 @@ export default function Investors() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Всего инвесторов", value: investors.length, icon: Users, color: "text-blue-600" },
-          { label: "Активных", value: investors.filter(i => i.status === "active").length, icon: Users, color: "text-green-600" },
-          { label: "Физ. лиц", value: investors.filter(i => i.type === "individual").length, icon: Users, color: "text-violet-600" },
+          { label: "Всего инвесторов", value: investorsArray.length, icon: Users, color: "text-blue-600" },
+          { label: "Активных", value: investorsArray.filter(i => i.status === "active").length, icon: Users, color: "text-emerald-600" },
+          { label: "Физ. лиц", value: investorsArray.filter(i => i.type === "individual").length, icon: Users, color: "text-indigo-600" },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4">
             <p className="text-xs text-gray-500 mb-1">{s.label}</p>
@@ -219,7 +221,7 @@ export default function Investors() {
               <TableRow key={inv.id} className="hover:bg-gray-50">
                 <TableCell>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 text-xs font-semibold flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-semibold flex-shrink-0">
                       {inv.fullName.charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -261,7 +263,7 @@ export default function Investors() {
                       <Eye className="w-3.5 h-3.5 text-gray-400 hover:text-blue-500" />
                     </Button>
                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(inv.id, inv.fullName)}>
-                      <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                      <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" />
                     </Button>
                   </div>
                 </TableCell>
@@ -275,3 +277,5 @@ export default function Investors() {
     </div>
   );
 }
+
+

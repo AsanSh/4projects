@@ -2,6 +2,7 @@ import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import NotificationsPanel from "@/components/notifications-panel";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import ChatPanel from "@/components/chat-panel";
 import UserProfileDropdown from "@/components/user-profile-dropdown";
 import {
@@ -75,7 +76,7 @@ const MODULES: Module[] = [
   },
   {
     id: "rental", label: "Аренда", shortLabel: "Аренда",
-    icon: Home, color: "#3b82f6", urlPrefix: ["/rental", "/settings/categories", "/settings/periods"],
+    icon: Home, color: "#3b82f6", urlPrefix: ["/rental"],
     sections: [
       { title: "Управление", items: [
         { href: "/rental/dashboard",  label: "Дашборд",    icon: BarChart3 },
@@ -112,45 +113,22 @@ const MODULES: Module[] = [
       { title: "Администратор", items: [
         { href: "/rental/counterparties", label: "Контрагенты",       icon: Users },
         { href: "/rental/employees",      label: "Сотрудники",        icon: UserCircle },
-        { href: "/settings/categories",   label: "Категории расходов",icon: Receipt },
-        { href: "/settings/periods",      label: "Периоды учёта",     icon: CalendarDays },
         { href: "/rental/admin/log",      label: "Лог операций",      icon: Activity },
         { href: "/rental/settings",       label: "Настройки",         icon: Settings },
       ]},
     ],
   },
   {
-    id: "proptech", label: "ПропТех", shortLabel: "ПропТех",
-    icon: Building2, color: "#8b5cf6", urlPrefix: ["/proptech", "/sales", "/crm"],
+    id: "proptech", label: "CRM / Продажи", shortLabel: "CRM",
+    icon: Target, color: "#8b5cf6", urlPrefix: ["/proptech", "/sales", "/crm"],
     sections: [
-      { title: "Управление", items: [
-        { href: "/proptech/dashboard",  label: "Дашборд",   icon: LayoutDashboard },
-        { href: "/proptech/properties", label: "Объекты",   icon: Building2 },
-        { href: "/proptech/finances",   label: "Финансы",   icon: Wallet },
-        { href: "/proptech/documents",  label: "Документы", icon: FileText },
-      ]},
       { title: "CRM", items: [
-        { href: "/crm/leads",    label: "Лиды",          icon: Target },
-        { href: "/crm/pipeline", label: "Воронка",       icon: TrendingUp },
-        { href: "/crm/clients",  label: "Клиенты",       icon: Users },
-        { href: "/sales/properties", label: "На продажу",icon: Building2 },
-        { href: "/sales/contracts",  label: "Договоры",  icon: FileText },
-      ]},
-      { title: "Аналитика", items: [
-        { href: "/proptech/analytics/odds",     label: "ОДДС",             icon: BarChart3 },
-        { href: "/proptech/analytics/opu",      label: "ОПУ",              icon: LineChart },
-        { href: "/proptech/analytics/debt",     label: "Задолженность",    icon: AlertTriangle },
-        { href: "/proptech/analytics/summary",  label: "Сводка объектов",  icon: Grid3X3 },
-        { href: "/proptech/analytics/cashflow", label: "Денежный поток",   icon: TrendingUp },
-      ]},
-      { title: "Инвесторы", items: [
-        { href: "/proptech/investors",     label: "Инвесторы",       icon: Users },
-        { href: "/proptech/investments",   label: "Доли",            icon: PieChart },
-        { href: "/proptech/distributions", label: "Распределение",   icon: Coins },
-      ]},
-      { title: "Справочники", items: [
-        { href: "/proptech/counterparties", label: "Контрагенты", icon: Users },
-        { href: "/proptech/settings",       label: "Настройки",   icon: Settings },
+        { href: "/crm/dashboard",        label: "Дашборд CRM",    icon: LayoutDashboard },
+        { href: "/crm/leads",            label: "Лиды",           icon: Target },
+        { href: "/crm/clients",          label: "Клиенты",        icon: Users },
+        { href: "/crm/deals",            label: "Сделки",         icon: TrendingUp },
+        { href: "/crm/sales-contracts",  label: "Договоры",       icon: FileText },
+        { href: "/crm/sales-properties", label: "Объекты на продажу", icon: Building2 },
       ]},
     ],
   },
@@ -186,11 +164,12 @@ const MODULES: Module[] = [
     icon: Globe, color: "#6b7280", urlPrefix: ["/dashboard", "/counterparties", "/properties", "/users", "/settings", "/import", "/activity", "/companies", "/reports"],
     sections: [
       { title: "Главная", items: [
-        { href: "/dashboard",     label: "Главный дашборд",  icon: LayoutDashboard },
-        { href: "/properties",    label: "Объекты",          icon: Building2 },
-        { href: "/counterparties",label: "Контрагенты",      icon: Users },
-        { href: "/companies",     label: "Компании",         icon: Building },
-        { href: "/users",         label: "Пользователи",     icon: UserCircle },
+        { href: "/dashboard",        label: "Главный дашборд",   icon: LayoutDashboard },
+        { href: "/properties",       label: "Объекты",           icon: Building2 },
+        { href: "/properties/chess", label: "Шахматка объектов", icon: Grid3X3 },
+        { href: "/counterparties",   label: "Контрагенты",       icon: Users },
+        { href: "/companies",        label: "Компании",          icon: Building },
+        { href: "/users",            label: "Пользователи",      icon: UserCircle },
       ]},
       { title: "Отчёты", items: [
         { href: "/reports/debt",     label: "Задолженность",   icon: AlertTriangle },
@@ -199,13 +178,14 @@ const MODULES: Module[] = [
         { href: "/reports/payments", label: "История платежей",icon: Activity },
       ]},
       { title: "Система", items: [
-        { href: "/settings",            label: "Настройки",     icon: Settings },
-        { href: "/settings/legal",      label: "Юр. лица",      icon: Building },
-        { href: "/settings/accounts",   label: "Счета",         icon: Landmark },
-        { href: "/settings/roles",      label: "Роли",          icon: CheckSquare },
+        { href: "/settings",            label: "Настройки",       icon: Settings },
+        { href: "/settings/legal",      label: "Юр. лица",        icon: Building },
+        { href: "/settings/accounts",   label: "Счета",           icon: Landmark },
+        { href: "/settings/roles",      label: "Роли",            icon: CheckSquare },
         { href: "/settings/categories", label: "Статьи операций", icon: Coins },
-        { href: "/import",              label: "Импорт данных", icon: Calculator },
-        { href: "/activity",            label: "Лог действий",  icon: Activity },
+        { href: "/settings/periods",    label: "Периоды учёта",   icon: CalendarDays },
+        { href: "/import",              label: "Импорт данных",   icon: Calculator },
+        { href: "/activity",            label: "Лог действий",    icon: Activity },
       ]},
     ],
   },
@@ -227,7 +207,7 @@ const MODULE_QUICK_ACTIONS: Record<ModuleId, { label: string; href: string }[]> 
   ],
   proptech: [
     { label: "Новый лид",    href: "/crm/leads" },
-    { label: "Новый договор",href: "/sales/contracts" },
+    { label: "Новый договор",href: "/crm/sales-contracts" },
     { label: "Новый клиент", href: "/crm/clients" },
   ],
   warehouse: [
@@ -256,7 +236,10 @@ interface SectionGroupProps {
 }
 
 function SectionGroup({ section, location, defaultOpen }: SectionGroupProps) {
-  const isActive = section.items.some(i => location === i.href || location.startsWith(i.href + "/"));
+  // Find the most specific matching item (longest href that matches)
+  const matchingItems = section.items.filter(i => location === i.href || location.startsWith(i.href + "/"));
+  const bestMatch = matchingItems.sort((a, b) => b.href.length - a.href.length)[0];
+  const isActive = !!bestMatch;
   const [open, setOpen] = useState(isActive || !!defaultOpen);
 
   return (
@@ -271,7 +254,8 @@ function SectionGroup({ section, location, defaultOpen }: SectionGroupProps) {
       {open && (
         <div className="ml-1 space-y-0.5">
           {section.items.map(item => {
-            const active = location === item.href || location.startsWith(item.href + "/");
+            // Only mark as active if this is the most specific match
+            const active = bestMatch?.href === item.href;
             const Icon = item.icon;
             return (
               <Link key={item.href} href={item.href}>
@@ -319,9 +303,17 @@ export function Layout({ children }: { children: ReactNode }) {
   const ModuleIcon = activeModule.icon;
   const quickActions = MODULE_QUICK_ACTIONS[activeModuleId];
 
-  const initials = user?.firstName
+  const initials = user?.firstName && user?.lastName
+    ? (user.firstName[0] + user.lastName[0]).toUpperCase()
+    : user?.firstName
     ? user.firstName.slice(0, 2).toUpperCase()
-    : user?.email?.slice(0, 2).toUpperCase() || "АД";
+    : user?.email?.slice(0, 2).toUpperCase() || "??";
+
+  const displayName = user?.firstName && user?.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : user?.firstName || "Загрузка...";
+
+  const displayEmail = user?.email || "...";
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#F7F8FC" }}>
@@ -377,8 +369,8 @@ export function Layout({ children }: { children: ReactNode }) {
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-white text-[12px] font-medium truncate leading-none">{user?.firstName || "Администратор"}</div>
-              <div className="text-white/40 text-[10px] truncate mt-0.5">{user?.email || "admin@buildflow.kg"}</div>
+              <div className="text-white text-[12px] font-medium truncate leading-none">{displayName}</div>
+              <div className="text-white/40 text-[10px] truncate mt-0.5">{displayEmail}</div>
             </div>
             <button onClick={logout} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <LogOut className="w-3.5 h-3.5 text-white/40 hover:text-white/70" />
@@ -413,7 +405,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       <div
                         className={cn(
                           "flex items-center gap-3 px-4 py-2.5 text-sm cursor-pointer transition-colors whitespace-nowrap",
-                          m.id === activeModuleId ? "bg-indigo-50 text-indigo-700" : "hover:bg-gray-50 text-gray-700"
+                          m.id === activeModuleId ? "bg-indigo-50 text-indigo-900" : "hover:bg-gray-50 text-gray-900"
                         )}
                         onClick={() => setModulePickerOpen(false)}
                       >
@@ -465,7 +457,8 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Notifications */}
-          <NotificationsPanel />
+          <NotificationBell />
+          {/* <NotificationsPanel /> */}
 
           {/* Messages */}
           <ChatPanel />
@@ -488,3 +481,4 @@ export function Layout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, accountingPeriodsTable } from "@workspace/db";
+import { db, accountingPeriodsTable } from "../lib/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 

@@ -46,12 +46,16 @@ export default function TenantPortal() {
   }
 
   const tenant = data?.tenant;
-  const contracts = data?.contracts ?? [];
-  const payments = data?.payments ?? [];
-  const accruals = data?.accruals ?? [];
+  const contractsData = data?.contracts ?? [];
+  const paymentsData = data?.payments ?? [];
+  const accrualsData = data?.accruals ?? [];
 
-  const totalPaid = payments.reduce((s: number, p: any) => s + parseFloat(p.amount || 0), 0);
-  const totalCharged = accruals.reduce((s: number, a: any) => s + parseFloat(a.amount || 0), 0);
+  const contracts = Array.isArray(contractsData) ? contractsData : [];
+  const payments = Array.isArray(paymentsData) ? paymentsData : [];
+  const accruals = Array.isArray(accrualsData) ? accrualsData : [];
+
+  const totalPaid = payments.reduce((s: number, p: any) => s + (parseFloat(p.amount || 0) || 0), 0);
+  const totalCharged = accruals.reduce((s: number, a: any) => s + (parseFloat(a.amount || 0) || 0), 0);
   const balance = totalCharged - totalPaid;
   const activeContracts = contracts.filter((c: any) => c.status === "active");
 
@@ -92,16 +96,16 @@ export default function TenantPortal() {
         <div className="grid grid-cols-2 gap-4">
           <KPI icon={<Building2 className="w-6 h-6 text-blue-600" />} label="Активных договоров"
             value={`${activeContracts.length}`} sub={`всего ${contracts.length}`} color="bg-blue-50" />
-          <KPI icon={<Wallet className="w-6 h-6 text-green-600" />} label="Оплачено"
-            value={`${fmt(totalPaid)} KGS`} sub={`${payments.length} платежей`} color="bg-green-50" />
+          <KPI icon={<Wallet className="w-6 h-6 text-emerald-600" />} label="Оплачено"
+            value={`${fmt(totalPaid)} KGS`} sub={`${payments.length} платежей`} color="bg-emerald-50" />
           <KPI icon={<CreditCard className="w-6 h-6 text-amber-600" />} label="Начислено"
             value={`${fmt(totalCharged)} KGS`} sub="всего начислено" color="bg-amber-50" />
           <KPI
-            icon={balance > 0 ? <AlertCircle className="w-6 h-6 text-red-600" /> : <CheckCircle className="w-6 h-6 text-green-600" />}
+            icon={balance > 0 ? <AlertCircle className="w-6 h-6 text-rose-600" /> : <CheckCircle className="w-6 h-6 text-emerald-600" />}
             label="Задолженность"
             value={`${fmt(Math.abs(balance))} KGS`}
             sub={balance > 0 ? "долг" : balance < 0 ? "переплата" : "нет долга"}
-            color={balance > 0 ? "bg-red-50" : "bg-green-50"} />
+            color={balance > 0 ? "bg-rose-50" : "bg-emerald-50"} />
         </div>
 
         {/* Contracts */}
@@ -129,7 +133,7 @@ export default function TenantPortal() {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-sm font-bold text-teal-700">{fmt(c.rentAmount)} KGS/мес</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-white"}`}>
                       {c.status === "active" ? "Активный" : "Расторгнут"}
                     </span>
                   </div>
@@ -175,8 +179,8 @@ export default function TenantPortal() {
                       <tr key={p.id} className="border-b last:border-0 hover:bg-gray-50">
                         <td className="px-6 py-3.5 text-gray-500 text-xs">{fmtDate(p.paymentDate || p.createdAt)}</td>
                         <td className="px-6 py-3.5 text-gray-700">{p.notes || "Аренда"}</td>
-                        <td className="px-6 py-3.5 text-right font-medium text-green-700">+{fmt(paid)} KGS</td>
-                        <td className={`px-6 py-3.5 text-right text-xs font-medium ${running > 0 ? "text-red-600" : "text-green-700"}`}>
+                        <td className="px-6 py-3.5 text-right font-medium text-emerald-700">+{fmt(paid)} KGS</td>
+                        <td className={`px-6 py-3.5 text-right text-xs font-medium ${running > 0 ? "text-rose-600" : "text-emerald-700"}`}>
                           {running > 0 ? `-${fmt(running)}` : `+${fmt(Math.abs(running))}`}
                         </td>
                       </tr>
@@ -187,8 +191,8 @@ export default function TenantPortal() {
               <tfoot>
                 <tr className="bg-gray-50 border-t-2 font-bold">
                   <td colSpan={2} className="px-6 py-3 text-gray-700">ИТОГО ОПЛАЧЕНО</td>
-                  <td className="px-6 py-3 text-right text-green-700">+{fmt(totalPaid)} KGS</td>
-                  <td className={`px-6 py-3 text-right ${balance > 0 ? "text-red-600" : "text-green-700"}`}>
+                  <td className="px-6 py-3 text-right text-emerald-700">+{fmt(totalPaid)} KGS</td>
+                  <td className={`px-6 py-3 text-right ${balance > 0 ? "text-rose-600" : "text-emerald-700"}`}>
                     {balance > 0 ? `-${fmt(balance)}` : `+${fmt(Math.abs(balance))}`}
                   </td>
                 </tr>
@@ -204,3 +208,4 @@ export default function TenantPortal() {
     </div>
   );
 }
+

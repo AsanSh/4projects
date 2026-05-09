@@ -45,19 +45,26 @@ export default function RentalODDS() {
   const { data: accruals = [] } = useQuery<any[]>({ queryKey: ["rental-accruals"], queryFn: () => api.get("/rental/accruals").then(r => r.data) });
   const { data: distributions = [] } = useQuery<any[]>({ queryKey: ["rental-distributions"], queryFn: () => api.get("/rental/distributions").then(r => r.data) });
 
+  const paymentsArray = Array.isArray(payments) ? payments : [];
+  const expensesArray = Array.isArray(expenses) ? expenses : [];
+  const propertiesArray = Array.isArray(properties) ? properties : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+  const accrualsArray = Array.isArray(accruals) ? accruals : [];
+  const distributionsArray = Array.isArray(distributions) ? distributions : [];
+
   const rows = useMemo(() => {
     const sumArr = (a: number[]) => a.reduce((s, v) => s + v, 0);
     const addArrs = (...arrs: number[][]) => arrs.reduce((acc, a) => acc.map((v, i) => v + a[i]), Array(12).fill(0));
 
     const contractMap: Record<number, number> = {};
-    contracts.forEach((c: any) => { if (c.id && c.propertyId) contractMap[c.id] = c.propertyId; });
+    contractsArray.forEach((c: any) => { if (c.id && c.propertyId) contractMap[c.id] = c.propertyId; });
     const propMap: Record<number, string> = {};
-    properties.forEach((p: any) => { propMap[p.id] = p.address || p.name || `Объект ${p.id}`; });
+    propertiesArray.forEach((p: any) => { propMap[p.id] = p.address || p.name || `Объект ${p.id}`; });
 
     // ── Cash INFLOWS ─────────────────────────────────────────────────────────
     // Payments received (rent income) by property
     const rentByProp: Record<number, number[]> = {};
-    payments.forEach((p: any) => {
+    paymentsArray.forEach((p: any) => {
       const m = getMonthIdx(p.paymentDate || p.createdAt, year);
       if (m < 0) return;
       const pid = contractMap[p.leaseContractId];
@@ -68,7 +75,7 @@ export default function RentalODDS() {
 
     // Other payments (not linked to property)
     const otherPayVals: number[] = Array(12).fill(0);
-    payments.forEach((p: any) => {
+    paymentsArray.forEach((p: any) => {
       const m = getMonthIdx(p.paymentDate || p.createdAt, year);
       if (m < 0) return;
       if (contractMap[p.leaseContractId]) return;
@@ -77,7 +84,7 @@ export default function RentalODDS() {
 
     // Accruals (planned income) by property
     const accrualsByProp: Record<number, number[]> = {};
-    accruals.forEach((a: any) => {
+    accrualsArray.forEach((a: any) => {
       const m = getMonthIdx(a.accrualDate || a.periodStart || a.createdAt, year);
       if (m < 0) return;
       const pid = contractMap[a.leaseContractId];
@@ -90,7 +97,7 @@ export default function RentalODDS() {
     // Expenses by property
     const expByProp: Record<number, number[]> = {};
     const expByCat: Record<string, number[]> = {};
-    expenses.forEach((e: any) => {
+    expensesArray.forEach((e: any) => {
       const m = getMonthIdx(e.expenseDate, year);
       if (m < 0) return;
       if (e.propertyId) {
@@ -105,7 +112,7 @@ export default function RentalODDS() {
 
     // Distributions
     const distribVals: number[] = Array(12).fill(0);
-    distributions.forEach((d: any) => {
+    distributionsArray.forEach((d: any) => {
       const m = getMonthIdx(d.distributionDate || d.createdAt, year);
       if (m < 0) return;
       distribVals[m] += parseFloat(d.amount || "0");
@@ -210,7 +217,7 @@ export default function RentalODDS() {
     result.push({ id: "end_bal", label: "Остаток на конец периода", type: "balance", indent: 0, values: endBalance, total: endBalance[11] });
 
     return result;
-  }, [payments, expenses, properties, contracts, accruals, distributions, year]);
+  }, [paymentsArray, expensesArray, propertiesArray, contractsArray, accrualsArray, distributionsArray, year]);
 
   const visibleRows = useMemo(() => {
     const STRUCTURAL = new Set(["section", "total", "balance"]);
@@ -236,7 +243,7 @@ export default function RentalODDS() {
       case "section": return "bg-gray-100 font-bold text-gray-900 border-y border-gray-200";
       case "group":   return "bg-gray-50 font-semibold text-gray-800 border-b border-gray-100";
       case "total":   return "bg-blue-50 font-bold text-blue-900 border-y border-blue-100";
-      case "balance": return "bg-green-50 font-semibold text-green-800 border-b border-green-100";
+      case "balance": return "bg-emerald-50 font-semibold text-emerald-800 border-b border-emerald-100";
       case "item":    return "bg-white text-gray-700 border-b border-gray-50";
       default:        return "bg-white border-b border-gray-50";
     }
@@ -245,7 +252,7 @@ export default function RentalODDS() {
   const labelPad = [0, 12, 24, 36];
   const stickyBg: Record<ODDSRow["type"], string> = {
     section: "bg-gray-100", group: "bg-gray-50", total: "bg-blue-50",
-    balance: "bg-green-50", item: "bg-white", subitem: "bg-white",
+    balance: "bg-emerald-50", item: "bg-white", subitem: "bg-white",
   };
 
   return (
@@ -279,7 +286,7 @@ export default function RentalODDS() {
               <th className="text-right py-2 px-3 border-r border-gray-300 bg-gray-300 font-bold" style={{ minWidth: "90px" }}>ИТОГО</th>
               {MONTH_SHORT.map((m, i) => (
                 <th key={i}
-                  className={`text-right py-2 px-3 border-r border-gray-200 ${i === curMonth && String(new Date().getFullYear()) === year ? "bg-yellow-100 text-yellow-800" : ""}`}
+                  className={`text-right py-2 px-3 border-r border-gray-200 ${i === curMonth && String(new Date().getFullYear()) === year ? "bg-amber-100 text-amber-800" : ""}`}
                   style={{ minWidth: "90px" }}>
                   {m.slice(0, 3)} {year.slice(2)}
                 </th>
@@ -303,13 +310,13 @@ export default function RentalODDS() {
                       <span className="text-xs leading-tight">{row.label}</span>
                     </div>
                   </td>
-                  <td className={`py-1.5 px-3 text-right border-r border-gray-300 bg-gray-50 font-semibold text-xs ${row.total < 0 ? "text-red-600" : ""}`}>
+                  <td className={`py-1.5 px-3 text-right border-r border-gray-300 bg-gray-50 font-semibold text-xs ${row.total < 0 ? "text-rose-700" : ""}`}>
                     {fmt2(row.total)}
                   </td>
                   {row.values.map((v, i) => (
                     <td key={i} className={`py-1.5 px-3 text-right border-r border-gray-100 text-xs ${
-                      i === curMonth && String(new Date().getFullYear()) === year ? "bg-yellow-50" : ""
-                    } ${v < 0 ? "text-red-600" : ""}`}>
+                      i === curMonth && String(new Date().getFullYear()) === year ? "bg-amber-50" : ""
+                    } ${v < 0 ? "text-rose-700" : ""}`}>
                       {fmt2(v)}
                     </td>
                   ))}

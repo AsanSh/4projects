@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, sessionsTable } from "@workspace/db";
+import { db, usersTable, sessionsTable } from "../lib/db";
 
 export interface AuthenticatedRequest extends Request {
   userId?: number;
@@ -8,12 +8,17 @@ export interface AuthenticatedRequest extends Request {
   userRole?: string;
 }
 
+/**
+ * Middleware для проверки аутентификации
+ * Проверяет Bearer токен, его истечение и статус пользователя
+ */
 export async function requireAuth(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   const authHeader = req.headers.authorization;
+
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Not authenticated" });
     return;
@@ -21,25 +26,46 @@ export async function requireAuth(
 
   const token = authHeader.slice(7);
 
-  // Ищем сессию в БД (сессии переживают перезапуск сервера)
-  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.token, token));
+  // Поиск сессии в БД
+  const [session] = await db
+    .select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.token, token));
+
   if (!session) {
-    res.status(401).json({ error: "Not authenticated" });
+    res.status(401).json({ error: "Invalid token" });
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, session.userId));
+  // Проверка истечения токена
+  if (session.expiresAt && session.expiresAt < new Date()) {
+    // Удаляем истекшую сессию
+    await db.delete(sessionsTable).where(eq(sessionsTable.token, token));
+    res.status(401).json({ error: "Session expired" });
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, session.userId));
+
   if (!user || !user.isActive) {
-    res.status(401).json({ error: "Not authenticated" });
+    res.status(401).json({ error: "User not found or inactive" });
     return;
   }
 
   req.userId = user.id;
   req.companyId = user.companyId ?? undefined;
   req.userRole = user.role;
+
   next();
 }
 
+/**
+ * Middleware для проверки роли пользователя
+ * @param roles - Список допустимых ролей
+ */
 export function requireRole(...roles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.userRole || !roles.includes(req.userRole)) {

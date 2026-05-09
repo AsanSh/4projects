@@ -79,7 +79,7 @@ export default function RentalSummaryReport() {
           value={`${summary?.collectionRate ?? 0}%`}
           sub="оплачено от начисленного"
           icon={TrendingUp}
-          className={summary?.collectionRate >= 90 ? "border-green-200 bg-green-50" : summary?.collectionRate >= 70 ? "border-yellow-200 bg-yellow-50" : "border-red-200 bg-red-50"}
+          className={summary?.collectionRate >= 90 ? "border-emerald-200 bg-emerald-50" : summary?.collectionRate >= 70 ? "border-amber-200 bg-amber-50" : "border-rose-200 bg-rose-50"}
         />
       </div>
 
@@ -105,22 +105,22 @@ export default function RentalSummaryReport() {
                     <span className="text-xs text-gray-600">{formatCurrency(row.charged)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="h-4 bg-green-500 rounded" style={{ width: `${(row.paid / maxVal) * 100}%`, minWidth: 4 }} />
+                    <div className="h-4 bg-emerald-600 rounded" style={{ width: `${(row.paid / maxVal) * 100}%`, minWidth: 4 }} />
                     <span className="text-xs text-gray-600">{formatCurrency(row.paid)}</span>
                   </div>
                 </div>
                 <div className="w-16 text-right flex-shrink-0">
                   {row.balance > 0 ? (
-                    <span className="text-xs text-red-500 font-medium">-{formatCurrency(row.balance)}</span>
+                    <span className="text-xs text-rose-600 font-medium">-{formatCurrency(row.balance)}</span>
                   ) : (
-                    <span className="text-xs text-green-600 font-medium">✓</span>
+                    <span className="text-xs text-emerald-600 font-medium">✓</span>
                   )}
                 </div>
               </div>
             ))}
             <div className="flex items-center gap-4 pt-2 text-xs text-gray-500">
               <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-blue-100 rounded" /> Начислено</div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-green-500 rounded" /> Оплачено</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-600 rounded" /> Оплачено</div>
             </div>
           </div>
         )}
@@ -147,10 +147,10 @@ export default function RentalSummaryReport() {
                 <tr key={row.period} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3.5 font-medium text-gray-900">{formatPeriod(row.period)}</td>
                   <td className="px-6 py-3.5 text-right text-gray-700">{formatCurrency(row.charged)}</td>
-                  <td className="px-6 py-3.5 text-right text-green-600 font-medium">{formatCurrency(row.paid)}</td>
+                  <td className="px-6 py-3.5 text-right text-emerald-600 font-medium">{formatCurrency(row.paid)}</td>
                   <td className="px-6 py-3.5 text-right">
                     {row.balance > 0 ? (
-                      <span className="text-red-500 font-medium">{formatCurrency(row.balance)}</span>
+                      <span className="text-rose-600 font-medium">{formatCurrency(row.balance)}</span>
                     ) : <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-6 py-3.5 text-right text-gray-500">{row.count ?? 0}</td>

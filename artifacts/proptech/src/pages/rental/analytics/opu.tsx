@@ -79,17 +79,23 @@ export default function RentalOPU() {
   const { data: contracts = [] } = useQuery<any[]>({ queryKey: ["rental-contracts"], queryFn: () => api.get("/rental/contracts").then(r => r.data) });
   const { data: distributions = [] } = useQuery<any[]>({ queryKey: ["rental-distributions"], queryFn: () => api.get("/rental/distributions").then(r => r.data) });
 
+  const paymentsArray = Array.isArray(payments) ? payments : [];
+  const expensesArray = Array.isArray(expenses) ? expenses : [];
+  const propertiesArray = Array.isArray(properties) ? properties : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+  const distributionsArray = Array.isArray(distributions) ? distributions : [];
+
   const rows = useMemo(() => {
     // Helper: contract → property
     const contractMap: Record<number, number> = {};
-    contracts.forEach((c: any) => { if (c.id && c.propertyId) contractMap[c.id] = c.propertyId; });
+    contractsArray.forEach((c: any) => { if (c.id && c.propertyId) contractMap[c.id] = c.propertyId; });
 
     const propMap: Record<number, string> = {};
-    properties.forEach((p: any) => { propMap[p.id] = p.address || p.name || `Объект ${p.id}`; });
+    propertiesArray.forEach((p: any) => { propMap[p.id] = p.address || p.name || `Объект ${p.id}`; });
 
     // ── Revenue by property ──────────────────────────────────────────────
     const rentByProp: Record<number, number[]> = {}; // propId → [12 months]
-    payments.forEach((p: any) => {
+    paymentsArray.forEach((p: any) => {
       const m = getMonthIdx(p.paymentDate || p.createdAt, year);
       if (m < 0) return;
       const propId = contractMap[p.leaseContractId];
@@ -100,7 +106,7 @@ export default function RentalOPU() {
 
     // ── Variable expenses by property → by description ───────────────────
     const varExpByProp: Record<number, Record<string, number[]>> = {}; // propId → desc → [12m]
-    expenses.forEach((e: any) => {
+    expensesArray.forEach((e: any) => {
       if (!e.propertyId) return;
       const m = getMonthIdx(e.expenseDate, year);
       if (m < 0) return;
@@ -113,7 +119,7 @@ export default function RentalOPU() {
 
     // ── Fixed expenses by category ───────────────────────────────────────
     const fixedByCat: Record<string, number[]> = {};
-    expenses.forEach((e: any) => {
+    expensesArray.forEach((e: any) => {
       if (e.propertyId) return;
       const m = getMonthIdx(e.expenseDate, year);
       if (m < 0) return;
@@ -124,7 +130,7 @@ export default function RentalOPU() {
 
     // ── Distributions by month ───────────────────────────────────────────
     const distribByMonth: number[] = Array(12).fill(0);
-    distributions.forEach((d: any) => {
+    distributionsArray.forEach((d: any) => {
       const m = getMonthIdx(d.distributionDate || d.createdAt, year);
       if (m < 0) return;
       distribByMonth[m] += parseFloat(d.amount || "0");
@@ -265,7 +271,7 @@ export default function RentalOPU() {
     result.push({ id: "retained", label: "Нераспределённая прибыль", type: "total", indent: 0, values: retainedVals, total: sumArr(retainedVals) });
 
     return result;
-  }, [payments, expenses, properties, contracts, distributions, year]);
+  }, [paymentsArray, expensesArray, propertiesArray, contractsArray, distributionsArray, year]);
 
   // Filter hidden rows (collapsed parents + zero-value rows)
   const visibleRows = useMemo(() => {
@@ -305,7 +311,7 @@ export default function RentalOPU() {
     if (row.type === "percent") return "text-blue-700";
     if (row.type === "section" || row.type === "total") {
       const val = isTotal ? row.total : 0;
-      return val < 0 ? "text-red-600" : "text-gray-900";
+      return val < 0 ? "text-rose-700" : "text-gray-900";
     }
     if (row.id === "direct_costs" || (row.id.startsWith("var") || row.id.startsWith("fixed") || row.id === "dividends" || row.id === "distrib")) return "text-gray-700";
     return "text-gray-700";
@@ -351,7 +357,7 @@ export default function RentalOPU() {
               <th className="text-right py-2 px-3 border-r border-gray-300 bg-gray-300 font-bold" style={{ minWidth: "90px" }}>ИТОГО</th>
               {MONTH_SHORT.map((m, i) => (
                 <th key={i}
-                  className={`text-right py-2 px-3 border-r border-gray-200 ${i === curMonth && String(new Date().getFullYear()) === year ? "bg-yellow-100 text-yellow-800" : ""}`}
+                  className={`text-right py-2 px-3 border-r border-gray-200 ${i === curMonth && String(new Date().getFullYear()) === year ? "bg-amber-100 text-amber-800" : ""}`}
                   style={{ minWidth: "90px" }}>
                   {m.slice(0, 3)} {year.slice(2)}
                 </th>
@@ -383,15 +389,15 @@ export default function RentalOPU() {
                   </td>
                   {/* ИТОГО */}
                   <td className={`py-1.5 px-3 text-right border-r border-gray-300 bg-gray-50 font-semibold text-xs ${
-                    row.total < 0 ? "text-red-600" : row.type === "percent" ? "text-blue-700" : ""
+                    row.total < 0 ? "text-rose-700" : row.type === "percent" ? "text-blue-700" : ""
                   }`}>
                     {formatCell(row, row.total)}
                   </td>
                   {/* Months */}
                   {row.values.map((v, i) => (
                     <td key={i} className={`py-1.5 px-3 text-right border-r border-gray-100 text-xs ${
-                      i === curMonth && String(new Date().getFullYear()) === year ? "bg-yellow-50" : ""
-                    } ${v < 0 ? "text-red-600" : row.type === "percent" ? "text-blue-700" : ""}`}>
+                      i === curMonth && String(new Date().getFullYear()) === year ? "bg-amber-50" : ""
+                    } ${v < 0 ? "text-rose-700" : row.type === "percent" ? "text-blue-700" : ""}`}>
                       {formatCell(row, v)}
                     </td>
                   ))}

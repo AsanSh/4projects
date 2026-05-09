@@ -25,9 +25,9 @@ const MODULE_ICONS: Record<string, React.ElementType> = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  open:   { label: "Открыт",  color: "text-green-700", bg: "bg-green-50",  border: "border-green-200" },
+  open:   { label: "Открыт",  color: "text-emerald-700", bg: "bg-emerald-100",  border: "border-emerald-200" },
   closed: { label: "Закрыт",  color: "text-gray-600",  bg: "bg-gray-100",  border: "border-gray-200" },
-  draft:  { label: "Черновик",color: "text-amber-700", bg: "bg-amber-50",  border: "border-amber-200" },
+  draft:  { label: "Черновик",color: "text-amber-700", bg: "bg-amber-100",  border: "border-amber-200" },
 };
 
 const MONTH_NAMES_RU = [
@@ -124,7 +124,7 @@ function PeriodForm({ period, onClose, onSaved }: {
       </div>
       <div className="flex justify-end gap-2 pt-2 border-t">
         <Button type="button" variant="outline" size="sm" onClick={onClose}>Отмена</Button>
-        <Button type="submit" size="sm" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+        <Button type="submit" size="sm" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
           {loading ? "Сохранение..." : period ? "Обновить" : "Создать"}
         </Button>
       </div>
@@ -213,7 +213,7 @@ export default function SettingsPeriods() {
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setDialogOpen(true); }}
-          size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5">
+          size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1.5">
           <Plus className="w-4 h-4" /> Добавить период
         </Button>
       </div>
@@ -221,9 +221,9 @@ export default function SettingsPeriods() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: "Открытые", count: openCount, color: "text-green-700", bg: "bg-green-50", border: "border-green-200" },
+          { label: "Открытые", count: openCount, color: "text-emerald-700", bg: "bg-emerald-100", border: "border-emerald-200" },
           { label: "Закрытые", count: closedCount, color: "text-gray-600", bg: "bg-gray-50", border: "border-gray-200" },
-          { label: "Черновики", count: draftCount, color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" },
+          { label: "Черновики", count: draftCount, color: "text-amber-700", bg: "bg-amber-100", border: "border-amber-200" },
         ].map(s => (
           <div key={s.label} className={`rounded-xl border p-4 flex items-center gap-3 ${s.bg} ${s.border}`}>
             <CalendarDays className={`w-5 h-5 ${s.color}`} />
@@ -332,7 +332,7 @@ export default function SettingsPeriods() {
                         >
                           {p.status === "open"
                             ? <Lock className="w-3.5 h-3.5 text-gray-500" />
-                            : <Unlock className="w-3.5 h-3.5 text-green-600" />
+                            : <Unlock className="w-3.5 h-3.5 text-emerald-600" />
                           }
                         </button>
                         <button onClick={() => { setEditing(p); setDialogOpen(true); }}
@@ -340,8 +340,8 @@ export default function SettingsPeriods() {
                           <Pencil className="w-3.5 h-3.5 text-gray-500" />
                         </button>
                         <button onClick={() => handleDelete(p)}
-                          className="p-1.5 rounded-md hover:bg-red-50">
-                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                          className="p-1.5 rounded-md hover:bg-rose-50">
+                          <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                         </button>
                       </div>
                     </td>

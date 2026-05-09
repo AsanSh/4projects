@@ -1,105 +1,166 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, companiesTable, sessionsTable } from "@workspace/db";
-import { createHash } from "crypto";
+import { z } from "zod";
+import { db, usersTable, companiesTable, sessionsTable } from "../lib/db";
+import {
+  hashPassword,
+  verifyPassword,
+  generateSecureToken,
+  validatePassword,
+} from "../lib/security";
+import { validateBody } from "../middleware/validation";
 
 const router: ReturnType<typeof Router> = Router();
 
-export function hashPassword(password: string): string {
-  return createHash("sha256").update(password + "proptech_salt").digest("hex");
-}
+// Validation schemas
+const registerSchema = z.object({
+  companyName: z.string().min(1).max(200),
+  legalName: z.string().max(200).optional(),
+  bin: z.string().max(50).optional(),
+  phone: z.string().max(50).optional(),
+  email: z.string().email(),
+  address: z.string().max(500).optional(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  password: z.string().min(12),
+});
 
-/** Для обратной совместимости — middleware auth.ts по-прежнему может читать sessions */
-export const sessions = new Map<string, number>();
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
 
-function generateToken(): string {
-  return createHash("sha256").update(Math.random().toString() + Date.now().toString()).digest("hex");
-}
+const updateProfileSchema = z.object({
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  password: z.string().min(12).optional(),
+});
 
-/** Создаёт сессию в БД и возвращает токен */
+/**
+ * Создание сессии с истечением через 7 дней
+ */
 async function createSession(userId: number): Promise<string> {
-  const token = generateToken();
-  await db.insert(sessionsTable).values({ token, userId });
+  const token = generateSecureToken();
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7); // 7 дней
+
+  await db.insert(sessionsTable).values({
+    token,
+    userId,
+    expiresAt,
+  });
+
   return token;
 }
 
-/** Ищет userId по токену в БД */
+/**
+ * Получение userId по токену с проверкой истечения
+ */
 export async function getSessionUserId(token: string): Promise<number | null> {
-  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.token, token));
-  return session?.userId ?? null;
+  const [session] = await db
+    .select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.token, token));
+
+  if (!session) return null;
+
+  // Проверка истечения
+  if (session.expiresAt && session.expiresAt < new Date()) {
+    await db.delete(sessionsTable).where(eq(sessionsTable.token, token));
+    return null;
+  }
+
+  return session.userId;
 }
 
 // POST /auth/register — создание организации + admin пользователя
-router.post("/auth/register", async (req, res): Promise<void> => {
-  const { companyName, legalName, bin, phone, email, address, firstName, lastName, password } = req.body;
+router.post("/auth/register", validateBody(registerSchema), async (req, res): Promise<void> => {
+  try {
+    const { companyName, legalName, bin, phone, email, address, firstName, lastName, password } = req.body;
 
-  if (!companyName || !email || !password || !firstName || !lastName) {
-    res.status(400).json({ error: "Заполните все обязательные поля" });
-    return;
+    if (!companyName || !email || !password || !firstName || !lastName) {
+      res.status(400).json({ error: "Заполните все обязательные поля" });
+      return;
+    }
+
+    // Валидация пароля
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      res.status(400).json({ error: passwordValidation.error });
+      return;
+    }
+
+    const [existingUser] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    if (existingUser) {
+      res.status(409).json({ error: "Пользователь с таким email уже зарегистрирован" });
+      return;
+    }
+
+    // Создаём организацию
+    const [company] = await db.insert(companiesTable).values({
+      name: companyName,
+      legalName: legalName || null,
+      bin: bin || null,
+      phone: phone || null,
+      email,
+      address: address || null,
+      isActive: true,
+    }).returning();
+
+    // Хешируем пароль с bcrypt
+    const passwordHash = await hashPassword(password);
+
+    // Создаём company_admin пользователя (владелец организации)
+    const [user] = await db.insert(usersTable).values({
+      companyId: company.id,
+      email,
+      passwordHash,
+      firstName,
+      lastName,
+      role: "company_admin",
+      isActive: true,
+    }).returning();
+
+    const token = await createSession(user.id);
+
+    const { passwordHash: _ph, ...safeUser } = user;
+    res.status(201).json({ token, user: safeUser, company });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
   }
-
-  if (password.length < 6) {
-    res.status(400).json({ error: "Пароль должен быть не менее 6 символов" });
-    return;
-  }
-
-  const [existingUser] = await db.select().from(usersTable).where(eq(usersTable.email, email));
-  if (existingUser) {
-    res.status(409).json({ error: "Пользователь с таким email уже зарегистрирован" });
-    return;
-  }
-
-  // Создаём организацию
-  const [company] = await db.insert(companiesTable).values({
-    name: companyName,
-    legalName: legalName || null,
-    bin: bin || null,
-    phone: phone || null,
-    email,
-    address: address || null,
-    isActive: true,
-  }).returning();
-
-  // Создаём admin пользователя организации
-  const [user] = await db.insert(usersTable).values({
-    companyId: company.id,
-    email,
-    passwordHash: hashPassword(password),
-    firstName,
-    lastName,
-    role: "admin",
-    isActive: true,
-  }).returning();
-
-  const token = await createSession(user.id);
-
-  const { passwordHash: _ph, ...safeUser } = user;
-  res.status(201).json({ token, user: safeUser, company });
 });
 
 // POST /auth/login
-router.post("/auth/login", async (req, res): Promise<void> => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    res.status(400).json({ error: "Email и пароль обязательны" });
-    return;
+router.post("/auth/login", validateBody(loginSchema), async (req, res): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(400).json({ error: "Email и пароль обязательны" });
+      return;
+    }
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+
+    // Проверка через bcrypt
+    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+      res.status(401).json({ error: "Неверный email или пароль" });
+      return;
+    }
+
+    if (!user.isActive) {
+      res.status(401).json({ error: "Аккаунт заблокирован. Обратитесь к администратору." });
+      return;
+    }
+
+    const token = await createSession(user.id);
+
+    const { passwordHash: _ph, ...safeUser } = user;
+    res.json({ token, user: safeUser });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
   }
-
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
-  if (!user || user.passwordHash !== hashPassword(password)) {
-    res.status(401).json({ error: "Неверный email или пароль" });
-    return;
-  }
-
-  if (!user.isActive) {
-    res.status(401).json({ error: "Аккаунт заблокирован. Обратитесь к администратору." });
-    return;
-  }
-
-  const token = await createSession(user.id);
-
-  const { passwordHash: _ph, ...safeUser } = user;
-  res.json({ token, user: safeUser });
 });
 
 // POST /auth/logout
@@ -114,73 +175,107 @@ router.post("/auth/logout", async (req, res): Promise<void> => {
 
 // GET /auth/me
 router.get("/auth/me", async (req, res): Promise<void> => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
-  const token = authHeader.slice(7);
-  const userId = await getSessionUserId(token);
-  if (!userId) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-  if (!user) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
 
-  let company = null;
-  if (user.companyId) {
-    const [comp] = await db.select().from(companiesTable).where(eq(companiesTable.id, user.companyId));
-    company = comp || null;
-  }
+    const token = authHeader.slice(7);
+    const userId = await getSessionUserId(token);
 
-  const { passwordHash: _ph, ...safeUser } = user;
-  res.json({ ...safeUser, company });
+    if (!userId) {
+      res.status(401).json({ error: "Session expired or invalid" });
+      return;
+    }
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    if (!user) {
+      res.status(401).json({ error: "User not found" });
+      return;
+    }
+
+    let company = null;
+    if (user.companyId) {
+      const [comp] = await db.select().from(companiesTable).where(eq(companiesTable.id, user.companyId));
+      company = comp || null;
+    }
+
+    const { passwordHash: _ph, ...safeUser } = user;
+    res.json({ ...safeUser, company });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ error: 'Failed to get user' });
+  }
 });
 
 // PATCH /auth/me — обновление собственного профиля
-router.patch("/auth/me", async (req, res): Promise<void> => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
-  const token = authHeader.slice(7);
-  const userId = sessions.get(token);
-  if (!userId) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
+router.patch("/auth/me", validateBody(updateProfileSchema), async (req, res): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
 
-  const { firstName, lastName, password } = req.body;
-  const updates: Record<string, unknown> = {};
+    const token = authHeader.slice(7);
+    const userId = await getSessionUserId(token);
+    if (!userId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
 
-  if (firstName !== undefined) {
-    if (!firstName.trim()) { res.status(400).json({ error: "Имя не может быть пустым" }); return; }
-    updates.firstName = firstName.trim();
-  }
-  if (lastName !== undefined) {
-    if (!lastName.trim()) { res.status(400).json({ error: "Фамилия не может быть пустой" }); return; }
-    updates.lastName = lastName.trim();
-  }
-  if (password !== undefined) {
-    if (password.length < 6) { res.status(400).json({ error: "Пароль должен быть не менее 6 символов" }); return; }
-    updates.passwordHash = hashPassword(password);
-  }
+    const { firstName, lastName, password } = req.body;
+    const updates: Record<string, unknown> = {};
 
-  if (Object.keys(updates).length === 0) {
-    res.status(400).json({ error: "Нет данных для обновления" });
-    return;
+    if (firstName !== undefined) {
+      if (!firstName.trim()) {
+        res.status(400).json({ error: "Имя не может быть пустым" });
+        return;
+      }
+      updates.firstName = firstName.trim();
+    }
+
+    if (lastName !== undefined) {
+      if (!lastName.trim()) {
+        res.status(400).json({ error: "Фамилия не может быть пустой" });
+        return;
+      }
+      updates.lastName = lastName.trim();
+    }
+
+    if (password !== undefined) {
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.valid) {
+        res.status(400).json({ error: passwordValidation.error });
+        return;
+      }
+      updates.passwordHash = await hashPassword(password);
+    }
+
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: "Нет данных для обновления" });
+      return;
+    }
+
+    const [user] = await db
+      .update(usersTable)
+      .set(updates)
+      .where(eq(usersTable.id, userId))
+      .returning();
+
+    if (!user) {
+      res.status(404).json({ error: "Пользователь не найден" });
+      return;
+    }
+
+    const { passwordHash: _ph, ...safeUser } = user;
+    res.json(safeUser);
+  } catch (error) {
+    console.error('Update me error:', error);
+    res.status(500).json({ error: 'Update failed' });
   }
-
-  const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
-  if (!user) { res.status(404).json({ error: "Пользователь не найден" }); return; }
-
-  const { passwordHash: _ph, ...safeUser } = user;
-  res.json(safeUser);
 });
 
 export default router;

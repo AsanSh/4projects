@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   useListCounterparties, useCreateCounterparty, useUpdateCounterparty, useDeleteCounterparty,
   Counterparty, getListCounterpartiesQueryKey,
-} from "@workspace/api-client-react";
+} from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit2, Trash2, Search, Briefcase } from "lucide-react";
@@ -32,10 +32,10 @@ const CATEGORIES = [
 
 const CATEGORY_COLORS: Record<string, string> = {
   tenant: "bg-blue-100 text-blue-800",
-  buyer: "bg-purple-100 text-purple-800",
-  supplier: "bg-orange-100 text-orange-800",
-  contractor: "bg-yellow-100 text-yellow-800",
-  owner: "bg-green-100 text-green-800",
+  buyer: "bg-indigo-100 text-indigo-800",
+  supplier: "bg-amber-100 text-amber-800",
+  contractor: "bg-amber-100 text-amber-800",
+  owner: "bg-emerald-100 text-emerald-700",
   other: "bg-gray-100 text-gray-700",
 };
 
@@ -255,13 +255,14 @@ export default function Counterparties() {
     setDeleteId(null);
   };
 
-  const filtered = (counterparties || []).filter((cp) => {
+  const counterpartiesArray = Array.isArray(counterparties) ? counterparties : [];
+  const filtered = counterpartiesArray.filter((cp) => {
     if (categoryFilter === "all") return true;
     return (cp as any).category === categoryFilter;
   });
 
   // Count by category
-  const countByCategory = (counterparties || []).reduce((acc, cp) => {
+  const countByCategory = counterpartiesArray.reduce((acc, cp) => {
     const cat = (cp as any).category || "other";
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
@@ -284,7 +285,7 @@ export default function Counterparties() {
       {/* Category tabs */}
       <div className="flex gap-1 flex-wrap border-b border-gray-200">
         {CATEGORIES.map(cat => {
-          const count = cat.key === "all" ? (counterparties?.length ?? 0) : (countByCategory[cat.key] || 0);
+          const count = cat.key === "all" ? counterpartiesArray.length : (countByCategory[cat.key] || 0);
           return (
             <button
               key={cat.key}
@@ -299,7 +300,7 @@ export default function Counterparties() {
               {cat.label}
               <span className={cn(
                 "ml-1.5 text-xs px-1.5 py-0.5 rounded-full",
-                categoryFilter === cat.key ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+                categoryFilter === cat.key ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-white"
               )}>
                 {count}
               </span>
@@ -386,7 +387,7 @@ export default function Counterparties() {
                       </Button>
                       <Button
                         variant="ghost" size="icon"
-                        className="text-red-500 hover:text-red-700"
+                        className="text-rose-600 hover:text-rose-700"
                         onClick={() => setDeleteId(cp.id)}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -412,10 +413,11 @@ export default function Counterparties() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-rose-600 hover:bg-rose-700">Удалить</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
   );
 }
+

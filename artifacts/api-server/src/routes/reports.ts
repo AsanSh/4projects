@@ -3,7 +3,7 @@ import { eq, and, SQL, gte, lte, sql } from "drizzle-orm";
 import {
   db, leaseContractsTable, accrualsTable, paymentsTable,
   tenantsTable, propertiesTable, expensesTable, paymentAllocationsTable
-} from "@workspace/db";
+} from "../lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
 const router: ReturnType<typeof Router> = Router();

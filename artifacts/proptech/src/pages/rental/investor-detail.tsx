@@ -105,13 +105,13 @@ export default function InvestorDetail() {
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-purple-600 rounded-xl flex items-center justify-center text-white text-base font-bold">
+            <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white text-base font-bold">
               {(investor.fullName || "И").charAt(0)}
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">{investor.fullName}</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <Badge className={investor.status === "active" ? "bg-green-100 text-green-700 border-green-200" : "bg-gray-100 text-gray-600"}>
+                <Badge className={investor.status === "active" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-gray-100 text-white"}>
                   {investor.status === "active" ? "Активный" : "Неактивный"}
                 </Badge>
                 <span className="text-xs text-gray-400">
@@ -122,7 +122,7 @@ export default function InvestorDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => { setShowPortalDialog(true); setPortalStatus(null); }} variant="outline" size="sm" className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50">
+          <Button onClick={() => { setShowPortalDialog(true); setPortalStatus(null); }} variant="outline" size="sm" className="gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50">
             <UserPlus className="w-4 h-4" /> Создать доступ
           </Button>
           <Button onClick={handlePrint} variant="outline" size="sm" className="gap-1.5">
@@ -133,12 +133,12 @@ export default function InvestorDetail() {
 
       {/* Portal account dialog */}
       {showPortalDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-950/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <UserPlus className="w-5 h-5 text-purple-600" />
+                <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <UserPlus className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
                   <h2 className="font-bold text-gray-900">Создать доступ к порталу</h2>
@@ -170,7 +170,7 @@ export default function InvestorDetail() {
                 <Input type="password" value={portalForm.password} onChange={e => setPortalForm(p => ({ ...p, password: e.target.value }))} placeholder="Минимум 6 символов" />
               </div>
               {portalStatus && (
-                <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${portalStatus.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${portalStatus.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
                   {portalStatus.type === "success" ? <Check className="w-4 h-4 flex-shrink-0" /> : <X className="w-4 h-4 flex-shrink-0" />}
                   {portalStatus.msg}
                 </div>
@@ -178,7 +178,7 @@ export default function InvestorDetail() {
             </div>
             <div className="flex gap-2 px-6 py-4 border-t bg-gray-50 rounded-b-2xl">
               <Button variant="outline" onClick={() => setShowPortalDialog(false)} className="flex-1">Отмена</Button>
-              <Button onClick={createPortalAccount} disabled={portalLoading} className="flex-1 bg-purple-600 hover:bg-purple-700">
+              <Button onClick={createPortalAccount} disabled={portalLoading} className="flex-1 bg-blue-600 hover:bg-purple-700">
                 {portalLoading ? "Создание..." : "Создать аккаунт"}
               </Button>
             </div>
@@ -193,8 +193,8 @@ export default function InvestorDetail() {
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Контакты</h3>
           {investor.phone && (
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Phone className="w-3.5 h-3.5 text-green-600" />
+              <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-[10px] text-gray-400">Телефон</p>
@@ -245,10 +245,10 @@ export default function InvestorDetail() {
 
         {/* Stats */}
         <div className="lg:col-span-2 grid grid-cols-2 gap-3">
-          <StatCard icon={<Wallet className="w-5 h-5 text-purple-600" />} label="Инвестировано"
-            value={`${fmt(totalInvested)} KGS`} sub={`${myInvestments.length} объект(а)`} color="bg-purple-50" />
-          <StatCard icon={<TrendingUp className="w-5 h-5 text-green-600" />} label="Получено выплат"
-            value={`${fmt(totalReceived)} KGS`} sub={`${myDistributions.length} транзакций`} color="bg-green-50" />
+          <StatCard icon={<Wallet className="w-5 h-5 text-blue-600" />} label="Инвестировано"
+            value={`${fmt(totalInvested)} KGS`} sub={`${myInvestments.length} объект(а)`} color="bg-blue-50" />
+          <StatCard icon={<TrendingUp className="w-5 h-5 text-emerald-600" />} label="Получено выплат"
+            value={`${fmt(totalReceived)} KGS`} sub={`${myDistributions.length} транзакций`} color="bg-emerald-50" />
           <StatCard icon={<Percent className="w-5 h-5 text-blue-600" />} label="Средняя доля"
             value={myInvestments.length > 0 ? `${(myInvestments.reduce((s: number, i: any) => s + parseFloat(i.sharePercent || 0), 0) / myInvestments.length).toFixed(1)}%` : "0%"}
             sub="по всем объектам" color="bg-blue-50" />
@@ -346,13 +346,13 @@ export default function InvestorDetail() {
                     <td className="px-5 py-3 text-gray-500">{fmtDate(d.distributionDate || d.createdAt)}</td>
                     <td className="px-5 py-3 text-gray-700">{d.propertyName || "—"}</td>
                     <td className="px-5 py-3">
-                      <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
                         {d.type === "dividend" ? "Дивиденд" : d.type === "profit_share" ? "Доля прибыли" : d.type || "Выплата"}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right font-semibold text-green-700">+{fmt(d.amount)} KGS</td>
+                    <td className="px-5 py-3 text-right font-semibold text-emerald-700">+{fmt(d.amount)} KGS</td>
                     <td className="px-5 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
                         {d.status === "paid" ? "Выплачено" : "Ожидает"}
                       </span>
                     </td>
@@ -362,7 +362,7 @@ export default function InvestorDetail() {
               <tfoot>
                 <tr className="bg-gray-50 font-semibold border-t-2">
                   <td colSpan={3} className="px-5 py-3 text-gray-700">ИТОГО ВЫПЛАТ</td>
-                  <td className="px-5 py-3 text-right text-green-700 text-base">+{fmt(totalReceived)} KGS</td>
+                  <td className="px-5 py-3 text-right text-emerald-700 text-base">+{fmt(totalReceived)} KGS</td>
                   <td className="px-5 py-3"></td>
                 </tr>
               </tfoot>
@@ -373,3 +373,4 @@ export default function InvestorDetail() {
     </div>
   );
 }
+

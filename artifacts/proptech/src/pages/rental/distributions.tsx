@@ -24,9 +24,9 @@ function fmtCurrency(v: number | string) {
 }
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
+  pending: "bg-amber-100 text-amber-800",
   calculated: "bg-blue-100 text-blue-800",
-  paid: "bg-green-100 text-green-800",
+  paid: "bg-emerald-100 text-emerald-800",
 };
 const statusLabels: Record<string, string> = {
   pending: "Ожидает", calculated: "Рассчитано", paid: "Выплачено",
@@ -55,7 +55,7 @@ function AddDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
     if (!form.propertyId || !form.period) { toast({ title: "Заполните обязательные поля", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}/api/rental/distributions`, {
+      const res = await fetch(`${BASE}/rental/distributions`, {
         method: "POST", headers: authHeaders(),
         body: JSON.stringify({ ...form, propertyId: parseInt(form.propertyId) }),
       });
@@ -96,7 +96,7 @@ function AddDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
             </div>
           </div>
           {(gross > 0 || exp > 0) && (
-            <div className={`p-3 rounded-lg text-sm font-medium ${net >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+            <div className={`p-3 rounded-lg text-sm font-medium ${net >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
               Чистая прибыль: {fmtCurrency(net)}
             </div>
           )}
@@ -128,7 +128,7 @@ export default function Distributions() {
   const pendingNet = distributions.filter(d => d.status !== "paid").reduce((s, d) => s + parseFloat(d.netProfit || "0"), 0);
 
   const updateStatus = async (id: number, status: string) => {
-    await fetch(`${BASE}/api/rental/distributions/${id}/status`, {
+    await fetch(`${BASE}/rental/distributions/${id}/status`, {
       method: "PATCH", headers: authHeaders(), body: JSON.stringify({ status }),
     });
     toast({ title: status === "paid" ? "Отмечено как выплачено" : "Статус обновлён" });
@@ -137,7 +137,7 @@ export default function Distributions() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить запись?")) return;
-    await fetch(`${BASE}/api/rental/distributions/${id}`, { method: "DELETE", headers: authHeaders() });
+    await fetch(`${BASE}/rental/distributions/${id}`, { method: "DELETE", headers: authHeaders() });
     toast({ title: "Удалено" });
     queryClient.invalidateQueries({ queryKey: ["distributions"] });
   };
@@ -165,7 +165,7 @@ export default function Distributions() {
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs text-gray-500 mb-1">Ожидает выплаты</p>
-          <p className="text-lg font-bold text-orange-500">{fmtCurrency(pendingNet)}</p>
+          <p className="text-lg font-bold text-amber-600">{fmtCurrency(pendingNet)}</p>
         </div>
       </div>
 
@@ -206,8 +206,8 @@ export default function Distributions() {
                   </TableCell>
                   <TableCell className="text-sm font-medium text-gray-700">{d.period}</TableCell>
                   <TableCell className="text-right text-sm text-gray-600">{fmtCurrency(d.grossIncome)}</TableCell>
-                  <TableCell className="text-right text-sm text-red-500">{fmtCurrency(d.expenses)}</TableCell>
-                  <TableCell className={`text-right font-semibold text-sm ${net >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  <TableCell className="text-right text-sm text-rose-600">{fmtCurrency(d.expenses)}</TableCell>
+                  <TableCell className={`text-right font-semibold text-sm ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                     {fmtCurrency(net)}
                   </TableCell>
                   <TableCell>
@@ -223,12 +223,12 @@ export default function Distributions() {
                         </Button>
                       )}
                       {d.status === "calculated" && (
-                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-green-300 text-green-700" onClick={() => updateStatus(d.id, "paid")}>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-green-300 text-emerald-700" onClick={() => updateStatus(d.id, "paid")}>
                           <CheckCircle2 className="w-3 h-3 mr-1" /> Выплачено
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(d.id)}>
-                        <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                        <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" />
                       </Button>
                     </div>
                   </TableCell>
@@ -243,3 +243,4 @@ export default function Distributions() {
     </div>
   );
 }
+

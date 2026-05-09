@@ -39,12 +39,17 @@ export default function RentalHistory() {
     queryFn: () => api.get("/rental/accounts").then(r => r.data),
   });
 
+  const paymentsArray = Array.isArray(payments) ? payments : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+  const tenantsArray = Array.isArray(tenants) ? tenants : [];
+  const accountsArray = Array.isArray(accounts) ? accounts : [];
+
   const now = new Date();
-  const filtered = payments
+  const filtered = paymentsArray
     .map((p: any) => {
-      const contract = contracts.find((c: any) => c.id === p.leaseContractId);
-      const tenant = contract ? tenants.find((t: any) => t.id === contract.tenantId) : null;
-      const account = accounts.find((a: any) => a.id === p.accountId);
+      const contract = contractsArray.find((c: any) => c.id === p.leaseContractId);
+      const tenant = contract ? tenantsArray.find((t: any) => t.id === contract.tenantId) : null;
+      const account = accountsArray.find((a: any) => a.id === p.accountId);
       return { ...p, contract, tenant, account };
     })
     .filter((p: any) => {
@@ -136,7 +141,7 @@ export default function RentalHistory() {
                   <p className="text-xs text-gray-400">{p.contract?.propertyAddress || `Дог. #${p.leaseContractId}`}</p>
                 </td>
                 <td className="p-3 text-gray-600">{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString("ru-KG") : "—"}</td>
-                <td className="p-3 text-right font-semibold text-green-600">{fmtFull(p.amount)}</td>
+                <td className="p-3 text-right font-semibold text-emerald-600">{fmtFull(p.amount)}</td>
                 <td className="p-3">
                   <Badge className="bg-gray-100 text-gray-700 font-normal">
                     {methodLabels[p.paymentMethod] || p.paymentMethod || "—"}

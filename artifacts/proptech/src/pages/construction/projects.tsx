@@ -12,16 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit2, Trash2, HardHat, MapPin, Building, Calculator } from "lucide-react";
 
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-const authHeaders = () => {
-  const token = localStorage.getItem("auth_token");
-  return { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
-};
-
 function fmtNum(v: string | number | null | undefined) {
   if (!v) return "—";
   const n = parseFloat(String(v));
-  return new Intl.NumberFormat("ru-KG").format(n);
+  return new Intl.NumberFormat("ru-RU").format(n);
 }
 
 const BUILD_TYPES = [
@@ -56,8 +50,8 @@ const RATE_SOURCES = [
   { value: "manual", label: "Ввести вручную" },
 ];
 const STATUS_COLORS: Record<string, string> = {
-  planning: "bg-gray-100 text-gray-700", active: "bg-blue-100 text-blue-700",
-  completed: "bg-green-100 text-green-700", paused: "bg-yellow-100 text-yellow-700",
+  planning: "bg-gray-100 text-white", active: "bg-blue-100 text-blue-700",
+  completed: "bg-emerald-100 text-emerald-700", paused: "bg-amber-100 text-amber-700",
 };
 
 interface Project {
@@ -109,16 +103,27 @@ function ProjectDialog({ project, onClose, onSaved }: {
     if (!form.name.trim()) { toast({ title: "Укажите название проекта", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit
-        ? `${BASE}/api/construction/projects/${(init as Project).id}`
-        : `${BASE}/api/construction/projects`;
-      const method = isEdit ? "PATCH" : "POST";
-      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(form) });
-      if (!res.ok) throw new Error("Ошибка сохранения");
+      // Подготовка данных - конвертация строк в числа
+      const payload = {
+        ...form,
+        totalFloors: form.totalFloors ? parseInt(form.totalFloors) : null,
+        totalUnits: form.totalUnits ? parseInt(form.totalUnits) : null,
+        totalArea: form.totalArea ? parseFloat(form.totalArea) : null,
+        costPerSqm: form.costPerSqm ? parseFloat(form.costPerSqm) : null,
+        exchangeRate: form.exchangeRate ? parseFloat(form.exchangeRate) : 1,
+        totalBudget: estimatedKgs,
+      };
+
+      if (isEdit) {
+        await api.patch(`/construction/projects/${(init as Project).id}`, payload);
+      } else {
+        await api.post("/construction/projects", payload);
+      }
+
       toast({ title: isEdit ? "Проект обновлён" : "Проект создан" });
       onSaved(); onClose();
     } catch (err: any) {
-      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+      toast({ title: "Ошибка", description: err.response?.data?.message || err.message, variant: "destructive" });
     } finally { setLoading(false); }
   };
 
@@ -235,7 +240,7 @@ function ProjectDialog({ project, onClose, onSaved }: {
                 )}
                 <div className="bg-emerald-50 p-3 rounded-lg col-span-1">
                   <p className="text-xs text-emerald-600 font-medium">Себестоимость в KGS</p>
-                  <p className="text-lg font-bold text-emerald-700">{fmtNum(estimatedKgs)} ₸</p>
+                  <p className="text-lg font-bold text-emerald-700">{fmtNum(estimatedKgs)} с</p>
                 </div>
               </div>
             )}
@@ -263,7 +268,7 @@ function ProjectDialog({ project, onClose, onSaved }: {
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>
               {loading ? "Сохранение..." : isEdit ? "Сохранить" : "Создать проект"}
             </Button>
           </div>
@@ -279,21 +284,27 @@ export default function ConstructionProjects() {
   const [dialog, setDialog] = useState<Project | null | "new">(null);
   const [search, setSearch] = useState("");
 
-  const { data: projects = [], isLoading } = useQuery<Project[]>({
+  const { data: response, isLoading } = useQuery<{ data: Project[], meta?: any }>({
     queryKey: ["construction-projects"],
-    queryFn: () => api.get("/construction/projects").then(r => r.data),
+    queryFn: () => api.get("/construction/projects?page=1&limit=100").then(r => r.data),
   });
 
-  const filtered = projects.filter(p =>
+  const projects = response?.data || [];
+  const projectsArray = Array.isArray(projects) ? projects : [];
+  const filtered = projectsArray.filter(p =>
     !search || p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.address?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Удалить проект "${name}"?`)) return;
-    await fetch(`${BASE}/api/construction/projects/${id}`, { method: "DELETE", headers: authHeaders() });
-    toast({ title: "Проект удалён" });
-    queryClient.invalidateQueries({ queryKey: ["construction-projects"] });
+    try {
+      await api.delete(`/construction/projects/${id}`);
+      toast({ title: "Проект удалён" });
+      queryClient.invalidateQueries({ queryKey: ["construction-projects"] });
+    } catch (err: any) {
+      toast({ title: "Ошибка удаления", description: err.message, variant: "destructive" });
+    }
   };
 
   const BUILD_TYPE_LABELS: Record<string, string> = Object.fromEntries(BUILD_TYPES.map(b => [b.value, b.label]));
@@ -307,7 +318,7 @@ export default function ConstructionProjects() {
           <h1 className="text-2xl font-bold text-gray-900">Строительные проекты</h1>
           <p className="text-sm text-gray-500 mt-0.5">Управление проектами и расчёт себестоимости</p>
         </div>
-        <Button onClick={() => setDialog("new")} className="bg-orange-500 hover:bg-orange-600 gap-2">
+        <Button onClick={() => setDialog("new")} className="bg-amber-500 hover:bg-orange-600 gap-2">
           <Plus className="w-4 h-4" /> Новый проект
         </Button>
       </div>
@@ -369,11 +380,11 @@ export default function ConstructionProjects() {
 
                   {/* Cost calculation */}
                   {estimated > 0 && (
-                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-lg p-3 mb-3">
-                      <p className="text-[10px] text-orange-600 font-semibold uppercase tracking-wider">Себестоимость</p>
-                      <p className="text-lg font-bold text-orange-700">{fmtNum(estimated)} ₸</p>
+                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-amber-100 rounded-lg p-3 mb-3">
+                      <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wider">Себестоимость</p>
+                      <p className="text-lg font-bold text-amber-700">{fmtNum(estimated)} с</p>
                       {p.totalArea && p.costPerSqm && (
-                        <p className="text-xs text-orange-500 mt-0.5">
+                        <p className="text-xs text-amber-600 mt-0.5">
                           {fmtNum(p.totalArea)} м² × {fmtNum(p.costPerSqm)} {p.currency}
                           {p.currency !== "KGS" && ` (×${p.exchangeRate} KGS)`}
                         </p>
@@ -394,7 +405,7 @@ export default function ConstructionProjects() {
                     <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setDialog(p)}>
                       <Edit2 className="w-3 h-3 mr-1" /> Редактировать
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-xs text-red-400 hover:text-red-500" onClick={() => handleDelete(p.id, p.name)}>
+                    <Button size="sm" variant="ghost" className="text-xs text-rose-600 hover:text-rose-600" onClick={() => handleDelete(p.id, p.name)}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
@@ -413,3 +424,4 @@ export default function ConstructionProjects() {
     </div>
   );
 }
+

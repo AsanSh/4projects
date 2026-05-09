@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { z } from "zod";
 import {
   db,
   constructionProjectsTable,
@@ -12,18 +13,44 @@ import {
   constructionExpensesTable,
   constructionUnitsTable,
   currencyRatesTable,
-} from "@workspace/db";
+} from "../lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
+import { getPaginationParams, createPaginatedResponse, getPaginationQuery } from "../lib/pagination";
+import { validateQuery, commonSchemas } from "../middleware/validation";
+import { cache, cacheKeys } from "../lib/cache";
 
 const router: ReturnType<typeof Router> = Router();
 
 // ── PROJECTS ──────────────────────────────────────────────────────────────────
 
-router.get("/projects", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+router.get("/projects", requireAuth, validateQuery(commonSchemas.pagination), async (req: AuthenticatedRequest, res): Promise<void> => {
+  const companyId = req.companyId!;
+  const pagination = getPaginationParams(req);
+
+  // Try cache first
+  const cacheKey = `${cacheKeys.projects(companyId)}:page:${pagination.page}:limit:${pagination.limit}`;
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    res.json(cached);
+    return;
+  }
+
+  // Get total count
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(constructionProjectsTable)
+    .where(eq(constructionProjectsTable.companyId, companyId));
+
+  // Get paginated data
   const rows = await db.select().from(constructionProjectsTable)
-    .where(eq(constructionProjectsTable.companyId, req.companyId!))
-    .orderBy(desc(constructionProjectsTable.createdAt));
-  res.json(rows);
+    .where(eq(constructionProjectsTable.companyId, companyId))
+    .orderBy(desc(constructionProjectsTable.createdAt))
+    .limit(pagination.limit)
+    .offset(pagination.offset);
+
+  const response = createPaginatedResponse(rows, count, pagination);
+  cache.set(cacheKey, response, 300); // Cache for 5 minutes
+  res.json(response);
 });
 
 router.post("/projects", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
@@ -53,6 +80,10 @@ router.post("/projects", requireAuth, async (req: AuthenticatedRequest, res): Pr
     plannedEndDate: body.plannedEndDate || null,
     description: body.description || null,
   }).returning();
+
+  // Invalidate cache
+  cache.deletePattern(`projects:${req.companyId!}:*`);
+
   res.status(201).json(row);
 });
 
@@ -81,6 +112,11 @@ router.patch("/projects/:id", requireAuth, async (req: AuthenticatedRequest, res
     .where(and(eq(constructionProjectsTable.id, id), eq(constructionProjectsTable.companyId, req.companyId!)))
     .returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
+
+  // Invalidate cache
+  cache.deletePattern(`projects:${req.companyId!}:*`);
+  cache.delete(cacheKeys.project(id));
+
   res.json(row);
 });
 
@@ -88,6 +124,11 @@ router.delete("/projects/:id", requireAuth, async (req: AuthenticatedRequest, re
   const id = parseInt(req.params.id);
   await db.delete(constructionProjectsTable)
     .where(and(eq(constructionProjectsTable.id, id), eq(constructionProjectsTable.companyId, req.companyId!)));
+
+  // Invalidate cache
+  cache.deletePattern(`projects:${req.companyId!}:*`);
+  cache.delete(cacheKeys.project(id));
+
   res.json({ ok: true });
 });
 
@@ -493,6 +534,89 @@ router.post("/currency-rates", requireAuth, async (req: AuthenticatedRequest, re
     mBankRate: mBankRate ? String(mBankRate) : null,
   }).returning();
   res.status(201).json(row);
+});
+
+// ── PROJECT COST ANALYSIS ─────────────────────────────────────────────────────
+
+router.get("/projects/:id/cost-analysis", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const projectId = parseInt(req.params.id);
+
+  const [project] = await db.select().from(constructionProjectsTable)
+    .where(and(eq(constructionProjectsTable.id, projectId), eq(constructionProjectsTable.companyId, req.companyId!)));
+
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+
+  // Get all expenses for this project
+  const expenses = await db.select().from(constructionExpensesTable)
+    .where(and(eq(constructionExpensesTable.projectId, projectId), eq(constructionExpensesTable.companyId, req.companyId!)));
+
+  // Get all units for this project
+  const units = await db.select().from(constructionUnitsTable)
+    .where(and(eq(constructionUnitsTable.projectId, projectId), eq(constructionUnitsTable.companyId, req.companyId!)));
+
+  // Calculate totals
+  const totalArea = parseFloat(project.totalArea || "0");
+  const totalBudget = parseFloat(project.totalBudget || "0");
+  const plannedCostPerSqm = parseFloat(project.costPerSqm || "0");
+
+  // Calculate spent amount
+  const spentAmount = expenses.reduce((sum, e) => sum + parseFloat(e.amountKgs || e.amount || "0"), 0);
+
+  // Calculate actual cost per sqm
+  const actualCostPerSqm = totalArea > 0 ? spentAmount / totalArea : 0;
+
+  // Sales statistics
+  const soldUnits = units.filter(u => u.status === "sold" || u.status === "registered");
+  const reservedUnits = units.filter(u => u.status === "reserved");
+  const availableUnits = units.filter(u => u.status === "available");
+
+  const totalRevenue = soldUnits.reduce((sum, u) => sum + parseFloat(u.totalPrice || "0"), 0);
+  const expectedRevenue = units.reduce((sum, u) => sum + parseFloat(u.totalPrice || "0"), 0);
+
+  // Calculate profitability
+  const profit = totalRevenue - spentAmount;
+  const profitMargin = spentAmount > 0 ? (profit / spentAmount) * 100 : 0;
+  const roi = totalBudget > 0 ? (profit / totalBudget) * 100 : 0;
+
+  // Calculate progress
+  const budgetProgress = totalBudget > 0 ? (spentAmount / totalBudget) * 100 : 0;
+  const salesProgress = units.length > 0 ? (soldUnits.length / units.length) * 100 : 0;
+
+  res.json({
+    project: {
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      totalArea,
+      totalBudget,
+    },
+    costs: {
+      plannedCostPerSqm,
+      actualCostPerSqm,
+      costDeviation: plannedCostPerSqm > 0 ? ((actualCostPerSqm / plannedCostPerSqm - 1) * 100) : 0,
+      totalBudget,
+      spentAmount,
+      remainingBudget: totalBudget - spentAmount,
+      budgetProgress,
+    },
+    sales: {
+      totalUnits: units.length,
+      soldUnits: soldUnits.length,
+      reservedUnits: reservedUnits.length,
+      availableUnits: availableUnits.length,
+      totalRevenue,
+      expectedRevenue,
+      salesProgress,
+    },
+    profitability: {
+      profit,
+      profitMargin,
+      roi,
+    },
+  });
 });
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────

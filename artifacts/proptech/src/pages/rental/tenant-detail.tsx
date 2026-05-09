@@ -118,7 +118,7 @@ export default function TenantDetail() {
             <div>
               <h1 className="text-xl font-bold text-gray-900">{tenant.fullName || tenant.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <Badge className={tenant.status === "active" ? "bg-green-100 text-green-700 border-green-200" : "bg-gray-100 text-gray-600"}>
+                <Badge className={tenant.status === "active" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-gray-100 text-white"}>
                   {tenant.status === "active" ? "Активный" : "Неактивный"}
                 </Badge>
                 <span className="text-xs text-gray-400">Арендатор</span>
@@ -138,7 +138,7 @@ export default function TenantDetail() {
 
       {/* Portal account dialog */}
       {showPortalDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-950/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <div className="flex items-center gap-3">
@@ -175,7 +175,7 @@ export default function TenantDetail() {
                 <Input type="password" value={portalForm.password} onChange={e => setPortalForm(p => ({ ...p, password: e.target.value }))} placeholder="Минимум 6 символов" />
               </div>
               {portalStatus && (
-                <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${portalStatus.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${portalStatus.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
                   {portalStatus.type === "success" ? <Check className="w-4 h-4 flex-shrink-0" /> : <X className="w-4 h-4 flex-shrink-0" />}
                   {portalStatus.msg}
                 </div>
@@ -197,8 +197,8 @@ export default function TenantDetail() {
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Контакты</h3>
           {tenant.phone && (
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Phone className="w-3.5 h-3.5 text-green-600" />
+              <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-[10px] text-gray-400">Телефон</p>
@@ -245,16 +245,16 @@ export default function TenantDetail() {
         <div className="lg:col-span-2 grid grid-cols-2 gap-3">
           <StatCard icon={<Building2 className="w-5 h-5 text-blue-600" />} label="Активных договоров"
             value={`${activeContracts.length}`} sub={`всего ${myContracts.length}`} color="bg-blue-50" />
-          <StatCard icon={<Wallet className="w-5 h-5 text-green-600" />} label="Оплачено"
-            value={`${fmt(totalPaid)} KGS`} sub={`${myPayments.length} платежей`} color="bg-green-50" />
+          <StatCard icon={<Wallet className="w-5 h-5 text-emerald-600" />} label="Оплачено"
+            value={`${fmt(totalPaid)} KGS`} sub={`${myPayments.length} платежей`} color="bg-emerald-50" />
           <StatCard icon={<CreditCard className="w-5 h-5 text-amber-600" />} label="Начислено"
             value={`${fmt(totalCharged)} KGS`} sub="всего начислено" color="bg-amber-50" />
           <StatCard
-            icon={balance > 0 ? <AlertCircle className="w-5 h-5 text-red-600" /> : <CheckCircle className="w-5 h-5 text-green-600" />}
+            icon={balance > 0 ? <AlertCircle className="w-5 h-5 text-rose-600" /> : <CheckCircle className="w-5 h-5 text-emerald-600" />}
             label="Задолженность"
             value={`${fmt(Math.abs(balance))} KGS`}
             sub={balance > 0 ? "долг арендатора" : balance < 0 ? "переплата" : "нет долга"}
-            color={balance > 0 ? "bg-red-50" : "bg-green-50"} />
+            color={balance > 0 ? "bg-rose-50" : "bg-emerald-50"} />
         </div>
       </div>
 
@@ -297,7 +297,7 @@ export default function TenantDetail() {
                       {fmtDate(c.startDate)} — {c.endDate ? fmtDate(c.endDate) : "бессрочно"}
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-white"}`}>
                         {c.status === "active" ? "Активный" : c.status === "terminated" ? "Расторгнут" : c.status}
                       </span>
                     </td>
@@ -355,8 +355,8 @@ export default function TenantDetail() {
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right text-gray-400">—</td>
-                        <td className="px-5 py-3 text-right font-medium text-green-700">+{fmt(paid)} KGS</td>
-                        <td className={`px-5 py-3 text-right font-medium text-xs ${running > 0 ? "text-red-600" : "text-green-700"}`}>
+                        <td className="px-5 py-3 text-right font-medium text-emerald-700">+{fmt(paid)} KGS</td>
+                        <td className={`px-5 py-3 text-right font-medium text-xs ${running > 0 ? "text-rose-600" : "text-emerald-700"}`}>
                           {running > 0 ? `-${fmt(running)}` : `+${fmt(Math.abs(running))}`}
                         </td>
                       </tr>
@@ -368,8 +368,8 @@ export default function TenantDetail() {
                 <tr className="bg-gray-50 font-semibold border-t-2">
                   <td colSpan={3} className="px-5 py-3 text-gray-700">ИТОГО</td>
                   <td className="px-5 py-3 text-right text-gray-700">{fmt(totalCharged)} KGS</td>
-                  <td className="px-5 py-3 text-right text-green-700">+{fmt(totalPaid)} KGS</td>
-                  <td className={`px-5 py-3 text-right ${balance > 0 ? "text-red-600" : "text-green-700"}`}>
+                  <td className="px-5 py-3 text-right text-emerald-700">+{fmt(totalPaid)} KGS</td>
+                  <td className={`px-5 py-3 text-right ${balance > 0 ? "text-rose-600" : "text-emerald-700"}`}>
                     {balance > 0 ? `-${fmt(balance)}` : `+${fmt(Math.abs(balance))}`} KGS
                   </td>
                 </tr>
@@ -381,3 +381,4 @@ export default function TenantDetail() {
     </div>
   );
 }
+

@@ -54,7 +54,7 @@ export default function PaymentsReport() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4">
-          <div className="w-11 h-11 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0">
             <CreditCard className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -116,7 +116,7 @@ export default function PaymentsReport() {
                         {METHOD_LABELS[p.paymentMethod] || p.paymentMethod || "—"}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right font-semibold text-green-600">
+                    <td className="px-6 py-4 text-right font-semibold text-emerald-600">
                       {formatCurrency(p.amount)}
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-400">

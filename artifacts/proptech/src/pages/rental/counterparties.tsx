@@ -97,7 +97,7 @@ export default function RentalCounterparties() {
         </div>
         <div className="bg-white border rounded-lg p-4">
           <p className="text-sm text-gray-500">Активных договоров</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">
+          <p className="text-2xl font-bold text-emerald-600 mt-1">
             {contracts.filter((c: any) => c.status === "active").length}
           </p>
         </div>
@@ -140,7 +140,7 @@ export default function RentalCounterparties() {
                 <td className="p-3">
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                      t.type === "company" ? "bg-purple-100 text-purple-700" : "bg-blue-50 text-blue-600"
+                      t.type === "company" ? "bg-blue-100 text-blue-700" : "bg-blue-50 text-blue-600"
                     }`}>
                       {t.type === "company" ? <Building2 className="w-4 h-4" /> : (t.fullName || "?").charAt(0).toUpperCase()}
                     </div>
@@ -148,7 +148,7 @@ export default function RentalCounterparties() {
                       <p className="font-medium text-gray-900">{t.fullName}</p>
                       <div className="mt-0.5">
                         {t.type === "company" ? (
-                          <Badge className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0">Юрлицо</Badge>
+                          <Badge className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0">Юрлицо</Badge>
                         ) : (
                           <Badge className="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0">Физлицо</Badge>
                         )}
@@ -168,12 +168,12 @@ export default function RentalCounterparties() {
                 <td className="p-3 text-center">
                   <span className="text-gray-700 font-medium">{t.contractCount}</span>
                   {t.activeCount > 0 && (
-                    <span className="text-xs text-green-600 ml-1">({t.activeCount} акт.)</span>
+                    <span className="text-xs text-emerald-600 ml-1">({t.activeCount} акт.)</span>
                   )}
                 </td>
                 <td className="p-3 text-center">
                   {t.activeCount > 0 ? (
-                    <Badge className="bg-green-100 text-green-800">Активный</Badge>
+                    <Badge className="bg-emerald-100 text-emerald-800">Активный</Badge>
                   ) : (
                     <Badge className="bg-gray-100 text-gray-600">Неактивный</Badge>
                   )}
@@ -191,7 +191,7 @@ export default function RentalCounterparties() {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h2 className="font-semibold text-gray-900">{isNew ? "Новый контрагент" : "Редактировать контрагента"}</h2>
@@ -206,7 +206,7 @@ export default function RentalCounterparties() {
                   <button key={val as string}
                     onClick={() => setEditing(e => ({ ...e, type: val as string }))}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-medium transition-all ${
-                      editing.type === val ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      editing.type === val ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-200 text-white hover:border-gray-300"
                     }`}>
                     {icon as any} {label as string}
                   </button>
@@ -256,7 +256,7 @@ export default function RentalCounterparties() {
                 </div>
               </div>
 
-              {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+              {error && <p className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-lg">{error}</p>}
             </div>
             <div className="flex justify-end gap-2 px-5 py-4 border-t">
               <Button variant="outline" size="sm" onClick={closeModal} disabled={saving}>Отмена</Button>
@@ -270,3 +270,4 @@ export default function RentalCounterparties() {
     </div>
   );
 }
+

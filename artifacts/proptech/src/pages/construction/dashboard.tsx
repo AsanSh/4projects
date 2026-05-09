@@ -58,7 +58,14 @@ export default function ConstructionDashboard() {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const filteredOps = ops.filter((o: any) => {
+  // Safe array wrappers
+  const opsArray = Array.isArray(ops) ? ops : [];
+  const accountsArray = Array.isArray(accounts) ? accounts : [];
+  const projectsArray = Array.isArray(projects) ? projects : [];
+  const accrualsArray = Array.isArray(accruals) ? accruals : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+
+  const filteredOps = opsArray.filter((o: any) => {
     if (period === "month" && !o.date?.startsWith(currentMonth)) return false;
     if (filterProject !== "all" && String(o.projectId) !== filterProject) return false;
     return true;
@@ -69,8 +76,8 @@ export default function ConstructionDashboard() {
   const netProfit = totalIncome - totalExpense;
   const margin = totalIncome > 0 ? (netProfit / totalIncome * 100) : 0;
 
-  const totalAccountsKgs = accounts.filter((a: any) => a.currency === "KGS").reduce((s: number, a: any) => s + parseFloat(a.currentBalance || "0"), 0);
-  const overdueDebt = accruals.filter((a: any) => a.status !== "paid" && new Date(a.dueDate) < now).reduce((s: number, a: any) => s + parseFloat(a.remainingAmount || "0"), 0);
+  const totalAccountsKgs = accountsArray.filter((a: any) => a.currency === "KGS").reduce((s: number, a: any) => s + parseFloat(a.currentBalance || "0"), 0);
+  const overdueDebt = accrualsArray.filter((a: any) => a.status !== "paid" && new Date(a.dueDate) < now).reduce((s: number, a: any) => s + parseFloat(a.remainingAmount || "0"), 0);
 
   // Expense by category
   const expByCat: Record<string, number> = {};
@@ -87,15 +94,15 @@ export default function ConstructionDashboard() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
   const monthlyData = last6.map(m => {
-    const inc = ops.filter((o: any) => o.type === "income" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
-    const exp = ops.filter((o: any) => o.type === "expense" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
+    const inc = opsArray.filter((o: any) => o.type === "income" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
+    const exp = opsArray.filter((o: any) => o.type === "expense" && o.date?.startsWith(m)).reduce((s: number, o: any) => s + parseFloat(o.amountKgs || "0"), 0);
     return { m, inc, exp };
   });
   const maxMonthly = Math.max(...monthlyData.map(d => Math.max(d.inc, d.exp)), 1);
 
   // Top income clients (by contract payments)
   const clientIncome: Record<string, number> = {};
-  contracts.forEach((c: any) => {
+  contractsArray.forEach((c: any) => {
     const paid = parseFloat(c.paidAmount || "0");
     if (paid > 0) clientIncome[c.buyerName || "—"] = (clientIncome[c.buyerName] || 0) + paid;
   });
@@ -118,12 +125,12 @@ export default function ConstructionDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {projects[0]?.name?.split(" ")[0] || "BuildFlow"}
+            {projectsArray[0]?.name?.split(" ")[0] || "BuildFlow"}
           </h1>
           <p className="text-sm text-gray-400">Строительный дашборд</p>
         </div>
         <div className="flex items-center gap-2">
-          {accounts.slice(0, 3).map((a: any) => (
+          {accountsArray.slice(0, 3).map((a: any) => (
             <div key={a.id} className="px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-mono">
               {a.name}: {fmt(a.currentBalance)} {a.currency}
             </div>
@@ -144,7 +151,7 @@ export default function ConstructionDashboard() {
             className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${filterProject === "all" ? "bg-white shadow text-gray-900" : "text-gray-500"}`}>
             Все проекты
           </button>
-          {projects.slice(0, 3).map((p: any) => (
+          {projectsArray.slice(0, 3).map((p: any) => (
             <button key={p.id} onClick={() => setFilterProject(String(p.id))}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${filterProject === String(p.id) ? "bg-white shadow text-gray-900" : "text-gray-500"}`}>
               {p.name}
@@ -175,29 +182,29 @@ export default function ConstructionDashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-gray-400 font-medium">РАСХОДЫ</span>
-            <TrendingDown className="w-4 h-4 text-red-400" />
+            <TrendingDown className="w-4 h-4 text-rose-600" />
           </div>
           <div className="text-2xl font-bold text-gray-900 mt-1">{fmt(totalExpense)}</div>
           <div className="text-xs text-gray-400 mt-0.5">KGS</div>
           <div className="flex items-end gap-0.5 h-6 mt-2">
             {monthlyData.map(({ m, exp }) => (
-              <div key={m} className="flex-1 bg-red-100 rounded-sm" style={{ height: `${maxMonthly > 0 ? Math.max(4, exp / maxMonthly * 24) : 4}px` }} />
+              <div key={m} className="flex-1 bg-rose-100 rounded-sm" style={{ height: `${maxMonthly > 0 ? Math.max(4, exp / maxMonthly * 24) : 4}px` }} />
             ))}
           </div>
         </div>
 
         {/* Чистая прибыль */}
-        <div className={`rounded-2xl border shadow-sm p-4 ${netProfit >= 0 ? "bg-emerald-500 border-emerald-400" : "bg-red-500 border-red-400"}`}>
+        <div className={`rounded-2xl border shadow-sm p-4 ${netProfit >= 0 ? "bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200" : "bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200"}`}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-emerald-100 font-medium">ЧИСТАЯ ПРИБЫЛЬ</span>
-            <BarChart2 className="w-4 h-4 text-white/70" />
+            <span className={`text-xs font-medium ${netProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>ЧИСТАЯ ПРИБЫЛЬ</span>
+            <BarChart2 className={`w-4 h-4 ${netProfit >= 0 ? "text-emerald-600" : "text-rose-600"}`} />
           </div>
-          <div className="text-2xl font-bold text-white mt-1">{netProfit >= 0 ? "+" : ""}{fmt(netProfit)}</div>
-          <div className="text-xs text-white/70 mt-0.5">KGS · рентабельность {margin.toFixed(1)}%</div>
+          <div className={`text-2xl font-bold mt-1 ${netProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>{netProfit >= 0 ? "+" : ""}{fmt(netProfit)}</div>
+          <div className={`text-xs mt-0.5 ${netProfit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>KGS · рентабельность {margin.toFixed(1)}%</div>
           <div className="flex items-end gap-0.5 h-6 mt-2">
             {monthlyData.map(({ m, inc, exp }) => {
               const net = inc - exp;
-              return <div key={m} className="flex-1 bg-white/30 rounded-sm" style={{ height: `${maxMonthly > 0 ? Math.max(4, Math.abs(net) / maxMonthly * 24) : 4}px` }} />;
+              return <div key={m} className={`flex-1 rounded-sm ${netProfit >= 0 ? "bg-emerald-600/30" : "bg-rose-600/30"}`} style={{ height: `${maxMonthly > 0 ? Math.max(4, Math.abs(net) / maxMonthly * 24) : 4}px` }} />;
             })}
           </div>
         </div>
@@ -209,9 +216,9 @@ export default function ConstructionDashboard() {
             <Wallet className="w-4 h-4 text-blue-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900 mt-1">{fmt(totalAccountsKgs)}</div>
-          <div className="text-xs text-gray-400 mt-0.5">KGS · {accounts.length} счетов</div>
+          <div className="text-xs text-gray-400 mt-0.5">KGS · {accountsArray.length} счетов</div>
           <div className="mt-2 space-y-0.5">
-            {accounts.slice(0, 3).map((a: any) => (
+            {accountsArray.slice(0, 3).map((a: any) => (
               <div key={a.id} className="flex justify-between text-[10px] text-gray-400">
                 <span className="truncate max-w-[80px]">{a.name}</span>
                 <span className="font-mono">{fmtShort(a.currentBalance)}</span>
@@ -258,17 +265,17 @@ export default function ConstructionDashboard() {
               <span className="text-xs text-gray-400 font-medium">РЕНТАБЕЛЬНОСТЬ</span>
               <span className="text-xs text-gray-300">→ 100%</span>
             </div>
-            <div className={`text-3xl font-bold mt-1 ${margin >= 0 ? "text-gray-900" : "text-red-600"}`}>{margin.toFixed(1)}%</div>
+            <div className={`text-3xl font-bold mt-1 ${margin >= 0 ? "text-gray-900" : "text-rose-600"}`}>{margin.toFixed(1)}%</div>
             <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, Math.max(0, margin))}%` }} />
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex-1">
             <div className="flex items-center gap-1 mb-1">
-              <AlertCircle className="w-3 h-3 text-red-400" />
+              <AlertCircle className="w-3 h-3 text-rose-600" />
               <span className="text-xs text-gray-400 font-medium">ДЕБИТОРСКАЯ ЗАДОЛЖЕННОСТЬ</span>
             </div>
-            <div className="text-2xl font-bold text-red-500 mt-1">{fmt(overdueDebt)}</div>
+            <div className="text-2xl font-bold text-rose-600 mt-1">{fmt(overdueDebt)}</div>
             <div className="text-xs text-gray-400 mt-0.5">KGS просрочено</div>
           </div>
         </div>
@@ -355,7 +362,7 @@ export default function ConstructionDashboard() {
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Building2 className="w-4 h-4 text-red-400" />
+            <Building2 className="w-4 h-4 text-rose-600" />
             <div className="text-sm font-semibold text-gray-700">Контрагенты с наибольшими расходами</div>
           </div>
           {topContExp.length === 0 ? (
@@ -366,7 +373,7 @@ export default function ConstructionDashboard() {
                 <div key={name}>
                   <div className="flex items-center justify-between text-sm mb-0.5">
                     <span className="text-gray-700 truncate max-w-[200px]">{name}</span>
-                    <span className="font-mono font-medium text-red-600">{fmt(amount)}</span>
+                    <span className="font-mono font-medium text-rose-600">{fmt(amount)}</span>
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-red-400 rounded-full" style={{ width: `${Math.round(amount / maxContAmt * 100)}%` }} />
@@ -383,7 +390,7 @@ export default function ConstructionDashboard() {
         <div className="px-5 py-3 border-b border-gray-50 flex items-center justify-between">
           <div className="text-sm font-semibold text-gray-700">Последние операции</div>
           <Link href="/construction/operations">
-            <button className="text-xs text-orange-500 hover:text-orange-600 flex items-center gap-1">
+            <button className="text-xs text-amber-600 hover:text-amber-600 flex items-center gap-1">
               Все операции <ArrowRight className="w-3 h-3" />
             </button>
           </Link>
@@ -393,7 +400,7 @@ export default function ConstructionDashboard() {
         ) : (
           <div>
             {[...filteredOps].reverse().slice(0, 8).map((op: any) => {
-              const proj = projects.find((p: any) => p.id === op.projectId);
+              const proj = projectsArray.find((p: any) => p.id === op.projectId);
               const isIncome = op.type === "income";
               const isTransfer = op.type === "transfer";
               return (
@@ -404,7 +411,7 @@ export default function ConstructionDashboard() {
                     {op.category && <div className="text-xs text-gray-400">{op.category}</div>}
                   </div>
                   <div className="text-xs text-gray-400 flex-shrink-0">{proj?.name || ""}</div>
-                  <div className={`font-mono font-semibold text-sm flex-shrink-0 ${isIncome ? "text-emerald-600" : isTransfer ? "text-blue-600" : "text-red-600"}`}>
+                  <div className={`font-mono font-semibold text-sm flex-shrink-0 ${isIncome ? "text-emerald-600" : isTransfer ? "text-blue-600" : "text-rose-600"}`}>
                     {isIncome ? "+" : isTransfer ? "⇄" : "−"}{fmt(op.amountKgs)}
                   </div>
                 </div>
@@ -452,3 +459,4 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = (angleDeg * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
+

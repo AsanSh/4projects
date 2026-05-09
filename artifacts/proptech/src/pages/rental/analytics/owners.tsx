@@ -30,9 +30,15 @@ export default function RentalOwners() {
     queryFn: () => api.get("/rental/contracts").then(r => r.data),
   });
 
+  const statementsArray = Array.isArray(statements) ? statements : [];
+  const paymentsArray = Array.isArray(payments) ? payments : [];
+  const expensesArray = Array.isArray(expenses) ? expenses : [];
+  const propertiesArray = Array.isArray(properties) ? properties : [];
+  const contractsArray = Array.isArray(contracts) ? contracts : [];
+
   // Group statements by owner
   const byOwner: Record<string, { name: string; props: Set<number>; income: number; expense: number; fee: number }> = {};
-  statements.forEach((s: any) => {
+  statementsArray.forEach((s: any) => {
     const key = s.ownerName || `Владелец #${s.id}`;
     if (!byOwner[key]) byOwner[key] = { name: key, props: new Set(), income: 0, expense: 0, fee: 0 };
     byOwner[key].income += parseFloat(s.grossRent || "0");
@@ -44,9 +50,9 @@ export default function RentalOwners() {
   // If no owner statements yet, compute from payments per property
   const showOwners = Object.values(byOwner);
 
-  const totalIncome = showOwners.reduce((s, o) => s + o.income, 0);
-  const totalExpense = showOwners.reduce((s, o) => s + o.expense, 0);
-  const totalFee = showOwners.reduce((s, o) => s + o.fee, 0);
+  const totalIncome = showOwners.reduce((s, o) => s + (o.income || 0), 0);
+  const totalExpense = showOwners.reduce((s, o) => s + (o.expense || 0), 0);
+  const totalFee = showOwners.reduce((s, o) => s + (o.fee || 0), 0);
   const totalNet = totalIncome - totalExpense - totalFee;
 
   return (
@@ -59,19 +65,19 @@ export default function RentalOwners() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white border rounded-lg p-4">
           <p className="text-xs text-gray-500 mb-1">Валовой доход</p>
-          <p className="text-xl font-bold text-green-600">{fmtFull(totalIncome)}</p>
+          <p className="text-xl font-bold text-emerald-600">{fmtFull(totalIncome)}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <p className="text-xs text-gray-500 mb-1">Расходы</p>
-          <p className="text-xl font-bold text-red-500">{fmtFull(totalExpense)}</p>
+          <p className="text-xl font-bold text-rose-600">{fmtFull(totalExpense)}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <p className="text-xs text-gray-500 mb-1">Комиссия УК</p>
-          <p className="text-xl font-bold text-orange-500">{fmtFull(totalFee)}</p>
+          <p className="text-xl font-bold text-amber-600">{fmtFull(totalFee)}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <p className="text-xs text-gray-500 mb-1">Чистый доход</p>
-          <p className={`text-xl font-bold ${totalNet >= 0 ? "text-blue-600" : "text-red-600"}`}>{fmtFull(totalNet)}</p>
+          <p className={`text-xl font-bold ${totalNet >= 0 ? "text-blue-600" : "text-rose-700"}`}>{fmtFull(totalNet)}</p>
         </div>
       </div>
 
@@ -108,13 +114,13 @@ export default function RentalOwners() {
                       </div>
                     </td>
                     <td className="p-3 text-center text-gray-600">{o.props.size}</td>
-                    <td className="p-3 text-right text-green-600 font-medium">{fmtFull(o.income)}</td>
-                    <td className="p-3 text-right text-red-500">{fmtFull(o.expense)}</td>
-                    <td className="p-3 text-right text-orange-500">{fmtFull(o.fee)}</td>
+                    <td className="p-3 text-right text-emerald-600 font-medium">{fmtFull(o.income)}</td>
+                    <td className="p-3 text-right text-rose-600">{fmtFull(o.expense)}</td>
+                    <td className="p-3 text-right text-amber-600">{fmtFull(o.fee)}</td>
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {net >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-blue-500" /> : <TrendingDown className="w-3.5 h-3.5 text-red-500" />}
-                        <span className={`font-semibold ${net >= 0 ? "text-blue-600" : "text-red-600"}`}>{fmtFull(net)}</span>
+                        {net >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-blue-600" /> : <TrendingDown className="w-3.5 h-3.5 text-rose-600" />}
+                        <span className={`font-semibold ${net >= 0 ? "text-blue-600" : "text-rose-700"}`}>{fmtFull(net)}</span>
                       </div>
                     </td>
                   </tr>

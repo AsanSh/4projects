@@ -54,14 +54,14 @@ export default function ConstructionDebt() {
           <div className="text-2xl font-bold text-blue-600">{fmtFull(totalDebt)}</div>
           <div className="text-xs text-gray-400">{accruals.length} платежей</div>
         </div>
-        <div className="bg-red-50 rounded-xl p-4 border border-red-100 shadow-sm">
-          <div className="flex items-center gap-1 text-xs text-red-600 mb-1"><AlertTriangle className="w-3 h-3" />Просрочено</div>
-          <div className="text-2xl font-bold text-red-600">{fmtFull(totalOverdue)}</div>
-          <div className="text-xs text-red-400">{overdue.length} платежей</div>
+        <div className="bg-rose-50 rounded-xl p-4 border border-rose-100 shadow-sm">
+          <div className="flex items-center gap-1 text-xs text-rose-700 mb-1"><AlertTriangle className="w-3 h-3" />Просрочено</div>
+          <div className="text-2xl font-bold text-rose-700">{fmtFull(totalOverdue)}</div>
+          <div className="text-xs text-rose-600">{overdue.length} платежей</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center gap-1 text-xs text-gray-500 mb-1"><Clock className="w-3 h-3" />Предстоит</div>
-          <div className="text-2xl font-bold text-orange-600">{fmtFull(totalUpcoming)}</div>
+          <div className="text-2xl font-bold text-amber-600">{fmtFull(totalUpcoming)}</div>
           <div className="text-xs text-gray-400">{upcoming.length} платежей</div>
         </div>
       </div>
@@ -71,10 +71,10 @@ export default function ConstructionDebt() {
         <div className="text-sm font-semibold text-gray-700 mb-4">Aging Report (просрочка по срокам)</div>
         <div className="grid grid-cols-4 gap-3">
           {[
-            { label: "0–30 дней", amount: aging.d30, color: "bg-yellow-100 border-yellow-200 text-yellow-700" },
-            { label: "30–60 дней", amount: aging.d60, color: "bg-orange-100 border-orange-200 text-orange-700" },
-            { label: "60–90 дней", amount: aging.d90, color: "bg-red-100 border-red-200 text-red-700" },
-            { label: "90+ дней", amount: aging.d90plus, color: "bg-red-200 border-red-300 text-red-800" },
+            { label: "0–30 дней", amount: aging.d30, color: "bg-amber-100 border-amber-200 text-amber-700" },
+            { label: "30–60 дней", amount: aging.d60, color: "bg-amber-100 border-amber-200 text-amber-700" },
+            { label: "60–90 дней", amount: aging.d90, color: "bg-rose-100 border-rose-200 text-rose-700" },
+            { label: "90+ дней", amount: aging.d90plus, color: "bg-rose-200 border-rose-300 text-rose-800" },
           ].map(bucket => (
             <div key={bucket.label} className={`rounded-lg border p-3 ${bucket.color}`}>
               <div className="text-xs font-medium mb-1">{bucket.label}</div>
@@ -106,23 +106,23 @@ export default function ConstructionDebt() {
               const isOvd = new Date(a.dueDate) < new Date();
               const days = isOvd ? daysOverdue(a.dueDate) : 0;
               return (
-                <tr key={a.id} className={`border-b border-gray-50 hover:bg-gray-50/50 ${isOvd ? "bg-red-50/20" : ""}`}>
+                <tr key={a.id} className={`border-b border-gray-50 hover:bg-gray-50/50 ${isOvd ? "bg-rose-50/20" : ""}`}>
                   <td className="px-4 py-2.5">
-                    <div className="font-mono text-xs font-medium text-orange-600">{contract?.contractNumber || `#${a.contractId}`}</div>
+                    <div className="font-mono text-xs font-medium text-amber-600">{contract?.contractNumber || `#${a.contractId}`}</div>
                     <div className="text-xs text-gray-500">{contract?.buyerName}</div>
                   </td>
                   <td className="px-4 py-2.5 text-gray-600">{a.dueDate}</td>
                   <td className="px-4 py-2.5">
                     {isOvd ? (
-                      <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 text-xs">
+                      <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200 text-xs">
                         {days} дн.
                       </Badge>
                     ) : (
-                      <span className="text-xs text-emerald-500">Не просрочен</span>
+                      <span className="text-xs text-emerald-600">Не просрочен</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono">{fmtFull(a.amount)}</td>
-                  <td className={`px-4 py-2.5 text-right font-mono font-bold ${isOvd ? "text-red-600" : "text-orange-600"}`}>
+                  <td className={`px-4 py-2.5 text-right font-mono font-bold ${isOvd ? "text-rose-700" : "text-amber-600"}`}>
                     {fmtFull(a.remainingAmount)}
                   </td>
                 </tr>

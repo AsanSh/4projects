@@ -1,4 +1,10 @@
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+import { getApiBase } from "./api-base";
+
+const BASE = getApiBase();
+
+if (import.meta.env.DEV) {
+  console.info("[api] BASE:", BASE);
+}
 
 function getHeaders(): Record<string, string> {
   const token = localStorage.getItem("auth_token");
@@ -9,7 +15,10 @@ function getHeaders(): Record<string, string> {
 }
 
 async function request<T = any>(method: string, path: string, options?: { params?: Record<string, string | undefined>; data?: unknown }): Promise<{ data: T }> {
-  let url = `${BASE}/api${path}`;
+  let url = `${BASE}${path}`;
+  if (import.meta.env.DEV) {
+    console.info(`[api] ${method}`, url);
+  }
 
   if (options?.params) {
     const qs = new URLSearchParams();
@@ -27,7 +36,11 @@ async function request<T = any>(method: string, path: string, options?: { params
   });
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const errorMessage = data.error || data.message || `HTTP ${res.status}`;
+    console.error(`API Error [${res.status}]:`, errorMessage, data);
+    throw new Error(errorMessage);
+  }
   return { data };
 }
 

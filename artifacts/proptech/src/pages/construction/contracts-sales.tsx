@@ -13,9 +13,9 @@ import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft:     { label: "Черновик",      color: "bg-gray-100 text-gray-600 border-gray-200" },
-  review:    { label: "На проверке",   color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
+  review:    { label: "На проверке",   color: "bg-amber-100 text-amber-700 border-amber-200" },
   signed:    { label: "Подписан",      color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  cancelled: { label: "Расторгнут",    color: "bg-red-100 text-red-700 border-red-200" },
+  cancelled: { label: "Расторгнут",    color: "bg-rose-100 text-rose-700 border-rose-200" },
   completed: { label: "Завершён",      color: "bg-blue-100 text-blue-700 border-blue-200" },
 };
 
@@ -90,7 +90,7 @@ export default function ConstructionContractsSales() {
           <h1 className="text-2xl font-bold text-gray-900">Договоры продажи</h1>
           <p className="text-gray-500 text-sm mt-0.5">Воронка сделок и договоры ДКП</p>
         </div>
-        <Button onClick={() => setOpen(true)} className="bg-orange-500 hover:bg-orange-600">
+        <Button onClick={() => setOpen(true)} className="bg-amber-500 hover:bg-orange-600">
           <Plus className="w-4 h-4 mr-2" /> Новый договор
         </Button>
       </div>
@@ -101,7 +101,7 @@ export default function ConstructionContractsSales() {
           { label: "Всего договоров", value: totalContracts, color: "text-gray-900" },
           { label: "Подписанных", value: totalSold, color: "text-emerald-600" },
           { label: "Сумма договоров", value: fmt(totalAmount) + " KGS", color: "text-blue-600" },
-          { label: "Получено", value: fmt(totalPaid) + " KGS", color: "text-orange-600" },
+          { label: "Получено", value: fmt(totalPaid) + " KGS", color: "text-amber-600" },
         ].map(stat => (
           <div key={stat.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
             <div className="text-xs text-gray-500 mb-1">{stat.label}</div>
@@ -147,8 +147,8 @@ export default function ConstructionContractsSales() {
               const proj = projects.find((p: any) => p.id === c.projectId);
               const pct = c.totalAmount > 0 ? Math.round(parseFloat(c.paidAmount || "0") / parseFloat(c.totalAmount) * 100) : 0;
               return (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-orange-50/30 transition-colors cursor-pointer" onClick={() => setDetailId(c.id)}>
-                  <td className="px-4 py-3 font-mono text-xs font-medium text-orange-600">{c.contractNumber}</td>
+                <tr key={c.id} className="border-b border-gray-50 hover:bg-amber-50/30 transition-colors cursor-pointer" onClick={() => setDetailId(c.id)}>
+                  <td className="px-4 py-3 font-mono text-xs font-medium text-amber-600">{c.contractNumber}</td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">{c.buyerName || "—"}</div>
                     {c.buyerPhone && <div className="text-xs text-gray-400">{c.buyerPhone}</div>}
@@ -164,7 +164,7 @@ export default function ConstructionContractsSales() {
                       <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-orange-600 font-medium">{fmt(c.remainingAmount)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-amber-600 font-medium">{fmt(c.remainingAmount)}</td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{c.contractDate}</td>
                   <td className="px-4 py-3"><ChevronRight className="w-4 h-4 text-gray-300" /></td>
                 </tr>
@@ -234,9 +234,9 @@ export default function ConstructionContractsSales() {
                 </div>
               </div>
               {form.totalAmount && (
-                <div className="mt-2 bg-orange-50 rounded-lg px-3 py-2 text-sm">
+                <div className="mt-2 bg-amber-50 rounded-lg px-3 py-2 text-sm">
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div><div className="text-xs text-gray-500">Остаток</div><div className="font-bold text-orange-600">{fmt(remaining)}</div></div>
+                    <div><div className="text-xs text-gray-500">Остаток</div><div className="font-bold text-amber-600">{fmt(remaining)}</div></div>
                     <div><div className="text-xs text-gray-500">В месяц</div><div className="font-bold text-blue-600">{fmt(monthly)}</div></div>
                     <div><div className="text-xs text-gray-500">Валюта</div>
                       <Select value={form.currency} onValueChange={v => setForm(f => ({ ...f, currency: v }))}>
@@ -274,7 +274,7 @@ export default function ConstructionContractsSales() {
 
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => { setOpen(false); resetForm(); }}>Отмена</Button>
-              <Button className="flex-1 bg-orange-500 hover:bg-orange-600"
+              <Button className="flex-1 bg-amber-500 hover:bg-orange-600"
                 disabled={createMut.isPending || !form.projectId || !form.buyerName || !form.totalAmount}
                 onClick={() => createMut.mutate({
                   ...form,
@@ -300,7 +300,7 @@ export default function ConstructionContractsSales() {
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <span className="font-mono text-orange-600">{contract.contractNumber}</span>
+                  <span className="font-mono text-amber-600">{contract.contractNumber}</span>
                   <Badge variant="outline" className={`${sc.color} text-xs`}>{sc.label}</Badge>
                 </DialogTitle>
               </DialogHeader>
@@ -314,7 +314,7 @@ export default function ConstructionContractsSales() {
                 <div className="grid grid-cols-3 gap-2 bg-gray-50 rounded-xl p-3 text-center text-sm">
                   <div><div className="text-xs text-gray-500">Сумма</div><div className="font-bold">{fmt(contract.totalAmount)} {contract.currency}</div></div>
                   <div><div className="text-xs text-gray-500">Оплачено</div><div className="font-bold text-emerald-600">{fmt(contract.paidAmount)}</div></div>
-                  <div><div className="text-xs text-gray-500">Остаток</div><div className="font-bold text-orange-600">{fmt(contract.remainingAmount)}</div></div>
+                  <div><div className="text-xs text-gray-500">Остаток</div><div className="font-bold text-amber-600">{fmt(contract.remainingAmount)}</div></div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500 mb-2">Этапы договора</div>
@@ -325,7 +325,7 @@ export default function ConstructionContractsSales() {
                       return (
                         <div key={s} className="flex items-center gap-1 flex-1">
                           <button onClick={() => statusMut.mutate({ id: contract.id, status: s })}
-                            className={`flex-1 py-1.5 rounded text-xs font-medium border transition-all ${isCurrent ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-500 border-gray-200 hover:border-orange-300"}`}>
+                            className={`flex-1 py-1.5 rounded text-xs font-medium border transition-all ${isCurrent ? "bg-amber-500 text-white border-orange-500" : "bg-white text-white border-gray-200 hover:border-orange-300"}`}>
                             {sc2.label}
                           </button>
                           {i < steps.length - 1 && <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />}
@@ -334,7 +334,7 @@ export default function ConstructionContractsSales() {
                     })}
                   </div>
                 </div>
-                <Button className="w-full bg-blue-500 hover:bg-blue-600"
+                <Button className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={() => scheduleMut.mutate(contract.id)}
                   disabled={scheduleMut.isPending}>
                   {scheduleMut.isPending ? "Генерация..." : "Сформировать график платежей"}
@@ -347,3 +347,4 @@ export default function ConstructionContractsSales() {
     </div>
   );
 }
+

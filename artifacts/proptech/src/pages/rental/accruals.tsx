@@ -15,11 +15,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
+  pending: "bg-amber-100 text-amber-800",
   approved: "bg-blue-100 text-blue-800",
-  partial: "bg-orange-100 text-orange-800",
-  paid: "bg-green-100 text-green-800",
-  overdue: "bg-red-100 text-red-800",
+  partial: "bg-amber-100 text-amber-800",
+  paid: "bg-emerald-100 text-emerald-800",
+  overdue: "bg-rose-100 text-rose-800",
   cancelled: "bg-gray-100 text-gray-700",
 };
 
@@ -44,7 +44,7 @@ const authHeaders = () => {
 };
 
 async function patchAccrual(id: number, body: Record<string, unknown>) {
-  const res = await fetch(`${BASE}/api/rental/accruals/${id}`, {
+  const res = await fetch(`${BASE}/rental/accruals/${id}`, {
     method: "PATCH", headers: authHeaders(), body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Ошибка обновления начисления");
@@ -52,7 +52,7 @@ async function patchAccrual(id: number, body: Record<string, unknown>) {
 }
 
 async function applyDiscount(id: number, body: Record<string, unknown>) {
-  const res = await fetch(`${BASE}/api/rental/accruals/${id}/discount`, {
+  const res = await fetch(`${BASE}/rental/accruals/${id}/discount`, {
     method: "POST", headers: authHeaders(), body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Ошибка применения льготы");
@@ -154,7 +154,7 @@ function DiscountDialog({ accrual, onClose, onSaved }: DiscountDialogProps) {
                 placeholder={discountType === "percent" ? "10" : "5000"} className="mt-1"
               />
               {preview > 0 && (
-                <p className="text-xs text-green-600 font-medium mt-1">
+                <p className="text-xs text-emerald-600 font-medium mt-1">
                   Скидка: {fmtCurrency(preview)} → итог: {fmtCurrency(Math.max(0, baseAmount - preview))}
                 </p>
               )}
@@ -202,8 +202,9 @@ function LeaseCombobox({
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
+    const leasesArray = Array.isArray(leases) ? leases : [];
     const q = search.toLowerCase();
-    return leases.filter(
+    return leasesArray.filter(
       (l) =>
         l.contractNumber?.toLowerCase().includes(q) ||
         (l.tenantName || "").toLowerCase().includes(q)
@@ -212,7 +213,8 @@ function LeaseCombobox({
 
   const selectedLabel = useMemo(() => {
     if (value === "all") return "Все договоры";
-    const l = leases.find((x) => String(x.id) === value);
+    const leasesArray = Array.isArray(leases) ? leases : [];
+    const l = leasesArray.find((x) => String(x.id) === value);
     return l ? `${l.contractNumber} — ${l.tenantName || ""}` : "Все договоры";
   }, [value, leases]);
 
@@ -316,7 +318,7 @@ function QuickPayDialog({
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}/api/rental/payments`, {
+      const res = await fetch(`${BASE}/rental/payments`, {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
@@ -351,7 +353,7 @@ function QuickPayDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Banknote className="w-4 h-4 text-green-600" /> Принять платёж
+            <Banknote className="w-4 h-4 text-emerald-600" /> Принять платёж
           </DialogTitle>
           <DialogDescription>
             Период {accrual.period} · Остаток: {fmtCurrency(parseFloat(accrual.balance))}
@@ -442,7 +444,7 @@ function AccrualRow({
       <TableCell>{fmtCurrency(parseFloat(accrual.amount))}</TableCell>
       <TableCell>
         {hasDiscount ? (
-          <span className="text-xs text-green-700 font-medium bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
+          <span className="text-xs text-emerald-700 font-medium bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
             -{fmtCurrency(parseFloat(accrual.discountAmount!))}
           </span>
         ) : <span className="text-gray-300 text-xs">—</span>}
@@ -450,7 +452,7 @@ function AccrualRow({
       <TableCell className="text-gray-600">{fmtCurrency(parseFloat(accrual.paidAmount))}</TableCell>
       <TableCell className={cn(
         "font-medium",
-        parseFloat(accrual.balance) > 0 ? "text-red-600" : "text-green-600"
+        parseFloat(accrual.balance) > 0 ? "text-rose-600" : "text-emerald-600"
       )}>
         {fmtCurrency(parseFloat(accrual.balance))}
       </TableCell>
@@ -465,7 +467,7 @@ function AccrualRow({
           {canApprove && (
             <Button
               size="sm" variant="outline"
-              className="h-7 px-2 text-xs border-green-300 text-green-700 hover:bg-green-50"
+              className="h-7 px-2 text-xs border-green-300 text-emerald-700 hover:bg-emerald-50"
               onClick={() => onAccept(accrual)}
               disabled={isBusy}
             >
@@ -475,7 +477,7 @@ function AccrualRow({
           {canCancel && (
             <Button
               size="sm" variant="outline"
-              className="h-7 px-2 text-xs border-red-300 text-red-700 hover:bg-red-50"
+              className="h-7 px-2 text-xs border-red-300 text-rose-700 hover:bg-rose-50"
               onClick={() => onStatusChange(accrual.id, "cancelled")}
               disabled={isBusy}
             >
@@ -549,6 +551,7 @@ export default function Accruals() {
 
   // Build a rich lease info map
   const leaseInfoMap = useMemo(() => {
+    const leasesArray = Array.isArray(leases) ? leases : [];
     const map: Record<number, {
       label: string;
       projectName: string;
@@ -556,7 +559,7 @@ export default function Accruals() {
       contractNumber: string;
       tenantName: string;
     }> = {};
-    for (const l of leases || []) {
+    for (const l of leasesArray) {
       map[l.id] = {
         label: `${l.contractNumber} — ${l.tenantName || ""}`.trim(),
         projectName: l.propertyProjectName || "Без проекта",
@@ -568,11 +571,14 @@ export default function Accruals() {
     return map;
   }, [leases]);
 
-  const filtered = useMemo(() => (accruals || []).filter((a) => {
-    if (leaseFilter !== "all" && String(a.leaseContractId) !== leaseFilter) return false;
-    if (statusFilter !== "all" && a.status !== statusFilter) return false;
-    return true;
-  }), [accruals, leaseFilter, statusFilter]);
+  const filtered = useMemo(() => {
+    const accrualsArray = Array.isArray(accruals) ? accruals : [];
+    return accrualsArray.filter((a) => {
+      if (leaseFilter !== "all" && String(a.leaseContractId) !== leaseFilter) return false;
+      if (statusFilter !== "all" && a.status !== statusFilter) return false;
+      return true;
+    });
+  }, [accruals, leaseFilter, statusFilter]);
 
   // Group by project name
   const grouped = useMemo(() => {
@@ -599,14 +605,15 @@ export default function Accruals() {
     }
   };
 
-  const pendingCount = (accruals || []).filter((a) => a.status === "pending").length;
-  const totalBalance = (accruals || []).reduce((s, a) => s + parseFloat(a.balance), 0);
+  const accrualsArray = Array.isArray(accruals) ? accruals : [];
+  const pendingCount = accrualsArray.filter((a) => a.status === "pending").length;
+  const totalBalance = accrualsArray.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0);
 
   const handleRecalculate = async () => {
     if (leaseFilter === "all") return;
     setRecalcLoading(true);
     try {
-      const res = await fetch(`${BASE}/api/rental/accruals/recalculate`, {
+      const res = await fetch(`${BASE}/rental/accruals/recalculate`, {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({ leaseContractId: parseInt(leaseFilter) }),
@@ -635,13 +642,13 @@ export default function Accruals() {
           <h1 className="text-2xl font-bold text-gray-900">Начисления</h1>
           <p className="text-sm text-gray-500 mt-1">
             Ежемесячные начисления по договорам аренды
-            {pendingCount > 0 && <span className="ml-2 text-yellow-600 font-medium">· {pendingCount} ожидают</span>}
+            {pendingCount > 0 && <span className="ml-2 text-amber-600 font-medium">· {pendingCount} ожидают</span>}
           </p>
         </div>
         {totalBalance > 0 && (
           <div className="text-right">
             <p className="text-xs text-gray-400">Общий остаток</p>
-            <p className="text-lg font-bold text-red-600">{fmtCurrency(totalBalance)}</p>
+            <p className="text-lg font-bold text-rose-600">{fmtCurrency(totalBalance)}</p>
           </div>
         )}
       </div>
@@ -721,8 +728,9 @@ export default function Accruals() {
         // ── GROUPED VIEW ──────────────────────────────────────────────────────
         <div className="space-y-4">
           {Array.from(grouped.entries()).map(([projectName, rows]) => {
-            const groupBalance = rows.reduce((s, a) => s + parseFloat(a.balance), 0);
-            const groupPending = rows.filter(a => a.status === "pending").length;
+            const rowsArray = Array.isArray(rows) ? rows : [];
+            const groupBalance = rowsArray.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0);
+            const groupPending = rowsArray.filter(a => a.status === "pending").length;
             const isExpanded = expandedGroups.has(projectName);
             return (
               <div key={projectName} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -741,15 +749,15 @@ export default function Accruals() {
                     />
                     <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
                     <span className="font-semibold text-gray-800 text-sm">{projectName}</span>
-                    <span className="text-gray-400 text-xs">· {rows.length} начисл.</span>
+                    <span className="text-gray-400 text-xs">· {rowsArray.length} начисл.</span>
                     {groupPending > 0 && (
-                      <span className="text-xs text-yellow-600 font-medium bg-yellow-50 border border-yellow-200 px-1.5 py-0.5 rounded">
+                      <span className="text-xs text-amber-600 font-medium bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
                         {groupPending} ожидают
                       </span>
                     )}
                   </div>
                   {groupBalance > 0 && (
-                    <span className="text-sm font-bold text-red-600">
+                    <span className="text-sm font-bold text-rose-600">
                       Долг: {fmtCurrency(groupBalance)}
                     </span>
                   )}
@@ -760,7 +768,7 @@ export default function Accruals() {
                   <Table>
                     <AccrualsTableHeader label="Помещение / Договор" />
                     <TableBody>
-                      {rows.map((accrual) => {
+                      {rowsArray.map((accrual) => {
                         const info = leaseInfoMap[accrual.leaseContractId];
                         const rowLabel = info
                           ? `${info.unitNumber ? `кв. ${info.unitNumber}` : ""} ${info.tenantName ? `— ${info.tenantName}` : ""}`.trim() || info.label
@@ -824,3 +832,4 @@ export default function Accruals() {
     </div>
   );
 }
+

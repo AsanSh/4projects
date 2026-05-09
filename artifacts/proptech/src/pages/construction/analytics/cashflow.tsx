@@ -148,14 +148,14 @@ export default function ConstructionCashflow() {
 
   const curMonth = new Date().getMonth();
   const labelPad = [0, 12, 24, 36];
-  const stickyBg: Record<string, string> = { section: "bg-gray-100", group: "bg-gray-50", total: "bg-blue-50", balance: "bg-green-50", item: "bg-white" };
+  const stickyBg: Record<string, string> = { section: "bg-gray-100", group: "bg-gray-50", total: "bg-blue-50", balance: "bg-emerald-50", item: "bg-white" };
 
   function rowClass(r: Row) {
     switch (r.type) {
       case "section": return "bg-gray-100 font-bold text-gray-900 border-y border-gray-200";
       case "group":   return "bg-gray-50 font-semibold text-gray-800 border-b border-gray-100";
       case "total":   return "bg-blue-50 font-bold text-blue-900 border-y border-blue-100";
-      case "balance": return "bg-green-50 font-semibold text-green-800 border-b border-green-100";
+      case "balance": return "bg-emerald-50 font-semibold text-emerald-800 border-b border-emerald-100";
       default: return "bg-white text-gray-700 border-b border-gray-50";
     }
   }
@@ -179,7 +179,7 @@ export default function ConstructionCashflow() {
               <th className="text-left py-2 px-3 sticky left-0 bg-gray-200 z-30 border-r border-gray-300" style={{ minWidth: "260px", width: "260px" }}>Статья</th>
               <th className="text-right py-2 px-3 border-r border-gray-300 bg-gray-300 font-bold" style={{ minWidth: "90px" }}>ИТОГО</th>
               {MONTH_SHORT.map((m, i) => (
-                <th key={i} className={`text-right py-2 px-3 border-r border-gray-200 ${i===curMonth&&String(new Date().getFullYear())===year?"bg-yellow-100 text-yellow-800":""}`} style={{ minWidth: "90px" }}>
+                <th key={i} className={`text-right py-2 px-3 border-r border-gray-200 ${i===curMonth&&String(new Date().getFullYear())===year?"bg-amber-100 text-amber-800":""}`} style={{ minWidth: "90px" }}>
                   {m.slice(0,3)} {year.slice(2)}
                 </th>
               ))}
@@ -201,9 +201,9 @@ export default function ConstructionCashflow() {
                       <span className="text-xs leading-tight">{row.label}</span>
                     </div>
                   </td>
-                  <td className={`py-1.5 px-3 text-right border-r border-gray-300 bg-gray-50 font-semibold text-xs ${row.total<0?"text-red-600":""}`}>{fmt2(row.total)}</td>
+                  <td className={`py-1.5 px-3 text-right border-r border-gray-300 bg-gray-50 font-semibold text-xs ${row.total<0?"text-rose-700":""}`}>{fmt2(row.total)}</td>
                   {row.values.map((v,i) => (
-                    <td key={i} className={`py-1.5 px-3 text-right border-r border-gray-100 text-xs ${i===curMonth&&String(new Date().getFullYear())===year?"bg-yellow-50":""} ${v<0?"text-red-600":""}`}>{fmt2(v)}</td>
+                    <td key={i} className={`py-1.5 px-3 text-right border-r border-gray-100 text-xs ${i===curMonth&&String(new Date().getFullYear())===year?"bg-amber-50":""} ${v<0?"text-rose-700":""}`}>{fmt2(v)}</td>
                   ))}
                 </tr>
               );

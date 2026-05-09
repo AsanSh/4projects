@@ -3,13 +3,22 @@ import { eq, sql, and, inArray } from "drizzle-orm";
 import {
   db, propertiesTable, tenantsTable, leaseContractsTable, contractsTable,
   counterpartiesTable, accrualsTable, paymentsTable, activityLogTable
-} from "@workspace/db";
+} from "../lib/db";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
+import { cache, cacheKeys } from "../lib/cache";
 
 const router: ReturnType<typeof Router> = Router();
 
 router.get("/dashboard/summary", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const cid = req.companyId;
+
+  // Try cache first
+  const cacheKey = cacheKeys.dashboard(cid!);
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    res.json(cached);
+    return;
+  }
 
   // Все запросы параллельно
   const [allProps, tenants, leaseContracts, contracts, counterparties, accruals] = await Promise.all([
@@ -33,7 +42,7 @@ router.get("/dashboard/summary", requireAuth, async (req: AuthenticatedRequest, 
   const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const monthlyAccruals = accruals.filter(a => a.period === currentPeriod);
 
-  res.json({
+  const result = {
     totalProperties: allProps.length,
     rentedProperties: allProps.filter(p => p.rentalStatus === "rented").length,
     freeProperties: allProps.filter(p => p.rentalStatus === "free" || !p.rentalStatus).length,
@@ -46,7 +55,12 @@ router.get("/dashboard/summary", requireAuth, async (req: AuthenticatedRequest, 
     monthlyRentReceived: monthlyAccruals.reduce((s, a) => s + parseFloat(a.paidAmount), 0),
     outstandingBalance: accruals.reduce((s, a) => s + parseFloat(a.balance), 0),
     currency: "KGS",
-  });
+  };
+
+  // Cache for 5 minutes
+  cache.set(cacheKey, result, 300);
+
+  res.json(result);
 });
 
 router.get("/dashboard/activity", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {

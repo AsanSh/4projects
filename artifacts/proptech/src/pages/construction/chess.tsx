@@ -20,9 +20,9 @@ function fmtNum(v: string | number | null | undefined) {
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string; border: string }> = {
   available: { label: "Свободна", bg: "bg-emerald-50 hover:bg-emerald-100", text: "text-emerald-700", border: "border-emerald-200" },
   reserved: { label: "Забронирована", bg: "bg-blue-50 hover:bg-blue-100", text: "text-blue-700", border: "border-blue-200" },
-  sold: { label: "Продана", bg: "bg-orange-50 hover:bg-orange-100", text: "text-orange-700", border: "border-orange-200" },
-  occupied: { label: "Заселена", bg: "bg-purple-50 hover:bg-purple-100", text: "text-purple-700", border: "border-purple-200" },
-  construction: { label: "Строится", bg: "bg-yellow-50 hover:bg-yellow-100", text: "text-yellow-700", border: "border-yellow-200" },
+  sold: { label: "Продана", bg: "bg-amber-50 hover:bg-amber-100", text: "text-amber-700", border: "border-amber-200" },
+  occupied: { label: "Заселена", bg: "bg-blue-50 hover:bg-blue-100", text: "text-blue-700", border: "border-blue-200" },
+  construction: { label: "Строится", bg: "bg-amber-50 hover:bg-amber-100", text: "text-amber-700", border: "border-amber-200" },
 };
 
 const UNIT_TYPES = [
@@ -62,7 +62,7 @@ function UnitDialog({ unit, projectId, onClose, onSaved }: { unit: Unit | null |
     if (!form.unitNumber) { toast({ title: "Укажите номер квартиры", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const url = isEdit ? `${BASE}/api/construction/units/${init!.id}` : `${BASE}/api/construction/units`;
+      const url = isEdit ? `${BASE}/construction/units/${init!.id}` : `${BASE}/construction/units`;
       await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: ah(), body: JSON.stringify({ ...form, projectId }) });
       toast({ title: isEdit ? "Обновлено" : "Квартира добавлена" });
       onSaved(); onClose();
@@ -98,15 +98,15 @@ function UnitDialog({ unit, projectId, onClose, onSaved }: { unit: Unit | null |
             </div>
           </div>
           {totalPrice > 0 && (
-            <div className="bg-orange-50 border border-orange-100 rounded-lg p-3">
-              <p className="text-xs text-orange-600">Стоимость квартиры</p>
-              <p className="text-lg font-bold text-orange-700">{fmtNum(totalPrice)} {form.currency}</p>
+            <div className="bg-amber-50 border border-amber-100 rounded-lg p-3">
+              <p className="text-xs text-amber-600">Стоимость квартиры</p>
+              <p className="text-lg font-bold text-amber-700">{fmtNum(totalPrice)} {form.currency}</p>
             </div>
           )}
           <div><Label>Заметки</Label><Input className="mt-1" value={form.notes} onChange={e => set("notes", e.target.value)} /></div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "..." : "Сохранить"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -127,7 +127,7 @@ function BulkGenerateDialog({ projectId, onClose, onSaved }: { projectId: number
     if (!form.floors || !form.unitsPerFloor) { toast({ title: "Укажите этажи и квартиры", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}/api/construction/units/bulk`, { method: "POST", headers: ah(), body: JSON.stringify({ ...form, projectId }) });
+      const res = await fetch(`${BASE}/construction/units/bulk`, { method: "POST", headers: ah(), body: JSON.stringify({ ...form, projectId }) });
       if (!res.ok) throw new Error();
       toast({ title: `Сгенерировано ${total} квартир` });
       onSaved(); onClose();
@@ -154,10 +154,10 @@ function BulkGenerateDialog({ projectId, onClose, onSaved }: { projectId: number
               </Select>
             </div>
           </div>
-          {total > 0 && <p className="text-sm text-orange-600 font-medium text-center">Будет создано {total} квартир</p>}
+          {total > 0 && <p className="text-sm text-amber-600 font-medium text-center">Будет создано {total} квартир</p>}
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Отмена</Button>
-            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={loading}>{loading ? "Создание..." : "Сгенерировать"}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-orange-600" disabled={loading}>{loading ? "Создание..." : "Сгенерировать"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -199,7 +199,7 @@ export default function ConstructionChess() {
   }));
 
   const handleStatusChange = async (unit: Unit, newStatus: string) => {
-    await fetch(`${BASE}/api/construction/units/${unit.id}`, {
+    await fetch(`${BASE}/construction/units/${unit.id}`, {
       method: "PATCH", headers: ah(), body: JSON.stringify({ ...unit, status: newStatus }),
     });
     qc.invalidateQueries({ queryKey: ["construction-units", projectId] });
@@ -214,7 +214,7 @@ export default function ConstructionChess() {
         </div>
         <div className="flex gap-2">
           {projectId && <Button variant="outline" onClick={() => setShowBulk(true)} className="gap-2 text-xs"><Layers className="w-3.5 h-3.5" /> Заполнить шахматку</Button>}
-          {projectId && <Button onClick={() => setSelectedUnit("new")} className="bg-orange-500 hover:bg-orange-600 gap-2 text-xs"><Plus className="w-3.5 h-3.5" /> Добавить квартиру</Button>}
+          {projectId && <Button onClick={() => setSelectedUnit("new")} className="bg-amber-500 hover:bg-orange-600 gap-2 text-xs"><Plus className="w-3.5 h-3.5" /> Добавить квартиру</Button>}
         </div>
       </div>
 
@@ -225,7 +225,7 @@ export default function ConstructionChess() {
           <div className="flex gap-2 flex-wrap">
             {projects.map(p => (
               <button key={p.id} onClick={() => setProjectId(p.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectId === p.id ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${projectId === p.id ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>
                 {p.name}
               </button>
             ))}
@@ -252,7 +252,7 @@ export default function ConstructionChess() {
           {blocks.length > 2 && (
             <div className="flex gap-2">
               {blocks.map(b => (
-                <button key={b} onClick={() => setBlockFilter(b)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${blockFilter === b ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                <button key={b} onClick={() => setBlockFilter(b)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${blockFilter === b ? "bg-amber-500 text-white" : "bg-gray-100 text-white hover:bg-gray-200"}`}>
                   {b === "all" ? "Все секции" : `Секция ${b}`}
                 </button>
               ))}
@@ -267,7 +267,7 @@ export default function ConstructionChess() {
               <Grid3X3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
               <p className="font-medium">Шахматка пуста</p>
               <p className="text-sm mt-1">Используйте «Заполнить шахматку» для быстрого создания квартир</p>
-              <Button onClick={() => setShowBulk(true)} className="mt-4 bg-orange-500 hover:bg-orange-600 gap-2"><Layers className="w-4 h-4" /> Заполнить шахматку</Button>
+              <Button onClick={() => setShowBulk(true)} className="mt-4 bg-amber-500 hover:bg-orange-600 gap-2"><Layers className="w-4 h-4" /> Заполнить шахматку</Button>
             </div>
           ) : (
             <div className="bg-white rounded-xl border border-gray-200 overflow-auto">
@@ -316,3 +316,4 @@ export default function ConstructionChess() {
     </div>
   );
 }
+

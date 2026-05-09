@@ -31,18 +31,21 @@ export default function RentalCashflow() {
     queryFn: () => api.get("/rental/expenses").then(r => r.data),
   });
 
+  const paymentsArray = Array.isArray(payments) ? payments : [];
+  const expensesArray = Array.isArray(expenses) ? expenses : [];
+
   const monthly: Record<string, { income: number; expense: number }> = {};
   for (let m = 1; m <= 12; m++) {
     monthly[String(m).padStart(2, "0")] = { income: 0, expense: 0 };
   }
 
-  payments.forEach((p: any) => {
+  paymentsArray.forEach((p: any) => {
     const d = p.paymentDate || p.createdAt;
     if (!d || !d.startsWith(year)) return;
     const mon = d.slice(5, 7);
     if (monthly[mon]) monthly[mon].income += parseFloat(p.amount || "0");
   });
-  expenses.forEach((e: any) => {
+  expensesArray.forEach((e: any) => {
     const d = e.expenseDate || e.createdAt;
     if (!d || !d.startsWith(year)) return;
     const mon = d.slice(5, 7);
@@ -73,39 +76,39 @@ export default function RentalCashflow() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <ArrowUpRight className="w-4 h-4 text-green-500" />
+            <ArrowUpRight className="w-4 h-4 text-emerald-600" />
             <span className="text-sm text-gray-500">Поступления</span>
           </div>
-          <p className="text-xl font-bold text-green-600">{fmtFull(totalIncome)}</p>
+          <p className="text-xl font-bold text-emerald-600">{fmtFull(totalIncome)}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <ArrowDownRight className="w-4 h-4 text-red-500" />
+            <ArrowDownRight className="w-4 h-4 text-rose-600" />
             <span className="text-sm text-gray-500">Расходы</span>
           </div>
-          <p className="text-xl font-bold text-red-600">{fmtFull(totalExpense)}</p>
+          <p className="text-xl font-bold text-rose-700">{fmtFull(totalExpense)}</p>
         </div>
         <div className="bg-white border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            {net >= 0 ? <TrendingUp className="w-4 h-4 text-blue-500" /> : <TrendingDown className="w-4 h-4 text-orange-500" />}
+            {net >= 0 ? <TrendingUp className="w-4 h-4 text-blue-600" /> : <TrendingDown className="w-4 h-4 text-amber-600" />}
             <span className="text-sm text-gray-500">Чистый поток</span>
           </div>
-          <p className={`text-xl font-bold ${net >= 0 ? "text-blue-600" : "text-orange-600"}`}>{fmtFull(net)}</p>
+          <p className={`text-xl font-bold ${net >= 0 ? "text-blue-600" : "text-amber-600"}`}>{fmtFull(net)}</p>
         </div>
       </div>
 
       <div className="bg-white border rounded-lg p-6">
         <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-blue-500" /><span className="text-xs text-gray-500">Поступления</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-red-400" /><span className="text-xs text-gray-500">Расходы</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-blue-600" /><span className="text-xs text-gray-700">Поступления</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-rose-600" /><span className="text-xs text-gray-700">Расходы</span></div>
         </div>
         <div className="flex items-end gap-2 h-48">
           {months.map(([mon, vals]) => (
             <div key={mon} className="flex-1 flex flex-col items-center gap-0.5">
               <div className="w-full flex items-end gap-0.5 h-40">
-                <div className="flex-1 bg-blue-500 rounded-t-sm transition-all"
+                <div className="flex-1 bg-blue-600 rounded-t-sm transition-all"
                   style={{ height: `${(vals.income / maxVal) * 100}%`, minHeight: vals.income > 0 ? "2px" : "0" }} />
-                <div className="flex-1 bg-red-400 rounded-t-sm transition-all"
+                <div className="flex-1 bg-rose-600 rounded-t-sm transition-all"
                   style={{ height: `${(vals.expense / maxVal) * 100}%`, minHeight: vals.expense > 0 ? "2px" : "0" }} />
               </div>
               <span className="text-xs text-gray-400">{MONTHS[parseInt(mon) - 1]}</span>
@@ -130,9 +133,9 @@ export default function RentalCashflow() {
               return (
                 <tr key={mon} className="border-t hover:bg-gray-50">
                   <td className="p-3 text-gray-700">{MONTHS[parseInt(mon) - 1]} {year}</td>
-                  <td className="p-3 text-right font-medium text-green-600">{vals.income > 0 ? fmtFull(vals.income) : "—"}</td>
-                  <td className="p-3 text-right font-medium text-red-500">{vals.expense > 0 ? fmtFull(vals.expense) : "—"}</td>
-                  <td className={`p-3 text-right font-semibold ${n > 0 ? "text-blue-600" : n < 0 ? "text-orange-600" : "text-gray-400"}`}>
+                  <td className="p-3 text-right font-medium text-emerald-600">{vals.income > 0 ? fmtFull(vals.income) : "—"}</td>
+                  <td className="p-3 text-right font-medium text-rose-600">{vals.expense > 0 ? fmtFull(vals.expense) : "—"}</td>
+                  <td className={`p-3 text-right font-semibold ${n > 0 ? "text-blue-600" : n < 0 ? "text-amber-600" : "text-gray-400"}`}>
                     {(vals.income > 0 || vals.expense > 0) ? fmtFull(n) : "—"}
                   </td>
                 </tr>
@@ -144,3 +147,4 @@ export default function RentalCashflow() {
     </div>
   );
 }
+

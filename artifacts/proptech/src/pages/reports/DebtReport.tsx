@@ -53,13 +53,13 @@ export default function DebtReport() {
           title="Всего должников"
           value={String(summary?.totalDebtors ?? 0)}
           icon={Users}
-          color="bg-orange-500"
+          color="bg-amber-500"
         />
         <StatCard
           title="Общий долг"
           value={formatCurrency(summary?.totalDebt ?? 0)}
           icon={TrendingUp}
-          color="bg-red-500"
+          color="bg-rose-600"
         />
         <StatCard
           title="Просрочено"
@@ -104,7 +104,7 @@ export default function DebtReport() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {row.overdueDebt > 0 ? (
-                        <span className="font-semibold text-red-600">{formatCurrency(row.overdueDebt)}</span>
+                        <span className="font-semibold text-rose-600">{formatCurrency(row.overdueDebt)}</span>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}

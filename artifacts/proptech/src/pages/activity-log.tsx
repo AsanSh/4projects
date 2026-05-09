@@ -37,10 +37,10 @@ const typeIcons: Record<string, React.ElementType> = {
 
 const typeColors: Record<string, string> = {
   contract: "bg-blue-50 text-blue-600",
-  payment: "bg-green-50 text-green-600",
-  accrual: "bg-yellow-50 text-yellow-600",
-  property: "bg-purple-50 text-purple-600",
-  counterparty: "bg-orange-50 text-orange-600",
+  payment: "bg-emerald-50 text-emerald-600",
+  accrual: "bg-amber-50 text-amber-600",
+  property: "bg-blue-50 text-blue-600",
+  counterparty: "bg-amber-50 text-amber-600",
   tenant: "bg-indigo-50 text-indigo-600",
   default: "bg-gray-100 text-gray-500",
 };
@@ -77,7 +77,8 @@ export default function ActivityLogPage() {
     queryFn: () => fetchActivity(entityTypeFilter),
   });
 
-  const filtered = (data || []).filter((item) =>
+  const dataArray = Array.isArray(data) ? data : [];
+  const filtered = dataArray.filter((item) =>
     !search || item.description.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -135,7 +136,7 @@ export default function ActivityLogPage() {
           </div>
         ) : Object.keys(grouped).length === 0 ? (
           <div className="py-16 text-center text-gray-400 text-sm">
-            {data?.length === 0
+            {dataArray.length === 0
               ? "Активность ещё не зафиксирована. Операции будут появляться здесь по мере работы с системой."
               : "Нет записей, соответствующих фильтру"}
           </div>

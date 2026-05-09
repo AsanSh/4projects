@@ -58,9 +58,9 @@ export default function RentalOverdue() {
   }
 
   function debtColor(days: number) {
-    if (days > 60) return "bg-red-100 text-red-800";
-    if (days > 30) return "bg-orange-100 text-orange-800";
-    if (days > 14) return "bg-yellow-100 text-yellow-800";
+    if (days > 60) return "bg-rose-100 text-rose-800";
+    if (days > 30) return "bg-amber-100 text-amber-800";
+    if (days > 14) return "bg-amber-100 text-amber-800";
     return "bg-blue-100 text-blue-800";
   }
 
@@ -80,19 +80,19 @@ export default function RentalOverdue() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-red-50 border border-red-100 rounded-lg p-4">
-          <p className="text-sm text-red-600">Общий долг</p>
-          <p className="text-2xl font-bold text-red-700">{fmtFull(totalDebt)}</p>
+        <div className="bg-rose-50 border border-rose-100 rounded-lg p-4">
+          <p className="text-sm text-rose-600">Общий долг</p>
+          <p className="text-2xl font-bold text-rose-700">{fmtFull(totalDebt)}</p>
         </div>
-        <div className="bg-orange-50 border border-orange-100 rounded-lg p-4">
-          <p className="text-sm text-orange-600">Должников</p>
-          <p className="text-2xl font-bold text-orange-700">
+        <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
+          <p className="text-sm text-amber-600">Должников</p>
+          <p className="text-2xl font-bold text-amber-700">
             {new Set(overdue.map((a: any) => a.leaseContractId)).size}
           </p>
         </div>
-        <div className="bg-red-50 border border-red-100 rounded-lg p-4">
-          <p className="text-sm text-red-600">Критичных (60+ дн.)</p>
-          <p className="text-2xl font-bold text-red-700">{overdue.filter((a: any) => a.days > 60).length}</p>
+        <div className="bg-rose-50 border border-rose-100 rounded-lg p-4">
+          <p className="text-sm text-rose-600">Критичных (60+ дн.)</p>
+          <p className="text-2xl font-bold text-rose-700">{overdue.filter((a: any) => a.days > 60).length}</p>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export default function RentalOverdue() {
                   )}
                 </td>
                 <td className="p-3 text-gray-600">{a.period}</td>
-                <td className="p-3 text-right font-bold text-red-600">{fmtFull(a.balance)}</td>
+                <td className="p-3 text-right font-bold text-rose-600">{fmtFull(a.balance)}</td>
                 <td className="p-3 text-gray-600">{a.dueDate ? new Date(a.dueDate).toLocaleDateString("ru-KG") : "—"}</td>
                 <td className="p-3 text-center">
                   <Badge className={debtColor(a.days)}>{a.days} дн.</Badge>

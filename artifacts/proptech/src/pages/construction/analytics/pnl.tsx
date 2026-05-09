@@ -216,7 +216,7 @@ export default function ConstructionPnL() {
               <th className="text-left py-2 px-3 sticky left-0 bg-gray-200 z-30 border-r border-gray-300" style={{ minWidth: "240px", width: "240px" }}>Статья</th>
               <th className="text-right py-2 px-3 border-r border-gray-300 bg-gray-300 font-bold" style={{ minWidth: "90px" }}>ИТОГО</th>
               {MONTH_SHORT.map((m, i) => (
-                <th key={i} className={`text-right py-2 px-3 border-r border-gray-200 ${i===curMonth&&String(new Date().getFullYear())===year?"bg-yellow-100 text-yellow-800":""}`} style={{ minWidth: "90px" }}>
+                <th key={i} className={`text-right py-2 px-3 border-r border-gray-200 ${i===curMonth&&String(new Date().getFullYear())===year?"bg-amber-100 text-amber-800":""}`} style={{ minWidth: "90px" }}>
                   {m.slice(0,3)} {year.slice(2)}
                 </th>
               ))}
@@ -238,11 +238,11 @@ export default function ConstructionPnL() {
                       <span className={`${row.type==="subitem"?"text-[11px]":"text-xs"} leading-tight`}>{row.label}</span>
                     </div>
                   </td>
-                  <td className={`py-1.5 px-3 text-right border-r border-gray-300 bg-gray-50 font-semibold text-xs ${row.total<0?"text-red-600":row.type==="percent"?"text-blue-700":""}`}>
+                  <td className={`py-1.5 px-3 text-right border-r border-gray-300 bg-gray-50 font-semibold text-xs ${row.total<0?"text-rose-700":row.type==="percent"?"text-blue-700":""}`}>
                     {row.type==="percent"?fmtPct(row.total):fmt2(row.total)}
                   </td>
                   {row.values.map((v,i) => (
-                    <td key={i} className={`py-1.5 px-3 text-right border-r border-gray-100 text-xs ${i===curMonth&&String(new Date().getFullYear())===year?"bg-yellow-50":""} ${v<0?"text-red-600":row.type==="percent"?"text-blue-700":""}`}>
+                    <td key={i} className={`py-1.5 px-3 text-right border-r border-gray-100 text-xs ${i===curMonth&&String(new Date().getFullYear())===year?"bg-amber-50":""} ${v<0?"text-rose-700":row.type==="percent"?"text-blue-700":""}`}>
                       {row.type==="percent"?fmtPct(v):fmt2(v)}
                     </td>
                   ))}

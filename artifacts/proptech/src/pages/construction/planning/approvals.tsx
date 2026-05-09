@@ -21,7 +21,7 @@ export default function ConstructionApprovals() {
           <h1 className="text-2xl font-bold text-gray-900">Согласование платежей</h1>
           <p className="text-gray-500 text-sm mt-0.5">Маршруты согласования и статусы заявок</p>
         </div>
-        <Button className="bg-orange-500 hover:bg-orange-600">
+        <Button className="bg-amber-500 hover:bg-orange-600">
           <CheckSquare className="w-4 h-4 mr-2" /> Новая заявка
         </Button>
       </div>
@@ -29,7 +29,7 @@ export default function ConstructionApprovals() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">На согласовании</div>
-          <div className="text-2xl font-bold text-yellow-500">1</div>
+          <div className="text-2xl font-bold text-amber-600">1</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Согласовано</div>
@@ -37,7 +37,7 @@ export default function ConstructionApprovals() {
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Отклонено</div>
-          <div className="text-2xl font-bold text-red-500">1</div>
+          <div className="text-2xl font-bold text-rose-600">1</div>
         </div>
       </div>
 
@@ -66,9 +66,9 @@ export default function ConstructionApprovals() {
                 return (
                   <div key={step} className="flex items-center gap-2 flex-1">
                     <div className={`flex-1 flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium border ${
-                      isRejected ? "bg-red-50 border-red-200 text-red-600" :
+                      isRejected ? "bg-rose-50 border-rose-200 text-rose-600" :
                       isDone ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
-                      isCurrent ? "bg-yellow-50 border-yellow-200 text-yellow-700" :
+                      isCurrent ? "bg-amber-50 border-amber-200 text-amber-700" :
                       "bg-gray-50 border-gray-200 text-gray-400"
                     }`}>
                       {isDone ? <CheckCircle2 className="w-3 h-3" /> : isRejected ? <XCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
@@ -83,15 +83,15 @@ export default function ConstructionApprovals() {
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={
                 ap.status === "approved" ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                ap.status === "rejected" ? "bg-red-100 text-red-700 border-red-200" :
-                "bg-yellow-100 text-yellow-700 border-yellow-200"
+                ap.status === "rejected" ? "bg-rose-100 text-rose-700 border-rose-200" :
+                "bg-amber-100 text-amber-700 border-amber-200"
               }>
                 {ap.status === "approved" ? "Согласовано" : ap.status === "rejected" ? "Отклонено" : "На согласовании"}
               </Badge>
               {ap.status === "pending" && (
                 <div className="flex gap-2 ml-auto">
-                  <Button size="sm" variant="outline" className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50">Отклонить</Button>
-                  <Button size="sm" className="h-7 text-xs bg-emerald-500 hover:bg-emerald-600">Согласовать</Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs border-rose-200 text-rose-600 hover:bg-rose-50">Отклонить</Button>
+                  <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700">Согласовать</Button>
                 </div>
               )}
             </div>

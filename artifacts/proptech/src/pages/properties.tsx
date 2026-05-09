@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useListProperties, useCreateProperty, useUpdateProperty, useDeleteProperty, Property, PropertyType, PropertyStatus } from "@workspace/api-client-react";
+import { useListProperties, useCreateProperty, useUpdateProperty, useDeleteProperty, Property, PropertyType, PropertyStatus } from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit2, Trash2 } from "lucide-react";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListPropertiesQueryKey } from "@workspace/api-client-react";
+import { getListPropertiesQueryKey } from "@/api-client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -20,6 +20,9 @@ export default function Properties() {
   const deleteMutation = useDeleteProperty();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Безопасное преобразование в массив
+  const propertiesArray = Array.isArray(properties) ? properties : [];
 
   const handleOpenCreate = () => {
     setEditingProperty(null);
@@ -83,14 +86,14 @@ export default function Properties() {
                   <TableCell className="text-right"><Skeleton className="h-8 w-8 inline-block" /></TableCell>
                 </TableRow>
               ))
-            ) : properties?.length === 0 ? (
+            ) : propertiesArray.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No properties found.
                 </TableCell>
               </TableRow>
             ) : (
-              properties?.map((property) => (
+              propertiesArray.map((property) => (
                 <TableRow key={property.id}>
                   <TableCell className="font-medium">{property.projectName}</TableCell>
                   <TableCell>{property.unitNumber}</TableCell>

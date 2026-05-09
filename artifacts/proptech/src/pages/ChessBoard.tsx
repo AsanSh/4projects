@@ -24,10 +24,10 @@ interface Property {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  available:    { label: "Свободна",  bg: "bg-green-50",  text: "text-green-700",  border: "border-green-300" },
+  available:    { label: "Свободна",  bg: "bg-emerald-50",  text: "text-emerald-700",  border: "border-green-300" },
   occupied:     { label: "Занята",    bg: "bg-blue-50",   text: "text-blue-700",   border: "border-blue-300" },
   reserved:     { label: "Брон.",     bg: "bg-amber-50",  text: "text-amber-700",  border: "border-amber-300" },
-  maintenance:  { label: "Ремонт",    bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-300" },
+  maintenance:  { label: "Ремонт",    bg: "bg-amber-50", text: "text-amber-700", border: "border-orange-300" },
   inactive:     { label: "Неактив.",  bg: "bg-gray-50",   text: "text-gray-400",   border: "border-gray-200" },
 };
 

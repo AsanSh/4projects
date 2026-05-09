@@ -35,7 +35,7 @@ export default function ConstructionExpenseAnalysis() {
     if (o.projectId) byProject[o.projectId] = (byProject[o.projectId] || 0) + parseFloat(o.amountKgs || "0");
   });
 
-  const COLORS = ["bg-orange-400", "bg-blue-400", "bg-emerald-400", "bg-violet-400", "bg-red-400", "bg-yellow-400", "bg-gray-400"];
+  const COLORS = ["bg-orange-400", "bg-blue-400", "bg-emerald-600", "bg-indigo-400", "bg-rose-600", "bg-yellow-400", "bg-gray-400"];
 
   return (
     <div>
@@ -74,7 +74,7 @@ export default function ConstructionExpenseAnalysis() {
               })}
               <div className="pt-2 border-t border-gray-100 flex justify-between font-semibold text-sm">
                 <span>Итого расходов</span>
-                <span className="font-mono text-red-600">{fmtFull(totalExpense)}</span>
+                <span className="font-mono text-rose-700">{fmtFull(totalExpense)}</span>
               </div>
             </div>
           )}
@@ -130,7 +130,7 @@ export default function ConstructionExpenseAnalysis() {
                 <td className="px-4 py-2.5 text-gray-500">{op.date}</td>
                 <td className="px-4 py-2.5 font-medium">{op.description}</td>
                 <td className="px-4 py-2.5 text-gray-400 text-xs">{op.category}</td>
-                <td className="px-4 py-2.5 text-right font-mono text-red-600 font-medium">-{fmtFull(op.amountKgs)}</td>
+                <td className="px-4 py-2.5 text-right font-mono text-rose-700 font-medium">-{fmtFull(op.amountKgs)}</td>
               </tr>
             ))}
           </tbody>

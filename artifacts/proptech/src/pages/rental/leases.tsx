@@ -7,7 +7,7 @@ import {
   useListProperties,
   LeaseContract,
   CreateLeaseContractBodyStatus,
-} from "@workspace/api-client-react";
+} from "@/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -26,7 +26,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListLeaseContractsQueryKey } from "@workspace/api-client-react";
+import { getListLeaseContractsQueryKey } from "@/api-client";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -52,9 +52,9 @@ function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-800",
-  active: "bg-green-100 text-green-800",
-  expired: "bg-yellow-100 text-yellow-800",
-  terminated: "bg-red-100 text-red-800",
+  active: "bg-emerald-100 text-emerald-800",
+  expired: "bg-amber-100 text-amber-800",
+  terminated: "bg-rose-100 text-rose-800",
 };
 const statusLabels: Record<string, string> = {
   draft: "Черновик",
@@ -213,11 +213,13 @@ function LeaseFormFields({
   mode: "create" | "edit";
 }) {
   const { data: tenants } = useListTenants();
+  const tenantsArray = Array.isArray(tenants) ? tenants : [];
   const { data: properties } = useListProperties();
+  const propertiesArray = Array.isArray(properties) ? properties : [];
 
   const availableProperties = mode === "create"
-    ? (properties?.filter((p) => p.status === "available") ?? [])
-    : (properties ?? []);
+    ? propertiesArray.filter((p) => p.status === "available")
+    : propertiesArray;
 
   const f = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [field]: e.target.value });
@@ -256,7 +258,7 @@ function LeaseFormFields({
               <SelectValue placeholder="Выберите арендатора" />
             </SelectTrigger>
             <SelectContent>
-              {(tenants ?? []).map((t) => (
+              {tenantsArray.map((t) => (
                 <SelectItem key={t.id} value={String(t.id)}>
                   {t.fullName}
                 </SelectItem>
@@ -661,6 +663,7 @@ function RecalcDialog({
 
 export default function RentalContracts() {
   const { data: leases, isLoading } = useListLeaseContracts();
+  const leasesArray = Array.isArray(leases) ? leases : [];
   const [createOpen, setCreateOpen] = useState(false);
   const [editLease, setEditLease] = useState<LeaseContract | null>(null);
   const [recalcLease, setRecalcLease] = useState<LeaseContract | null>(null);
@@ -704,14 +707,14 @@ export default function RentalContracts() {
                   ))}
                 </TableRow>
               ))
-            ) : !leases?.length ? (
+            ) : !leasesArray.length ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   Договоры аренды не найдены
                 </TableCell>
               </TableRow>
             ) : (
-              leases.map((lease) => (
+              leasesArray.map((lease) => (
                 <TableRow key={lease.id}>
                   <TableCell className="font-medium">{lease.contractNumber}</TableCell>
                   <TableCell>{(lease as any).propertyUnitNumber || `#${lease.propertyId}`}</TableCell>
@@ -775,3 +778,4 @@ export default function RentalContracts() {
     </div>
   );
 }
+

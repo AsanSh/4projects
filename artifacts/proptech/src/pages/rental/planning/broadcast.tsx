@@ -72,10 +72,10 @@ export default function RentalBroadcast() {
           <h1 className="text-2xl font-bold text-gray-900">Массовая рассылка</h1>
           <p className="text-gray-500 text-sm mt-0.5">Уведомления арендаторам</p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-xl p-12 text-center">
-          <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-green-800 mb-2">Сообщение отправлено!</h3>
-          <p className="text-sm text-green-600 mb-6">Отправлено {recipients.length} получателям через {channel === "sms" ? "СМС" : channel === "whatsapp" ? "WhatsApp" : "Email"}</p>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-12 text-center">
+          <CheckCircle className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-emerald-800 mb-2">Сообщение отправлено!</h3>
+          <p className="text-sm text-emerald-600 mb-6">Отправлено {recipients.length} получателям через {channel === "sms" ? "СМС" : channel === "whatsapp" ? "WhatsApp" : "Email"}</p>
           <Button onClick={() => { setSent(false); setMessage(""); }}>Новая рассылка</Button>
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function RentalBroadcast() {
                 Получателей: <strong className="text-gray-900">{recipients.length}</strong>
               </span>
               {type === "overdue" && (
-                <Badge className="bg-red-100 text-red-700 text-xs">только должники</Badge>
+                <Badge className="bg-rose-100 text-rose-700 text-xs">только должники</Badge>
               )}
             </div>
           </div>
@@ -149,7 +149,7 @@ export default function RentalBroadcast() {
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-gray-400">{message.length} символов</span>
               {channel === "sms" && message.length > 160 && (
-                <span className="text-xs text-orange-500">
+                <span className="text-xs text-amber-600">
                   {Math.ceil(message.length / 160)} СМС на получателя
                 </span>
               )}
@@ -177,7 +177,7 @@ export default function RentalBroadcast() {
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-gray-800 truncate">{t.name}</p>
                       {overdueTenantIds.has(t.id) && (
-                        <Badge className="text-[10px] px-1 py-0 bg-red-100 text-red-600">долг</Badge>
+                        <Badge className="text-[10px] px-1 py-0 bg-rose-100 text-rose-600">долг</Badge>
                       )}
                     </div>
                   </div>

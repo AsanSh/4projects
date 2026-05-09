@@ -5,7 +5,7 @@ import {
   accrualsTable, paymentsTable, depositsTable, expensesTable,
   ownerStatementsTable, paymentAllocationsTable, bankAccountsTable,
   activityLogTable,
-} from "@workspace/db";
+} from "../lib/db";
 
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 

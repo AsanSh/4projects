@@ -40,17 +40,17 @@ export default function ConstructionOverdue() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-red-50 rounded-xl p-4 border border-red-100 shadow-sm">
-          <div className="flex items-center gap-1 text-xs text-red-600 mb-1"><AlertTriangle className="w-3 h-3" />Сумма просрочки</div>
-          <div className="text-2xl font-bold text-red-600">{fmtFull(totalOverdue)}</div>
+        <div className="bg-rose-50 rounded-xl p-4 border border-rose-100 shadow-sm">
+          <div className="flex items-center gap-1 text-xs text-rose-600 mb-1"><AlertTriangle className="w-3 h-3" />Сумма просрочки</div>
+          <div className="text-2xl font-bold text-rose-600">{fmtFull(totalOverdue)}</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Частично оплачено</div>
-          <div className="text-2xl font-bold text-yellow-600">{fmtFull(totalPaid)}</div>
+          <div className="text-2xl font-bold text-amber-600">{fmtFull(totalPaid)}</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Просроченных платежей</div>
-          <div className="text-2xl font-bold text-red-500">{overdue.length} шт.</div>
+          <div className="text-2xl font-bold text-rose-600">{overdue.length} шт.</div>
         </div>
       </div>
 
@@ -79,10 +79,10 @@ export default function ConstructionOverdue() {
               const contract = contracts.find((c: any) => c.id === a.contractId);
               const days = Math.ceil((new Date().getTime() - new Date(a.dueDate).getTime()) / 86400000);
               const severity = days <= 30 ? "yellow" : days <= 60 ? "orange" : "red";
-              const colorMap = { yellow: "bg-yellow-100 text-yellow-700 border-yellow-200", orange: "bg-orange-100 text-orange-700 border-orange-200", red: "bg-red-100 text-red-700 border-red-200" };
+              const colorMap = { yellow: "bg-amber-100 text-amber-700 border-amber-200", orange: "bg-amber-100 text-amber-700 border-amber-200", red: "bg-rose-100 text-rose-700 border-rose-200" };
               return (
-                <tr key={a.id} className="border-b border-gray-50 hover:bg-red-50/30 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs font-medium text-orange-600">{contract?.contractNumber || `#${a.contractId}`}</td>
+                <tr key={a.id} className="border-b border-gray-50 hover:bg-rose-50/30 transition-colors">
+                  <td className="px-4 py-3 font-mono text-xs font-medium text-amber-600">{contract?.contractNumber || `#${a.contractId}`}</td>
                   <td className="px-4 py-3 font-medium">{contract?.buyerName || "—"}</td>
                   <td className="px-4 py-3 text-gray-600">{a.dueDate}</td>
                   <td className="px-4 py-3">
@@ -90,7 +90,7 @@ export default function ConstructionOverdue() {
                       {days} дн.
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-red-600">{fmtFull(a.remainingAmount)}</td>
+                  <td className="px-4 py-3 text-right font-mono font-bold text-rose-600">{fmtFull(a.remainingAmount)}</td>
                   <td className="px-4 py-3 text-right font-mono text-emerald-600">{fmtFull(a.paidAmount)}</td>
                   <td className="px-4 py-3">
                     <Button size="sm" variant="outline" className="h-7 text-xs"

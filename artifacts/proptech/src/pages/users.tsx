@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useListUsers, useCreateUser, useUpdateUser, useDeleteUser, User, UserRole } from "@workspace/api-client-react";
+import { useListUsers, useCreateUser, useUpdateUser, useDeleteUser, User, UserRole } from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListUsersQueryKey } from "@workspace/api-client-react";
+import { getListUsersQueryKey } from "@/api-client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -90,14 +90,14 @@ export default function Users() {
                   <TableCell className="text-right"><Skeleton className="h-8 w-8 inline-block" /></TableCell>
                 </TableRow>
               ))
-            ) : users?.length === 0 ? (
+            ) : !users || users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   Сотрудники не найдены
                 </TableCell>
               </TableRow>
             ) : (
-              users?.map((user) => (
+              (Array.isArray(users) ? users : []).map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
                   <TableCell className="text-muted-foreground">{user.email}</TableCell>
@@ -299,7 +299,10 @@ function UserDialog({
                 <SelectValue placeholder="Выберите роль" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="super_admin">Супер-Администратор</SelectItem>
+                <SelectItem value="company_admin">Администратор компании</SelectItem>
                 <SelectItem value="admin">Администратор</SelectItem>
+                <SelectItem value="sales_manager">Менеджер продаж</SelectItem>
                 <SelectItem value="rental_manager">Менеджер аренды</SelectItem>
                 <SelectItem value="finance">Финансы</SelectItem>
                 <SelectItem value="staff">Сотрудник</SelectItem>
