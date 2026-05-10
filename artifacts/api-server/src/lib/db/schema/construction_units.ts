@@ -1,6 +1,6 @@
 import { pgTable, text, serial, timestamp, integer, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 // Chess-board units for construction projects (apartments, offices, etc.)
 export const constructionUnitsTable = pgTable("construction_units", {

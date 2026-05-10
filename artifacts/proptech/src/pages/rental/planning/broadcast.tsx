@@ -91,7 +91,7 @@ export default function RentalBroadcast() {
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-5">
-          <div className="bg-white border rounded-lg p-5">
+          <div className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold text-gray-800 mb-4">Получатели</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -128,7 +128,7 @@ export default function RentalBroadcast() {
             </div>
           </div>
 
-          <div className="bg-white border rounded-lg p-5">
+          <div className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold text-gray-800 mb-4">Сообщение</h3>
             <div className="mb-3 flex gap-2 flex-wrap">
               {templates.map(t => (
@@ -163,7 +163,7 @@ export default function RentalBroadcast() {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white border rounded-lg p-4">
+          <div className="bg-white border rounded-xl p-4">
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Список получателей</h4>
             {recipients.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-4">Нет получателей</p>

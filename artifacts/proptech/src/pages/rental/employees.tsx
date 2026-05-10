@@ -99,15 +99,15 @@ export default function RentalEmployees() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Всего сотрудников</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{users.length}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Активных</p>
           <p className="text-2xl font-bold text-emerald-600 mt-1">{active.length}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Администраторов</p>
           <p className="text-2xl font-bold text-rose-600 mt-1">
             {users.filter(u => u.role === "admin").length}
@@ -119,7 +119,7 @@ export default function RentalEmployees() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-white border rounded-lg p-4 animate-pulse">
+            <div key={i} className="bg-white border rounded-xl p-4 animate-pulse">
               <div className="w-12 h-12 rounded-full bg-gray-200 mb-3" />
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
               <div className="h-3 bg-gray-100 rounded w-1/2" />
@@ -134,7 +134,7 @@ export default function RentalEmployees() {
             </Button>
           </div>
         ) : users.map(u => (
-          <div key={u.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow group relative">
+          <div key={u.id} className="bg-white border rounded-xl p-4 hover:shadow-sm transition-shadow group relative">
             <button onClick={() => openEdit(u)}
               className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-100 rounded-lg">
               <Pencil className="w-3.5 h-3.5 text-gray-400" />

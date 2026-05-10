@@ -117,7 +117,7 @@ export default function RentalHistory() {
         <span className="text-sm font-semibold text-blue-800">Итого: {fmtFull(total)}</span>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
+      <div className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>

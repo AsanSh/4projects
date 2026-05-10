@@ -1,13 +1,13 @@
 import { pgTable, text, serial, timestamp, integer, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const depositsTable = pgTable("deposits", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id"),
   leaseContractId: integer("lease_contract_id").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
-  currency: text("currency").notNull().default("KZT"),
+  currency: text("currency").notNull().default("KGS"),
   status: text("status").notNull().default("held"),
   receivedDate: text("received_date").notNull(),
   accountId: integer("account_id"),

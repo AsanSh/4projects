@@ -1,6 +1,6 @@
-import { pgTable, text, serial, timestamp, integer, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const accrualsTable = pgTable("accruals", {
   id: serial("id").primaryKey(),
@@ -22,6 +22,13 @@ export const accrualsTable = pgTable("accruals", {
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => {
+  return {
+    companyIdIdx: index("accruals_company_id_idx").on(table.companyId),
+    leaseContractIdIdx: index("accruals_lease_contract_id_idx").on(table.leaseContractId),
+    periodIdx: index("accruals_period_idx").on(table.period),
+    statusIdx: index("accruals_status_idx").on(table.status),
+  };
 });
 
 export const insertAccrualSchema = createInsertSchema(accrualsTable).omit({ id: true, createdAt: true, updatedAt: true });

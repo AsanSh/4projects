@@ -176,7 +176,7 @@ export default function ConstructionTasks() {
                 </div>
                 <div className="space-y-2">
                   {col.tasks.map(t => (
-                    <div key={t.id} className="bg-white rounded-lg border border-gray-200 p-3 hover:border-amber-200 transition-colors group">
+                    <div key={t.id} className="bg-white rounded-xl border border-gray-200 p-3 hover:border-amber-200 transition-colors group">
                       <div className="flex items-start justify-between gap-1 mb-1.5">
                         <p className="text-xs font-medium text-gray-900 leading-snug">{t.title}</p>
                         <button onClick={() => handleDelete(t.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-rose-600 flex-shrink-0">

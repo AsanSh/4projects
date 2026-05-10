@@ -63,32 +63,32 @@ export default function RentalOwners() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-xs text-gray-500 mb-1">Валовой доход</p>
           <p className="text-xl font-bold text-emerald-600">{fmtFull(totalIncome)}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-xs text-gray-500 mb-1">Расходы</p>
           <p className="text-xl font-bold text-rose-600">{fmtFull(totalExpense)}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-xs text-gray-500 mb-1">Комиссия УК</p>
           <p className="text-xl font-bold text-amber-600">{fmtFull(totalFee)}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-xs text-gray-500 mb-1">Чистый доход</p>
           <p className={`text-xl font-bold ${totalNet >= 0 ? "text-blue-600" : "text-rose-700"}`}>{fmtFull(totalNet)}</p>
         </div>
       </div>
 
       {showOwners.length === 0 ? (
-        <div className="bg-white border rounded-lg p-12 text-center">
+        <div className="bg-white border rounded-xl p-12 text-center">
           <FileText className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-sm text-gray-500">Нет данных отчётов владельцев.</p>
           <p className="text-xs text-gray-400 mt-1">Отчёты создаются автоматически при добавлении платежей</p>
         </div>
       ) : (
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="bg-white border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>

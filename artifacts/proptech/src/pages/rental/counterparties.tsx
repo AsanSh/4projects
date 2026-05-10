@@ -91,17 +91,17 @@ export default function RentalCounterparties() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Всего контрагентов</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{tenants.length}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Активных договоров</p>
           <p className="text-2xl font-bold text-emerald-600 mt-1">
             {contracts.filter((c: any) => c.status === "active").length}
           </p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <p className="text-sm text-gray-500">Юрлиц</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">
             {tenants.filter(t => t.type === "company").length}
@@ -110,7 +110,7 @@ export default function RentalCounterparties() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border rounded-lg overflow-hidden">
+      <div className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
