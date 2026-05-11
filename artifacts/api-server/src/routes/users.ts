@@ -18,7 +18,7 @@ router.get("/users", requireAuth, async (req: AuthenticatedRequest, res): Promis
 });
 
 // POST /users — добавить сотрудника в свою организацию
-router.post("/users", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
+router.post("/users", requireAuth, requireRole("admin", "company_admin", "super_admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const { email, password, firstName, lastName, role } = req.body;
   if (!email || !password || !firstName || !lastName || !role) {
     res.status(400).json({ error: "Заполните все обязательные поля" });
@@ -61,7 +61,7 @@ router.get("/users/:id", requireAuth, async (req: AuthenticatedRequest, res): Pr
 });
 
 // PATCH /users/:id
-router.patch("/users/:id", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
+router.patch("/users/:id", requireAuth, requireRole("admin", "company_admin", "super_admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const { firstName, lastName, role, isActive } = req.body;
   const conditions: SQL[] = [eq(usersTable.id, id)];
@@ -75,7 +75,7 @@ router.patch("/users/:id", requireAuth, requireRole("admin"), async (req: Authen
 });
 
 // PATCH /users/:id/password — смена пароля сотрудника
-router.patch("/users/:id/password", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
+router.patch("/users/:id/password", requireAuth, requireRole("admin", "company_admin", "super_admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const { password } = req.body;
   if (!password) {
@@ -99,7 +99,7 @@ router.patch("/users/:id/password", requireAuth, requireRole("admin"), async (re
 });
 
 // DELETE /users/:id
-router.delete("/users/:id", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
+router.delete("/users/:id", requireAuth, requireRole("admin", "company_admin", "super_admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (id === req.userId) {
     res.status(400).json({ error: "Нельзя удалить свой аккаунт" });

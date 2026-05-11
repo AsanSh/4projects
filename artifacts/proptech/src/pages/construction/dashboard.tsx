@@ -338,7 +338,7 @@ export default function ConstructionDashboard() {
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="w-4 h-4 text-emerald-500" />
+            <Users className="w-4 h-4 text-emerald-600" />
             <div className="text-sm font-semibold text-gray-700">Самые доходные клиенты</div>
           </div>
           {topClients.length === 0 ? (

@@ -27,7 +27,7 @@ router.post("/investors", requireAuth, async (req: AuthenticatedRequest, res): P
 });
 
 router.patch("/investors/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { fullName, type, phone, email, iin, telegramId, status, notes } = req.body;
   const [row] = await db.update(investorsTable)
     .set({ fullName, type, phone, email, iin, telegramId, status, notes })
@@ -38,7 +38,7 @@ router.patch("/investors/:id", requireAuth, async (req: AuthenticatedRequest, re
 });
 
 router.delete("/investors/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(investorsTable)
     .where(and(eq(investorsTable.id, id), eq(investorsTable.companyId, req.companyId!)));
   res.json({ ok: true });
@@ -88,7 +88,7 @@ router.post("/investments", requireAuth, async (req: AuthenticatedRequest, res):
 });
 
 router.delete("/investments/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(investmentsTable)
     .where(and(eq(investmentsTable.id, id), eq(investmentsTable.companyId, req.companyId!)));
   res.json({ ok: true });
@@ -138,7 +138,7 @@ router.post("/distributions", requireAuth, async (req: AuthenticatedRequest, res
 });
 
 router.patch("/distributions/:id/status", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { status } = req.body;
   const [row] = await db.update(distributionsTable)
     .set({ status })
@@ -149,7 +149,7 @@ router.patch("/distributions/:id/status", requireAuth, async (req: Authenticated
 });
 
 router.delete("/distributions/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(distributionsTable)
     .where(and(eq(distributionsTable.id, id), eq(distributionsTable.companyId, req.companyId!)));
   res.json({ ok: true });

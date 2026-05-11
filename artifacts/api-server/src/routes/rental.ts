@@ -113,7 +113,7 @@ function buildAccrualRows(params: {
 // ── BANK ACCOUNTS (shared table, rental module view) ────────────────────
 router.get("/rental/accounts", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const rows = await db.select().from(bankAccountsTable)
-    .where(req.companyId ? eq(bankAccountsTable.companyId, req.companyId) : undefined)
+    .where(eq(bankAccountsTable.companyId, req.companyId!))
     .orderBy(bankAccountsTable.name);
   res.json(rows);
 });
@@ -133,7 +133,7 @@ router.patch("/rental/accounts/:id", requireAuth, async (req: AuthenticatedReque
   const id = parseInt(req.params.id as string, 10);
   const [row] = await db.update(bankAccountsTable)
     .set(req.body)
-    .where(and(eq(bankAccountsTable.id, id), req.companyId ? eq(bankAccountsTable.companyId, req.companyId) : undefined))
+    .where(and(eq(bankAccountsTable.id, id), eq(bankAccountsTable.companyId, req.companyId!)))
     .returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   res.json(row);
@@ -142,7 +142,7 @@ router.patch("/rental/accounts/:id", requireAuth, async (req: AuthenticatedReque
 router.delete("/rental/accounts/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);
   await db.delete(bankAccountsTable)
-    .where(and(eq(bankAccountsTable.id, id), req.companyId ? eq(bankAccountsTable.companyId, req.companyId) : undefined));
+    .where(and(eq(bankAccountsTable.id, id), eq(bankAccountsTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
 
@@ -155,9 +155,9 @@ router.post("/rental/accounts/transfer", requireAuth, async (req: AuthenticatedR
     res.status(400).json({ error: "Счёт источник и назначение не могут совпадать" }); return;
   }
   const [fromAcc] = await db.select().from(bankAccountsTable)
-    .where(and(eq(bankAccountsTable.id, fromAccountId), req.companyId ? eq(bankAccountsTable.companyId, req.companyId) : undefined));
+    .where(and(eq(bankAccountsTable.id, fromAccountId), eq(bankAccountsTable.companyId, req.companyId!)));
   const [toAcc] = await db.select().from(bankAccountsTable)
-    .where(and(eq(bankAccountsTable.id, toAccountId), req.companyId ? eq(bankAccountsTable.companyId, req.companyId) : undefined));
+    .where(and(eq(bankAccountsTable.id, toAccountId), eq(bankAccountsTable.companyId, req.companyId!)));
 
   if (!fromAcc || !toAcc) { res.status(404).json({ error: "Счёт не найден" }); return; }
 
@@ -576,7 +576,7 @@ router.post("/rental/payments", requireAuth, async (req: AuthenticatedRequest, r
 });
 
 router.delete("/rental/payments/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   const conds: SQL[] = [eq(paymentsTable.id, id)];
   if (req.companyId) conds.push(eq(paymentsTable.companyId, req.companyId));
   const [snap] = await db.select().from(paymentsTable).where(and(...conds));
@@ -761,7 +761,7 @@ router.get("/rental/properties/:id/performance", requireAuth, async (req: Authen
 });
 
 // OWNER STATEMENTS
-router.get("/rental/statements", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+router.get(["/rental/statements", "/rental/owner-statements"], requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const { propertyId, month } = req.query as Record<string, string | undefined>;
   const conditions: SQL[] = [];
   if (req.companyId) conditions.push(eq(ownerStatementsTable.companyId, req.companyId));

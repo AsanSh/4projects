@@ -83,7 +83,7 @@ export default function PaymentsReport() {
         </div>
         {isLoading ? (
           <div className="h-40 flex items-center justify-center">
-            <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+            <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
           </div>
         ) : (rows ?? []).length === 0 ? (
           <div className="text-center py-16 text-gray-400">

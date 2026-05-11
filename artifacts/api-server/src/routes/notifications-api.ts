@@ -49,7 +49,7 @@ router.get("/notifications/unread-count", requireAuth, async (req: Authenticated
 
 // PATCH /api/notifications/:id/read
 router.patch("/notifications/:id/read", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
 
   const [notification] = await db.update(notificationsTable)
     .set({
@@ -91,7 +91,7 @@ router.patch("/notifications/mark-all-read", requireAuth, async (req: Authentica
 
 // DELETE /api/notifications/:id
 router.delete("/notifications/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
 
   await db.delete(notificationsTable)
     .where(and(

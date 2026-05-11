@@ -103,7 +103,7 @@ router.post(
       const [row] = await db
         .insert(rolesTable)
         .values({
-          companyId: req.companyId,
+          companyId: req.companyId!,
           name,
           description,
           permissions: permissions || [],

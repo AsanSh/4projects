@@ -146,7 +146,7 @@ function DocsTab() {
       </div>
       <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 p-3">
         <div className="flex items-start gap-2">
-          <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+          <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-blue-700">
             Шаблоны соответствуют законодательству Кыргызской Республики.
             Для кастомизации шаблонов обратитесь к администратору.

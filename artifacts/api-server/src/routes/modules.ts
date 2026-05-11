@@ -86,7 +86,7 @@ router.get("/modules", requireAuth, async (req: AuthenticatedRequest, res): Prom
 });
 
 // POST /modules/:key/toggle — включить/выключить модуль
-router.post("/modules/:key/toggle", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
+router.post("/modules/:key/toggle", requireAuth, requireRole("admin", "company_admin", "super_admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const { key } = req.params;
   const cid = req.companyId;
   if (!cid) { res.status(400).json({ error: "Нет привязки к организации" }); return; }

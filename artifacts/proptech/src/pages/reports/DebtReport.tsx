@@ -30,7 +30,7 @@ export default function DebtReport() {
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
-      <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+      <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
     </div>
   );
 

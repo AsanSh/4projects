@@ -11,6 +11,8 @@ export const propertiesTable = pgTable("properties", {
   unitNumber: text("unit_number").notNull(),
   type: text("type").notNull().default("apartment"),
   area: numeric("area", { precision: 10, scale: 2 }),
+  address: text("address"),
+  rooms: integer("rooms"),
   status: text("status").notNull().default("available"),
   rentalStatus: text("rental_status"),
   comment: text("comment"),

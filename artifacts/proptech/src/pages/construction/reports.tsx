@@ -92,7 +92,7 @@ export default function ConstructionReports() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-400">Освоение</p>
-                  <p className={`text-3xl font-bold ${spentPct > 90 ? "text-rose-600" : spentPct > 70 ? "text-amber-600" : "text-emerald-500"}`}>{spentPct.toFixed(1)}%</p>
+                  <p className={`text-3xl font-bold ${spentPct > 90 ? "text-rose-600" : spentPct > 70 ? "text-amber-600" : "text-emerald-600"}`}>{spentPct.toFixed(1)}%</p>
                 </div>
               </div>
               <div>
@@ -109,7 +109,7 @@ export default function ConstructionReports() {
 
         {/* Tasks */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><TrendingDown className="w-4 h-4 text-blue-500" /> Задачи</h3>
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><TrendingDown className="w-4 h-4 text-blue-600" /> Задачи</h3>
           {isLoading ? <Skeleton className="h-20" /> : (
             <div className="space-y-3">
               <div className="flex justify-between items-end">
@@ -125,7 +125,7 @@ export default function ConstructionReports() {
 
         {/* Sales */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><PieChart className="w-4 h-4 text-indigo-500" /> Продажи</h3>
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><PieChart className="w-4 h-4 text-indigo-600" /> Продажи</h3>
           {isLoading ? <Skeleton className="h-20" /> : (
             <div className="space-y-3">
               <div className="flex justify-between items-end">
@@ -136,7 +136,7 @@ export default function ConstructionReports() {
                 </div>
               </div>
               <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${soldPct}%` }} />
+                <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${soldPct}%` }} />
               </div>
               <p className="text-xs text-gray-400">{soldPct.toFixed(1)}% от {dash?.totalUnits || 0} юнитов</p>
             </div>

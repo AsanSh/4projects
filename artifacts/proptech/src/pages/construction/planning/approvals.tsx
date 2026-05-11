@@ -33,7 +33,7 @@ export default function ConstructionApprovals() {
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Согласовано</div>
-          <div className="text-2xl font-bold text-emerald-500">1</div>
+          <div className="text-2xl font-bold text-emerald-600">1</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500 mb-1">Отклонено</div>

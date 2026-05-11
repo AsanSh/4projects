@@ -260,7 +260,7 @@ export default function Investors() {
                       <ExternalLink className="w-3 h-3" /> Портал
                     </Button>
                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDialog(inv)}>
-                      <Eye className="w-3.5 h-3.5 text-gray-400 hover:text-blue-500" />
+                      <Eye className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600" />
                     </Button>
                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDelete(inv.id, inv.fullName)}>
                       <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-rose-600" />

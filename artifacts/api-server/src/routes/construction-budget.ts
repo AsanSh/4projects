@@ -102,7 +102,7 @@ router.post("/projects/:projectId/budget/categories", requireAuth, async (req: A
 
 // PATCH /construction/budget/categories/:id - Update category
 router.patch("/budget/categories/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { name, description, plannedAmount } = req.body;
 
   const [category] = await db.update(constructionBudgetCategoriesTable)
@@ -127,7 +127,7 @@ router.patch("/budget/categories/:id", requireAuth, async (req: AuthenticatedReq
 
 // DELETE /construction/budget/categories/:id
 router.delete("/budget/categories/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
 
   // Delete line items first
   await db.delete(constructionBudgetLineItemsTable)
@@ -176,7 +176,7 @@ router.post("/projects/:projectId/budget/line-items", requireAuth, async (req: A
 
 // PATCH /construction/budget/line-items/:id
 router.patch("/budget/line-items/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { name, unit, quantity, unitPrice, plannedAmount, spentAmount, notes } = req.body;
 
   const [item] = await db.update(constructionBudgetLineItemsTable)
@@ -211,7 +211,7 @@ router.patch("/budget/line-items/:id", requireAuth, async (req: AuthenticatedReq
 
 // DELETE /construction/budget/line-items/:id
 router.delete("/budget/line-items/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
 
   const [item] = await db.select().from(constructionBudgetLineItemsTable)
     .where(and(

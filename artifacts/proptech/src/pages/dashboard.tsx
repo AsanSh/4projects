@@ -220,7 +220,7 @@ export default function Dashboard() {
                 <div className="text-[18px] font-bold text-gray-900 leading-tight tabular-nums">{c.value}</div>
                 {c.currency && <div className="text-[10px] text-gray-400 mt-0.5">{c.currency}</div>}
                 {c.delta && (
-                  <div className={`text-[10px] mt-1 font-medium ${c.up ? "text-emerald-500" : "text-rose-600"}`}>
+                  <div className={`text-[10px] mt-1 font-medium ${c.up ? "text-emerald-600" : "text-rose-600"}`}>
                     {c.delta} <span className="text-gray-400 font-normal">vs прошлый мес.</span>
                   </div>
                 )}
@@ -319,7 +319,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-3">
             <div className="font-semibold text-gray-800 text-sm">Топ прибыльных проектов</div>
             <Link href="/construction/projects">
-              <button className="text-xs text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все проекты <ArrowRight className="w-3 h-3" /></button>
+              <button className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1">Все проекты <ArrowRight className="w-3 h-3" /></button>
             </Link>
           </div>
           {topProjects.length === 0 ? (
@@ -329,7 +329,7 @@ export default function Dashboard() {
               {topProjects.map((p: any, i: number) => (
                 <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
                   <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-5 h-5 text-indigo-500" />
+                    <Building2 className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div className="min-w-0">
                     <div className="font-semibold text-sm text-gray-900 truncate">{p.name}</div>
@@ -355,7 +355,7 @@ export default function Dashboard() {
               <div className="text-[10px] text-gray-400 font-medium mb-1.5 leading-tight">{c.label}</div>
               <div className="text-base font-bold text-gray-900 truncate">{c.value}</div>
               {c.sub && <div className="text-[10px] text-gray-400 mt-0.5 truncate">{c.sub}</div>}
-              {c.delta && <div className={`text-[10px] mt-1 font-medium ${(c as any).neg ? "text-rose-600" : "text-emerald-500"}`}>{c.delta}</div>}
+              {c.delta && <div className={`text-[10px] mt-1 font-medium ${(c as any).neg ? "text-rose-600" : "text-emerald-600"}`}>{c.delta}</div>}
             </div>
           ))}
         </div>
@@ -373,7 +373,7 @@ export default function Dashboard() {
                 )}
               </div>
               <Link href="/construction/planning/overdue">
-                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все просрочки <ArrowRight className="w-3 h-3" /></button>
+                <button className="text-[11px] text-indigo-600 hover:text-indigo-700 flex items-center gap-1">Все просрочки <ArrowRight className="w-3 h-3" /></button>
               </Link>
             </div>
             {overdueAccruals.length === 0 ? (
@@ -416,7 +416,7 @@ export default function Dashboard() {
                 )}
               </div>
               <Link href="/construction/planning/forecast">
-                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все поступления <ArrowRight className="w-3 h-3" /></button>
+                <button className="text-[11px] text-indigo-600 hover:text-indigo-700 flex items-center gap-1">Все поступления <ArrowRight className="w-3 h-3" /></button>
               </Link>
             </div>
             {upcomingAccruals.length === 0 ? (
@@ -451,7 +451,7 @@ export default function Dashboard() {
             <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
               <span className="font-semibold text-sm text-gray-800">Недавние операции</span>
               <Link href="/construction/operations">
-                <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1">Все операции <ArrowRight className="w-3 h-3" /></button>
+                <button className="text-[11px] text-indigo-600 hover:text-indigo-700 flex items-center gap-1">Все операции <ArrowRight className="w-3 h-3" /></button>
               </Link>
             </div>
             {recentOps.length === 0 ? (
@@ -488,7 +488,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckSquare className="w-4 h-4 text-indigo-500" />
+              <CheckSquare className="w-4 h-4 text-indigo-600" />
               <span className="font-semibold text-sm text-gray-800">Мои задачи</span>
               <span className="w-5 h-5 bg-rose-100 text-rose-600 text-[10px] font-bold flex items-center justify-center rounded-full">
                 {tasks.filter(t => !t.done).length}
@@ -499,14 +499,14 @@ export default function Dashboard() {
             {tasks.map(task => (
               <div key={task.id} className="px-4 py-2.5 flex items-start gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
                 onClick={() => setTasks(prev => prev.map(t => t.id === task.id ? { ...t, done: !t.done } : t))}>
-                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 mt-0.5 border ${task.done ? "bg-indigo-500 border-indigo-500" : "border-gray-200"}`}>
+                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 mt-0.5 border ${task.done ? "bg-indigo-600 border-indigo-500" : "border-gray-200"}`}>
                   {task.done && <CheckCircle2 className="w-3 h-3 text-white" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className={`text-xs font-medium leading-snug ${task.done ? "line-through text-gray-400" : "text-gray-700"}`}>{task.text}</div>
                   {task.sub && <div className="text-[10px] text-gray-400 mt-0.5">{task.sub}</div>}
                 </div>
-                <div className={`text-[10px] flex-shrink-0 font-medium mt-0.5 ${task.date === "Сегодня" ? "text-indigo-500" : task.date === "Завтра" ? "text-amber-500" : "text-gray-400"}`}>
+                <div className={`text-[10px] flex-shrink-0 font-medium mt-0.5 ${task.date === "Сегодня" ? "text-indigo-600" : task.date === "Завтра" ? "text-amber-500" : "text-gray-400"}`}>
                   {task.date}
                 </div>
               </div>
@@ -514,7 +514,7 @@ export default function Dashboard() {
           </div>
           <div className="px-4 py-2 border-t border-gray-50">
             <Link href="/construction/planning/approvals">
-              <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1 w-full justify-center py-1">
+              <button className="text-[11px] text-indigo-600 hover:text-indigo-700 flex items-center gap-1 w-full justify-center py-1">
                 Все задачи <ArrowRight className="w-3 h-3" />
               </button>
             </Link>
@@ -525,7 +525,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-indigo-500" />
+              <Bell className="w-4 h-4 text-indigo-600" />
               <span className="font-semibold text-sm text-gray-800">Уведомления</span>
               <span className="w-5 h-5 bg-rose-100 text-rose-600 text-[10px] font-bold flex items-center justify-center rounded-full">
                 {MOCK_NOTIFICATIONS.length}
@@ -545,7 +545,7 @@ export default function Dashboard() {
             ))}
           </div>
           <div className="px-4 py-2 border-t border-gray-50">
-            <button className="text-[11px] text-indigo-500 hover:text-indigo-700 flex items-center gap-1 w-full justify-center py-1">
+            <button className="text-[11px] text-indigo-600 hover:text-indigo-700 flex items-center gap-1 w-full justify-center py-1">
               Все уведомления <ArrowRight className="w-3 h-3" />
             </button>
           </div>

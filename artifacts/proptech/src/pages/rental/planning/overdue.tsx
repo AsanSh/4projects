@@ -124,7 +124,7 @@ export default function RentalOverdue() {
                   <p className="font-medium text-gray-900">{a.tenant?.name || "—"}</p>
                   <p className="text-xs text-gray-400">{a.contract?.propertyAddress || `Дог. #${a.leaseContractId}`}</p>
                   {a.tenant?.phone && (
-                    <p className="text-xs text-blue-500 flex items-center gap-0.5 mt-0.5">
+                    <p className="text-xs text-blue-600 flex items-center gap-0.5 mt-0.5">
                       <Phone className="w-3 h-3" />{a.tenant.phone}
                     </p>
                   )}

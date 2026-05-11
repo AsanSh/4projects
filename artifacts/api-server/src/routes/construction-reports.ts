@@ -18,7 +18,7 @@ const router: ReturnType<typeof Router> = Router();
 // ══════════════════════════════════════════════════════════════════════════════
 
 router.get("/projects/:id/reports/cost-analysis/excel", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const projectId = parseInt(req.params.id);
+  const projectId = parseInt(req.params.id as string, 10);
 
   const [project] = await db.select().from(constructionProjectsTable)
     .where(and(eq(constructionProjectsTable.id, projectId), eq(constructionProjectsTable.companyId, req.companyId!)));
@@ -149,7 +149,7 @@ router.get("/projects/:id/reports/cost-analysis/excel", requireAuth, async (req:
 // ══════════════════════════════════════════════════════════════════════════════
 
 router.get("/projects/:id/reports/budget/excel", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const projectId = parseInt(req.params.id);
+  const projectId = parseInt(req.params.id as string, 10);
 
   const [project] = await db.select().from(constructionProjectsTable)
     .where(and(eq(constructionProjectsTable.id, projectId), eq(constructionProjectsTable.companyId, req.companyId!)));

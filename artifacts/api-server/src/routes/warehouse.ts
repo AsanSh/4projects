@@ -378,6 +378,27 @@ router.get("/warehouse/incoming/:id", requireAuth, async (req: AuthenticatedRequ
   }
 });
 
+router.get("/warehouse/inventory/:id/details", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const [inventory] = await db.select().from(warehouseInventoryTable)
+      .where(and(
+        eq(warehouseInventoryTable.id, id),
+        eq(warehouseInventoryTable.companyId, req.companyId!)
+      ));
+
+    if (!inventory) {
+      res.status(404).json({ error: "Inventory not found" });
+      return;
+    }
+
+    res.json(inventory);
+  } catch (error) {
+    console.error("Error fetching inventory details:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.patch("/warehouse/incoming/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id, 10);
