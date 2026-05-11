@@ -71,6 +71,7 @@ app.use(
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
   "http://localhost:5173",
   "http://localhost:3000",
+  "https://proptech-sigma-eight.vercel.app",
 ];
 
 app.use(
@@ -79,19 +80,13 @@ app.use(
       // Allow requests with no origin (mobile apps, Postman)
       if (!origin) return callback(null, true);
 
-      const vercelHost = (() => {
-        try {
-          return new URL(origin).hostname.endsWith(".vercel.app");
-        } catch {
-          return false;
-        }
-      })();
+      const isVercel = origin.endsWith(".vercel.app");
 
-      if (allowedOrigins.includes(origin) || vercelHost) {
+      if (allowedOrigins.includes(origin) || isVercel) {
         callback(null, true);
       } else {
         logger.warn({ origin, allowedOrigins }, "CORS blocked request");
-        callback(new Error(`Доступ запрещен. Разрешенные домены: ${allowedOrigins.join(", ")}`));
+        callback(null, false); // Return false instead of Error to avoid "No Access-Control-Allow-Origin header"
       }
     },
     credentials: true,

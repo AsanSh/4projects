@@ -94,7 +94,7 @@ export default function CashflowReport() {
         <h2 className="font-semibold text-gray-900 mb-4">По месяцам</h2>
         {isLoading ? (
           <div className="h-40 flex items-center justify-center">
-            <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+            <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
           </div>
         ) : (byMonth?.length ?? 0) === 0 ? (
           <p className="text-center text-gray-400 py-10 text-sm">Нет данных</p>

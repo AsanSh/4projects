@@ -115,7 +115,7 @@ export default function ChessBoard() {
 
       {isLoading ? (
         <div className="h-64 flex items-center justify-center">
-          <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+          <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 py-20 text-center">
@@ -127,7 +127,7 @@ export default function ChessBoard() {
         Object.entries(grouped).map(([project, blocks]) => (
           <div key={project} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
-              <Building2 className="w-4 h-4 text-blue-500" />
+              <Building2 className="w-4 h-4 text-blue-600" />
               <h2 className="font-semibold text-gray-900">{project}</h2>
             </div>
             <div className="p-5 space-y-6">

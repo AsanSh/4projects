@@ -88,7 +88,7 @@ router.post("/projects", requireAuth, async (req: AuthenticatedRequest, res): Pr
 });
 
 router.patch("/projects/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const body = req.body;
   const totalArea = parseFloat(body.totalArea || "0");
   const costPerSqm = parseFloat(body.costPerSqm || "0");
@@ -121,7 +121,7 @@ router.patch("/projects/:id", requireAuth, async (req: AuthenticatedRequest, res
 });
 
 router.delete("/projects/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionProjectsTable)
     .where(and(eq(constructionProjectsTable.id, id), eq(constructionProjectsTable.companyId, req.companyId!)));
 
@@ -158,7 +158,7 @@ router.post("/stages", requireAuth, async (req: AuthenticatedRequest, res): Prom
 });
 
 router.patch("/stages/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { name, description, status, progress, startDate, plannedEndDate, actualEndDate, budgetAmount, sortOrder } = req.body;
   const [row] = await db.update(constructionStagesTable)
     .set({ name, description, status, progress, startDate, plannedEndDate, actualEndDate,
@@ -169,7 +169,7 @@ router.patch("/stages/:id", requireAuth, async (req: AuthenticatedRequest, res):
 });
 
 router.delete("/stages/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionStagesTable).where(and(eq(constructionStagesTable.id, id), eq(constructionStagesTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
@@ -200,7 +200,7 @@ router.post("/tasks", requireAuth, async (req: AuthenticatedRequest, res): Promi
 });
 
 router.patch("/tasks/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { title, description, status, priority, dueDate, estimatedHours, actualHours, completedAt } = req.body;
   const [row] = await db.update(constructionTasksTable)
     .set({ title, description, status, priority, dueDate, completedAt,
@@ -212,7 +212,7 @@ router.patch("/tasks/:id", requireAuth, async (req: AuthenticatedRequest, res): 
 });
 
 router.delete("/tasks/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionTasksTable).where(and(eq(constructionTasksTable.id, id), eq(constructionTasksTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
@@ -238,7 +238,7 @@ router.post("/workers", requireAuth, async (req: AuthenticatedRequest, res): Pro
 });
 
 router.patch("/workers/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { fullName, brigade, specialization, phone, dailyRate, currency, status, projectId, notes } = req.body;
   const [row] = await db.update(constructionWorkersTable)
     .set({ fullName, brigade, specialization, phone, dailyRate: dailyRate ? String(dailyRate) : null, currency, status, projectId: projectId || null, notes })
@@ -248,7 +248,7 @@ router.patch("/workers/:id", requireAuth, async (req: AuthenticatedRequest, res)
 });
 
 router.delete("/workers/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionWorkersTable).where(and(eq(constructionWorkersTable.id, id), eq(constructionWorkersTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
@@ -274,7 +274,7 @@ router.post("/contractors", requireAuth, async (req: AuthenticatedRequest, res):
 });
 
 router.patch("/contractors/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { fullName, type, specialization, phone, email, inn, contractNumber, contractAmount, currency, status, rating, notes } = req.body;
   const [row] = await db.update(constructionContractorsTable)
     .set({ fullName, type, specialization, phone, email, inn, contractNumber,
@@ -286,7 +286,7 @@ router.patch("/contractors/:id", requireAuth, async (req: AuthenticatedRequest, 
 });
 
 router.delete("/contractors/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionContractorsTable).where(and(eq(constructionContractorsTable.id, id), eq(constructionContractorsTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
@@ -318,7 +318,7 @@ router.post("/materials", requireAuth, async (req: AuthenticatedRequest, res): P
 });
 
 router.patch("/materials/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { name, category, unit, quantity, unitPrice, currency, status, deliveredAt, notes } = req.body;
   const qty = parseFloat(quantity || "0");
   const price = parseFloat(unitPrice || "0");
@@ -331,7 +331,7 @@ router.patch("/materials/:id", requireAuth, async (req: AuthenticatedRequest, re
 });
 
 router.delete("/materials/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionMaterialsTable).where(and(eq(constructionMaterialsTable.id, id), eq(constructionMaterialsTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
@@ -361,7 +361,7 @@ router.post("/budget", requireAuth, async (req: AuthenticatedRequest, res): Prom
 });
 
 router.patch("/budget/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { category, name, plannedAmount, actualAmount, currency, exchangeRateSource, exchangeRate, notes } = req.body;
   const [row] = await db.update(constructionBudgetItemsTable)
     .set({ category, name, plannedAmount: String(plannedAmount || 0),
@@ -373,7 +373,7 @@ router.patch("/budget/:id", requireAuth, async (req: AuthenticatedRequest, res):
 });
 
 router.delete("/budget/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionBudgetItemsTable).where(and(eq(constructionBudgetItemsTable.id, id), eq(constructionBudgetItemsTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
@@ -434,7 +434,7 @@ router.post("/expenses", requireAuth, async (req: AuthenticatedRequest, res): Pr
 });
 
 router.delete("/expenses/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db.delete(constructionExpensesTable).where(and(eq(constructionExpensesTable.id, id), eq(constructionExpensesTable.companyId, req.companyId!)));
   res.json({ ok: true });
 });
@@ -467,7 +467,7 @@ router.post("/units", requireAuth, async (req: AuthenticatedRequest, res): Promi
 });
 
 router.patch("/units/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { unitNumber, floor, block, unitType, roomCount, area, pricePerSqm, currency, status, buyerId, contractDate, notes } = req.body;
   const a = parseFloat(area || "0");
   const pps = parseFloat(pricePerSqm || "0");
@@ -539,7 +539,7 @@ router.post("/currency-rates", requireAuth, async (req: AuthenticatedRequest, re
 // ── PROJECT COST ANALYSIS ─────────────────────────────────────────────────────
 
 router.get("/projects/:id/cost-analysis", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const projectId = parseInt(req.params.id);
+  const projectId = parseInt(req.params.id as string, 10);
 
   const [project] = await db.select().from(constructionProjectsTable)
     .where(and(eq(constructionProjectsTable.id, projectId), eq(constructionProjectsTable.companyId, req.companyId!)));

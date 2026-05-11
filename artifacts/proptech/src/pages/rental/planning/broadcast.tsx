@@ -118,7 +118,7 @@ export default function RentalBroadcast() {
               </div>
             </div>
             <div className="mt-3 flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-500" />
+              <Users className="w-4 h-4 text-blue-600" />
               <span className="text-sm text-gray-600">
                 Получателей: <strong className="text-gray-900">{recipients.length}</strong>
               </span>

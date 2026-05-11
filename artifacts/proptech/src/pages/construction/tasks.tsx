@@ -30,7 +30,7 @@ const STATUS_ICONS: Record<string, React.ElementType> = {
   todo: Circle, in_progress: Clock, review: AlertCircle, done: CheckCircle2,
 };
 const STATUS_COLORS: Record<string, string> = {
-  todo: "text-gray-400", in_progress: "text-blue-500", review: "text-amber-600", done: "text-emerald-600",
+  todo: "text-gray-400", in_progress: "text-blue-600", review: "text-amber-600", done: "text-emerald-600",
 };
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-gray-100 text-white", medium: "bg-blue-100 text-blue-700",
@@ -197,7 +197,7 @@ export default function ConstructionTasks() {
                             → {col.value === "todo" ? "В работу" : col.value === "in_progress" ? "На проверку" : "Готово"}
                           </button>
                         )}
-                        <button onClick={() => setDialog(t)} className="ml-auto text-[10px] text-gray-400 hover:text-blue-500">✎</button>
+                        <button onClick={() => setDialog(t)} className="ml-auto text-[10px] text-gray-400 hover:text-blue-600">✎</button>
                       </div>
                     </div>
                   ))}

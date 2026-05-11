@@ -65,7 +65,7 @@ export default function ConstructionAccounts() {
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm col-span-2">
-          <div className="flex items-center gap-2 mb-1"><Wallet className="w-4 h-4 text-blue-500" /><span className="text-xs text-gray-500">Общий баланс (KGS)</span></div>
+          <div className="flex items-center gap-2 mb-1"><Wallet className="w-4 h-4 text-blue-600" /><span className="text-xs text-gray-500">Общий баланс (KGS)</span></div>
           <div className="text-3xl font-bold text-gray-900">{fmt(totalBalance)}</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">

@@ -63,7 +63,7 @@ router.post("/activity", requireAuth, async (req: AuthenticatedRequest, res): Pr
 // ── POST /activity/:id/restore  ────────────────────────────────────
 
 router.post("/activity/:id/restore", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const companyId = req.companyId!;
 
   const [entry] = await db.select().from(activityLogTable)

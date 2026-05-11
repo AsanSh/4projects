@@ -152,7 +152,7 @@ function ProrationPreview({
             <span className="text-blue-600">{firstMonth.label}:</span>{" "}
             <span className="font-semibold">{fmt(firstMonth.amount, currency)}</span>
             {" "}
-            <span className="text-blue-500">
+            <span className="text-blue-600">
               (с {new Date(startDate).toLocaleDateString("ru-RU")} до конца месяца)
             </span>
           </div>
@@ -162,10 +162,10 @@ function ProrationPreview({
             <span className="text-blue-600">{lastMonth.label}:</span>{" "}
             <span className="font-semibold">{fmt(lastMonth.amount, currency)}</span>
             {" "}
-            <span className="text-blue-500">(до {new Date(endDate).toLocaleDateString("ru-RU")})</span>
+            <span className="text-blue-600">(до {new Date(endDate).toLocaleDateString("ru-RU")})</span>
           </div>
         )}
-        <div className="text-blue-500 text-xs mt-1">Остальные месяцы — {fmt(amount, currency)}</div>
+        <div className="text-blue-600 text-xs mt-1">Остальные месяцы — {fmt(amount, currency)}</div>
       </AlertDescription>
     </Alert>
   );

@@ -79,7 +79,7 @@ export default function ProjectLanding() {
               <span>{project.address}</span>
             </div>
             <div className="flex gap-4">
-              <Button size="lg" className="bg-teal-500 hover:bg-teal-600 text-white h-14 px-8 text-lg shadow-xl">
+              <Button size="lg" className="bg-teal-500 hover:bg-emerald-600 text-white h-14 px-8 text-lg shadow-xl">
                 Оставить заявку
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -93,7 +93,7 @@ export default function ProjectLanding() {
       </div>
 
       {/* Stats Bar */}
-      <div className="bg-gradient-to-r from-purple-600 to-teal-600 text-white py-8 shadow-xl">
+      <div className="bg-gradient-to-r from-blue-600 to-emerald-600 text-white py-8 shadow-xl">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
@@ -218,7 +218,7 @@ export default function ProjectLanding() {
                       </div>
                     </div>
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-purple-600 to-teal-600 text-white">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 text-white">
                     Узнать подробнее
                   </Button>
                 </div>
@@ -245,7 +245,7 @@ export default function ProjectLanding() {
 
         {/* Contact Form */}
         <div className="mb-20">
-          <div className="bg-gradient-to-br from-purple-600 to-teal-600 rounded-3xl shadow-2xl overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-600 to-emerald-600 rounded-2xl shadow-2xl overflow-hidden">
             <div className="grid md:grid-cols-2 gap-0">
               <div className="p-12 text-white">
                 <h2 className="text-4xl font-bold mb-6">
@@ -328,7 +328,7 @@ export default function ProjectLanding() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-purple-600 to-teal-600 text-white text-lg font-semibold"
+                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-lg font-semibold"
                   >
                     Отправить заявку
                   </Button>

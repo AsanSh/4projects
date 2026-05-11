@@ -28,10 +28,10 @@ export default function ConstructionBroadcast() {
   const activeContracts = contracts.filter((c: any) => c.status === "signed" || c.status === "review");
 
   const CHANNELS = [
-    { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, color: "text-emerald-500" },
-    { id: "telegram", label: "Telegram", icon: Send, color: "text-blue-500" },
+    { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, color: "text-emerald-600" },
+    { id: "telegram", label: "Telegram", icon: Send, color: "text-blue-600" },
     { id: "email", label: "Email", icon: Mail, color: "text-amber-600" },
-    { id: "sms", label: "SMS", icon: Phone, color: "text-blue-500" },
+    { id: "sms", label: "SMS", icon: Phone, color: "text-blue-600" },
   ];
 
   const LOG = [

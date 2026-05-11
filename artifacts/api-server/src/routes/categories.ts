@@ -31,7 +31,7 @@ router.post("/categories", requireAuth, async (req: AuthenticatedRequest, res): 
 });
 
 router.patch("/categories/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { name, type, parentId, module, color, sortOrder, isActive } = req.body;
   const updates: Partial<typeof financialCategoriesTable.$inferInsert> = {};
   if (name !== undefined) updates.name = name;
@@ -50,7 +50,7 @@ router.patch("/categories/:id", requireAuth, async (req: AuthenticatedRequest, r
 });
 
 router.delete("/categories/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const [row] = await db.delete(financialCategoriesTable)
     .where(and(eq(financialCategoriesTable.id, id), eq(financialCategoriesTable.companyId, req.companyId!)))
     .returning();

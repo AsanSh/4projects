@@ -5,6 +5,46 @@ import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/au
 
 const router: ReturnType<typeof Router> = Router();
 
+// POST /companies — создание новой компании (только суперадмин или новый пользователь без компании)
+router.post("/companies", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  // Проверка прав: либо суперадмин, либо у пользователя еще нет привязки к компании
+  if (req.companyId && req.userRole !== "super_admin") {
+    res.status(403).json({ error: "У вас уже есть привязка к организации" });
+    return;
+  }
+
+  const { name, legalName, bin, phone, email, address } = req.body;
+  if (!name) {
+    res.status(400).json({ error: "Название компании обязательно" });
+    return;
+  }
+
+  try {
+    const [company] = await db.insert(companiesTable).values({
+      name,
+      legalName,
+      bin,
+      phone,
+      email,
+      address,
+      isActive: true,
+    }).returning();
+
+    // Если у пользователя не было компании, привязываем его к новой как администратора
+    if (!req.companyId) {
+      const { usersTable } = await import("../lib/db/schema");
+      await db.update(usersTable)
+        .set({ companyId: company.id, role: "admin" })
+        .where(eq(usersTable.id, req.userId!));
+    }
+
+    res.status(201).json(company);
+  } catch (error: any) {
+    console.error("Error creating company:", error);
+    res.status(500).json({ error: "Ошибка при создании организации" });
+  }
+});
+
 // GET /companies — список всех компаний (для суперадмина; обычным пользователям - только своя)
 router.get("/companies", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   if (req.companyId) {
@@ -28,7 +68,7 @@ router.get("/companies/my", requireAuth, async (req: AuthenticatedRequest, res):
 });
 
 // PATCH /companies/my — обновление данных своей организации (только admin)
-router.patch("/companies/my", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
+router.patch("/companies/my", requireAuth, requireRole("admin", "company_admin", "super_admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   if (!req.companyId) {
     res.status(400).json({ error: "Нет привязки к организации" });
     return;
@@ -55,7 +95,7 @@ router.get("/companies/:id", requireAuth, async (req: AuthenticatedRequest, res)
 });
 
 // PATCH /companies/:id (только своя компания)
-router.patch("/companies/:id", requireAuth, requireRole("admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
+router.patch("/companies/:id", requireAuth, requireRole("admin", "company_admin", "super_admin"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (req.companyId && req.companyId !== id) {
     res.status(403).json({ error: "Forbidden" });

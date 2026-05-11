@@ -207,7 +207,7 @@ export default function Settings() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
             </div>
           ) : (
             <>
@@ -218,7 +218,7 @@ export default function Settings() {
                 <div>
                   <h2 className="font-semibold text-gray-900">{org?.name || "Организация"}</h2>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <Shield className="h-3.5 w-3.5 text-blue-500" />
+                    <Shield className="h-3.5 w-3.5 text-blue-600" />
                     <span className="text-xs text-blue-600 font-medium">{isAdmin ? "Администратор" : "Сотрудник"}</span>
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export default function Settings() {
           {/* Edit profile form */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-500" />
+              <User className="w-4 h-4 text-blue-600" />
               Личные данные
             </h3>
             <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -344,7 +344,7 @@ export default function Settings() {
           {/* Change password form */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-blue-500" />
+              <KeyRound className="w-4 h-4 text-blue-600" />
               Изменить пароль
             </h3>
             <form onSubmit={handleChangePassword} className="space-y-4">

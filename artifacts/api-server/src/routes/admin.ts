@@ -33,7 +33,7 @@ router.post("/admin/periods", requireAuth, async (req: AuthenticatedRequest, res
 
 router.patch("/admin/periods/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const companyId = req.companyId!;
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   const { name, module, startDate, endDate, status, notes } = req.body;
   const [row] = await db
     .update(accountingPeriodsTable)
@@ -46,7 +46,7 @@ router.patch("/admin/periods/:id", requireAuth, async (req: AuthenticatedRequest
 
 router.delete("/admin/periods/:id", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
   const companyId = req.companyId!;
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id as string, 10);
   await db
     .delete(accountingPeriodsTable)
     .where(and(eq(accountingPeriodsTable.id, id), eq(accountingPeriodsTable.companyId, companyId)));

@@ -141,7 +141,7 @@ export default function RentalForecast() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-blue-500" />
+            <TrendingUp className="w-4 h-4 text-blue-600" />
             <span className="text-xs text-gray-500">Ожидается за {horizon} мес.</span>
           </div>
           <p className="text-xl font-bold text-blue-600">{fmtKGS(totalExpected)} KGS</p>
@@ -191,7 +191,7 @@ export default function RentalForecast() {
               {cols.map(col => (
                 <th key={col.key} className={`text-center p-3 font-medium text-white min-w-[110px] ${col.key === todayKey ? "bg-blue-50 text-blue-700" : ""}`}>
                   {col.label}
-                  {col.key === todayKey && <div className="text-[10px] text-blue-500 font-normal">текущий</div>}
+                  {col.key === todayKey && <div className="text-[10px] text-blue-600 font-normal">текущий</div>}
                 </th>
               ))}
               <th className="text-right p-3 font-semibold text-gray-700 min-w-[100px]">Итого</th>

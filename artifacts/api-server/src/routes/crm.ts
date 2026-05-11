@@ -185,6 +185,42 @@ router.patch("/crm/leads/:id/status", requireAuth, async (req: AuthenticatedRequ
   res.json(lead);
 });
 
+// POST /crm/leads/:id/convert - Convert lead to client
+router.post("/crm/leads/:id/convert", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const id = parseInt(req.params.id as string, 10);
+  const conditions: SQL[] = [eq(crmLeadsTable.id, id)];
+  if (req.companyId) conditions.push(eq(crmLeadsTable.companyId, req.companyId));
+
+  const [lead] = await db.select().from(crmLeadsTable).where(and(...conditions));
+  if (!lead) {
+    res.status(404).json({ error: "Lead not found" });
+    return;
+  }
+
+  // 1. Create client from lead
+  const [client] = await db.insert(crmClientsTable).values({
+    companyId: req.companyId,
+    fullName: lead.fullName,
+    phone: lead.phone,
+    email: lead.email,
+    status: "active",
+    type: "individual",
+    notes: `Конвертирован из лида #${lead.id}. ${lead.notes || ""}`,
+  }).returning();
+
+  // 2. Update lead status
+  await db.update(crmLeadsTable)
+    .set({ status: "converted", conversionDate: new Date() })
+    .where(eq(crmLeadsTable.id, id));
+
+  if (req.companyId) {
+    await logCrmOp(req.companyId, req.userId, "crm_lead", id, "update",
+      `Лид ${lead.fullName} конвертирован в клиента`, lead);
+  }
+
+  res.json({ success: true, client });
+});
+
 // DELETE /crm/leads/:id - Delete lead (admin only)
 router.delete("/crm/leads/:id", requireAuth, requireRole("admin", "owner"), async (req: AuthenticatedRequest, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);

@@ -7,7 +7,7 @@ const router: ReturnType<typeof Router> = Router();
 
 // GET /api/legal-entities - List all legal entities for company
 router.get(
-  "/api/legal-entities",
+  "/legal-entities",
   requireAuth,
   async (req: AuthenticatedRequest, res): Promise<void> => {
     try {
@@ -33,7 +33,7 @@ router.get(
 
 // POST /api/legal-entities - Create new legal entity
 router.post(
-  "/api/legal-entities",
+  "/legal-entities",
   requireAuth,
   requireRole("admin", "company_admin"),
   async (req: AuthenticatedRequest, res): Promise<void> => {
@@ -60,7 +60,7 @@ router.post(
       const [row] = await db
         .insert(legalEntitiesTable)
         .values({
-          companyId: req.companyId,
+          companyId: req.companyId!,
           name,
           fullLegalName,
           inn,
@@ -83,7 +83,7 @@ router.post(
 
 // PATCH /api/legal-entities/:id - Update legal entity
 router.patch(
-  "/api/legal-entities/:id",
+  "/legal-entities/:id",
   requireAuth,
   requireRole("admin", "company_admin"),
   async (req: AuthenticatedRequest, res): Promise<void> => {
@@ -147,7 +147,7 @@ router.patch(
 
 // DELETE /api/legal-entities/:id - Delete legal entity (admin only)
 router.delete(
-  "/api/legal-entities/:id",
+  "/legal-entities/:id",
   requireAuth,
   requireRole("admin", "company_admin"),
   async (req: AuthenticatedRequest, res): Promise<void> => {

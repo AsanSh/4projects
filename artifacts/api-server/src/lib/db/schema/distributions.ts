@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 export const distributionsTable = pgTable("distributions", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id"),
+  investorId: integer("investor_id"),
   propertyId: integer("property_id").notNull(),
   period: text("period").notNull(),
   grossIncome: numeric("gross_income", { precision: 15, scale: 2 }).notNull().default("0"),

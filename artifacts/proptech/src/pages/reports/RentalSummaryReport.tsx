@@ -88,7 +88,7 @@ export default function RentalSummaryReport() {
         <h2 className="font-semibold text-gray-900 mb-4">Динамика по месяцам</h2>
         {isLoading ? (
           <div className="h-48 flex items-center justify-center">
-            <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+            <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
           </div>
         ) : byMonth?.length === 0 ? (
           <div className="h-48 flex items-center justify-center text-gray-400 text-sm">

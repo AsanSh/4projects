@@ -150,7 +150,7 @@ export default function ConstructionCashier() {
             </div>
           ) : success ? (
             <div className="bg-white rounded-xl border border-emerald-200 shadow-sm p-8 text-center">
-              <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
+              <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto mb-4" />
               <div className="text-xl font-bold text-gray-900 mb-2">Платёж принят!</div>
               <div className="text-gray-500 text-sm mb-4">Операция записана в реестр</div>
               <div className="bg-gray-50 rounded-xl p-4 text-left text-sm space-y-2 mb-6">

@@ -161,7 +161,7 @@ export default function EnhancedConstructionDashboard() {
                 {overallStats.activeProjects} активных
               </p>
             </div>
-            <Building2 className="h-10 w-10 text-blue-500 opacity-50" />
+            <Building2 className="h-10 w-10 text-blue-600 opacity-50" />
           </div>
         </Card>
 
@@ -175,7 +175,7 @@ export default function EnhancedConstructionDashboard() {
                 <span className="text-xs">{Math.round(overallBudgetProgress)}%</span>
               </div>
             </div>
-            <Wallet className="h-10 w-10 text-blue-500 opacity-50" />
+            <Wallet className="h-10 w-10 text-blue-600 opacity-50" />
           </div>
         </Card>
 
@@ -311,7 +311,7 @@ export default function EnhancedConstructionDashboard() {
         <Link href="/construction/projects">
           <Card className="p-4 hover:bg-muted cursor-pointer transition-colors">
             <div className="flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-blue-500" />
+              <Building2 className="h-8 w-8 text-blue-600" />
               <div>
                 <p className="font-medium">Проекты</p>
                 <p className="text-sm text-muted-foreground">Управление проектами</p>
@@ -324,7 +324,7 @@ export default function EnhancedConstructionDashboard() {
         <Link href="/construction/chess">
           <Card className="p-4 hover:bg-muted cursor-pointer transition-colors">
             <div className="flex items-center gap-3">
-              <Package className="h-8 w-8 text-blue-500" />
+              <Package className="h-8 w-8 text-blue-600" />
               <div>
                 <p className="font-medium">Шахматка</p>
                 <p className="text-sm text-muted-foreground">Юниты и продажи</p>

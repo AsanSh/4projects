@@ -5,52 +5,53 @@ import {
   constructionSalesContractsTable, constructionAccrualsTable,
   constructionUnitsTable, constructionProjectsTable,
 } from "../lib/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, SQL } from "drizzle-orm";
+import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
 const router = Router();
 
 // ── Bank Accounts ──────────────────────────────────────────────────────
-router.get("/accounts", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.get("/accounts", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const rows = await db.select().from(bankAccountsTable)
     .where(eq(bankAccountsTable.companyId, companyId))
     .orderBy(bankAccountsTable.name);
   res.json(rows);
 });
 
-router.post("/accounts", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.post("/accounts", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const [row] = await db.insert(bankAccountsTable).values({ ...req.body, companyId }).returning();
   res.json(row);
 });
 
-router.patch("/accounts/:id", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.patch("/accounts/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const [row] = await db.update(bankAccountsTable)
     .set(req.body)
-    .where(and(eq(bankAccountsTable.id, Number(req.params.id)), eq(bankAccountsTable.companyId, companyId)))
+    .where(and(eq(bankAccountsTable.id, Number(req.params.id as string)), eq(bankAccountsTable.companyId, companyId)))
     .returning();
   res.json(row);
 });
 
-router.delete("/accounts/:id", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.delete("/accounts/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   await db.delete(bankAccountsTable)
-    .where(and(eq(bankAccountsTable.id, Number(req.params.id)), eq(bankAccountsTable.companyId, companyId)));
+    .where(and(eq(bankAccountsTable.id, Number(req.params.id as string)), eq(bankAccountsTable.companyId, companyId)));
   res.json({ ok: true });
 });
 
 // ── Operations ──────────────────────────────────────────────────────────
-router.get("/operations", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.get("/operations", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const rows = await db.select().from(constructionOperationsTable)
     .where(eq(constructionOperationsTable.companyId, companyId))
     .orderBy(desc(constructionOperationsTable.date));
   res.json(rows);
 });
 
-router.post("/operations", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.post("/operations", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const body = req.body;
   const amountKgs = body.currency === "KGS"
     ? body.amount
@@ -60,33 +61,33 @@ router.post("/operations", async (req, res) => {
   res.json(row);
 });
 
-router.patch("/operations/:id", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.patch("/operations/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const [row] = await db.update(constructionOperationsTable)
     .set(req.body)
-    .where(and(eq(constructionOperationsTable.id, Number(req.params.id)), eq(constructionOperationsTable.companyId, companyId)))
+    .where(and(eq(constructionOperationsTable.id, Number(req.params.id as string)), eq(constructionOperationsTable.companyId, companyId)))
     .returning();
   res.json(row);
 });
 
-router.delete("/operations/:id", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.delete("/operations/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   await db.delete(constructionOperationsTable)
-    .where(and(eq(constructionOperationsTable.id, Number(req.params.id)), eq(constructionOperationsTable.companyId, companyId)));
+    .where(and(eq(constructionOperationsTable.id, Number(req.params.id as string)), eq(constructionOperationsTable.companyId, companyId)));
   res.json({ ok: true });
 });
 
 // ── Sales Contracts ─────────────────────────────────────────────────────
-router.get("/contracts-sales", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.get("/contracts-sales", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const rows = await db.select().from(constructionSalesContractsTable)
     .where(eq(constructionSalesContractsTable.companyId, companyId))
     .orderBy(desc(constructionSalesContractsTable.createdAt));
   res.json(rows);
 });
 
-router.post("/contracts-sales", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.post("/contracts-sales", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const body = req.body;
   const remainingAmount = String(parseFloat(body.totalAmount || "0") - parseFloat(body.downPayment || "0"));
 
@@ -110,14 +111,14 @@ router.post("/contracts-sales", async (req, res) => {
   res.json(row);
 });
 
-router.patch("/contracts-sales/:id", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.patch("/contracts-sales/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const body = req.body;
 
   // If status changed to signed, mark unit as sold
   if (body.status === "signed" || body.status === "completed") {
     const [contract] = await db.select().from(constructionSalesContractsTable)
-      .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id)), eq(constructionSalesContractsTable.companyId, companyId)));
+      .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id as string)), eq(constructionSalesContractsTable.companyId, companyId)));
     if (contract?.unitId) {
       await db.update(constructionUnitsTable)
         .set({ status: "sold" })
@@ -127,23 +128,23 @@ router.patch("/contracts-sales/:id", async (req, res) => {
 
   const [row] = await db.update(constructionSalesContractsTable)
     .set({ ...body, updatedAt: new Date() })
-    .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id)), eq(constructionSalesContractsTable.companyId, companyId)))
+    .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id as string)), eq(constructionSalesContractsTable.companyId, companyId)))
     .returning();
   res.json(row);
 });
 
-router.delete("/contracts-sales/:id", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.delete("/contracts-sales/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   await db.delete(constructionSalesContractsTable)
-    .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id)), eq(constructionSalesContractsTable.companyId, companyId)));
+    .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id as string)), eq(constructionSalesContractsTable.companyId, companyId)));
   res.json({ ok: true });
 });
 
 // Generate payment schedule for a contract
-router.post("/contracts-sales/:id/generate-schedule", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.post("/contracts-sales/:id/generate-schedule", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const [contract] = await db.select().from(constructionSalesContractsTable)
-    .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id)), eq(constructionSalesContractsTable.companyId, companyId)));
+    .where(and(eq(constructionSalesContractsTable.id, Number(req.params.id as string)), eq(constructionSalesContractsTable.companyId, companyId)));
   if (!contract) return res.status(404).json({ error: "Договор не найден" });
 
   const installments = contract.installmentMonths || 1;
@@ -180,40 +181,64 @@ router.post("/contracts-sales/:id/generate-schedule", async (req, res) => {
 });
 
 // ── Accruals ────────────────────────────────────────────────────────────
-router.get("/accruals", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.get("/accruals", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const { contractId, projectId } = req.query;
-  let query = db.select().from(constructionAccrualsTable)
-    .where(eq(constructionAccrualsTable.companyId, companyId));
+
+  const conditions: SQL[] = [eq(constructionAccrualsTable.companyId, companyId)];
+  if (contractId) {
+    conditions.push(eq(constructionAccrualsTable.contractId, Number(contractId)));
+  }
+  if (projectId) {
+    conditions.push(eq(constructionAccrualsTable.projectId, Number(projectId)));
+  }
+
   const rows = await db.select().from(constructionAccrualsTable)
-    .where(
-      contractId
-        ? and(eq(constructionAccrualsTable.companyId, companyId), eq(constructionAccrualsTable.contractId, Number(contractId)))
-        : eq(constructionAccrualsTable.companyId, companyId)
-    )
+    .where(and(...conditions))
     .orderBy(constructionAccrualsTable.dueDate);
   res.json(rows);
 });
 
-router.patch("/accruals/:id", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.patch("/accruals/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const [row] = await db.update(constructionAccrualsTable)
     .set(req.body)
-    .where(and(eq(constructionAccrualsTable.id, Number(req.params.id)), eq(constructionAccrualsTable.companyId, companyId)))
+    .where(and(eq(constructionAccrualsTable.id, Number(req.params.id as string)), eq(constructionAccrualsTable.companyId, companyId)))
     .returning();
   res.json(row);
 });
 
 // ── Cashier — accept payment ────────────────────────────────────────────
-router.post("/cashier/payment", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
-  const { contractId, accrualId, amount, currency, exchangeRate, accountId, paymentMethod, date, notes } = req.body;
+router.post("/cashier/payment", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
+  const { contractId, accrualId, amount, currency, exchangeRate, accountId, paymentMethod, date, notes, projectId } = req.body;
+
+  // Security check for projectId if provided
+  if (projectId) {
+    const [project] = await db.select().from(constructionProjectsTable)
+      .where(and(eq(constructionProjectsTable.id, Number(projectId)), eq(constructionProjectsTable.companyId, companyId)));
+    if (!project) return res.status(403).json({ error: "Access denied to project" });
+  }
+
+  // Security check for contractId if provided
+  if (contractId) {
+    const [contract] = await db.select().from(constructionSalesContractsTable)
+      .where(and(eq(constructionSalesContractsTable.id, Number(contractId)), eq(constructionSalesContractsTable.companyId, companyId)));
+    if (!contract) return res.status(403).json({ error: "Access denied to contract" });
+  }
+
+  // Security check for accountId if provided
+  if (accountId) {
+    const [account] = await db.select().from(bankAccountsTable)
+      .where(and(eq(bankAccountsTable.id, Number(accountId)), eq(bankAccountsTable.companyId, companyId)));
+    if (!account) return res.status(403).json({ error: "Access denied to bank account" });
+  }
 
   // 1. Record operation
   const amountKgs = currency === "KGS" ? amount : String(parseFloat(amount) * parseFloat(exchangeRate || "1"));
   const [op] = await db.insert(constructionOperationsTable).values({
     companyId,
-    projectId: req.body.projectId,
+    projectId: projectId ? Number(projectId) : null,
     type: "income",
     category: "Платеж по договору",
     contractId,
@@ -267,8 +292,8 @@ router.post("/cashier/payment", async (req, res) => {
 });
 
 // ── Analytics ───────────────────────────────────────────────────────────
-router.get("/analytics/cashflow", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.get("/analytics/cashflow", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const { year = new Date().getFullYear() } = req.query;
 
   const rows = await db.select({
@@ -286,8 +311,8 @@ router.get("/analytics/cashflow", async (req, res) => {
   res.json(rows);
 });
 
-router.get("/analytics/debt", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.get("/analytics/debt", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
   const rows = await db.select().from(constructionAccrualsTable)
     .where(and(
       eq(constructionAccrualsTable.companyId, companyId),
@@ -297,8 +322,8 @@ router.get("/analytics/debt", async (req, res) => {
   res.json(rows);
 });
 
-router.get("/analytics/summary", async (req, res) => {
-  const companyId = (req as any).user?.companyId;
+router.get("/analytics/summary", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const companyId = req.companyId!;
 
   const [opStats] = await db.select({
     totalIncome: sql<number>`sum(case when type='income' then amount_kgs::numeric else 0 end)`,

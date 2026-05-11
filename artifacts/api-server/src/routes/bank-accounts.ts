@@ -5,9 +5,16 @@ import { requireAuth, requireRole, AuthenticatedRequest } from "../middleware/au
 
 const router: ReturnType<typeof Router> = Router();
 
+// Alias for frontend support
+router.get("/system-accounts", requireAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const conditions: SQL[] = [eq(bankAccountsTable.companyId, req.companyId!)];
+  const rows = await db.select().from(bankAccountsTable).where(and(...conditions)).orderBy(bankAccountsTable.createdAt);
+  res.json(rows);
+});
+
 // GET /api/bank-accounts - List all bank accounts
 router.get(
-  "/api/bank-accounts",
+  "/bank-accounts",
   requireAuth,
   async (req: AuthenticatedRequest, res): Promise<void> => {
     try {
@@ -33,7 +40,7 @@ router.get(
 
 // POST /api/bank-accounts - Create new bank account
 router.post(
-  "/api/bank-accounts",
+  "/bank-accounts",
   requireAuth,
   requireRole("admin", "company_admin"),
   async (req: AuthenticatedRequest, res): Promise<void> => {
@@ -85,7 +92,7 @@ router.post(
 
 // PATCH /api/bank-accounts/:id - Update bank account
 router.patch(
-  "/api/bank-accounts/:id",
+  "/bank-accounts/:id",
   requireAuth,
   requireRole("admin", "company_admin"),
   async (req: AuthenticatedRequest, res): Promise<void> => {
@@ -151,7 +158,7 @@ router.patch(
 
 // DELETE /api/bank-accounts/:id - Delete bank account (admin only)
 router.delete(
-  "/api/bank-accounts/:id",
+  "/bank-accounts/:id",
   requireAuth,
   requireRole("admin", "company_admin"),
   async (req: AuthenticatedRequest, res): Promise<void> => {
