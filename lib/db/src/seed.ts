@@ -45,7 +45,7 @@ async function seed() {
 
   const existingCP = await db.select().from(counterpartiesTable).where(eq(counterpartiesTable.companyId, company.id)).limit(1);
   if (existingCP.length === 0) {
-    await db.insert(counterpartiesTable).values([
+    const cpData = [
       {
         companyId: company.id,
         fullName: "Иванов Иван Иванович",
@@ -61,7 +61,10 @@ async function seed() {
         phone: "+7 727 222 3333",
         email: "info@kazstroy.kz",
       },
-    ]);
+    ];
+    for (const cp of cpData) {
+      await db.insert(counterpartiesTable).values(cp as any);
+    }
     console.log("Counterparties inserted");
   } else {
     console.log("Counterparties already exist, skipping");
@@ -69,7 +72,7 @@ async function seed() {
 
   const existingProps = await db.select().from(propertiesTable).where(eq(propertiesTable.companyId, company.id)).limit(1);
   if (existingProps.length === 0) {
-    await db.insert(propertiesTable).values([
+    const propsData = [
       {
         companyId: company.id,
         projectName: "ЖК Алатау",
@@ -113,7 +116,10 @@ async function seed() {
         area: "45.00",
         comment: "Студия, забронирована",
       },
-    ]);
+    ];
+    for (const p of propsData) {
+      await db.insert(propertiesTable).values(p as any);
+    }
     console.log("Properties inserted");
   } else {
     console.log("Properties already exist, skipping");
@@ -121,7 +127,7 @@ async function seed() {
 
   const existingTenants = await db.select().from(tenantsTable).where(eq(tenantsTable.companyId, company.id)).limit(1);
   if (existingTenants.length === 0) {
-    await db.insert(tenantsTable).values([
+    const tenantsData = [
       {
         companyId: company.id,
         fullName: "Петров Петр Петрович",
@@ -138,7 +144,10 @@ async function seed() {
         email: "sadykova@example.kz",
         address: "г. Алматы, мкр. Алмагуль 3, кв. 22",
       },
-    ]);
+    ];
+    for (const t of tenantsData) {
+      await db.insert(tenantsTable).values(t as any);
+    }
     console.log("Tenants inserted");
   } else {
     console.log("Tenants already exist, skipping");

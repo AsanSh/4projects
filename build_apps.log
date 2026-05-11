@@ -1,0 +1,29 @@
+Scope: 2 of 10 workspace projects
+artifacts/api-server build$ node ./build.mjs
+artifacts/proptech build$ vite build --config vite.config.ts
+artifacts/proptech build: vite v7.3.1 building client environment for production...
+artifacts/proptech build: transforming...
+artifacts/api-server build:   dist/index.mjs                       3.7mb ⚠️
+artifacts/api-server build:   dist/pino-worker.mjs               153.4kb
+artifacts/api-server build:   dist/pino-file.mjs                 142.0kb
+artifacts/api-server build:   dist/pino-pretty.mjs               114.6kb
+artifacts/api-server build:   dist/thread-stream-worker.mjs        7.3kb
+artifacts/api-server build:   dist/index.mjs.map                   6.4mb
+artifacts/api-server build:   dist/pino-worker.mjs.map           256.9kb
+artifacts/api-server build:   dist/pino-file.mjs.map             229.0kb
+artifacts/api-server build:   dist/pino-pretty.mjs.map           203.9kb
+artifacts/api-server build:   dist/thread-stream-worker.mjs.map   12.0kb
+artifacts/api-server build: ⚡ Done in 1869ms
+artifacts/api-server build: Done
+artifacts/proptech build: ✓ 2772 modules transformed.
+artifacts/proptech build: rendering chunks...
+artifacts/proptech build: computing gzip size...
+artifacts/proptech build: dist/index.html                     0.74 kB │ gzip:   0.41 kB
+artifacts/proptech build: dist/assets/index-LMcePbDc.css    168.25 kB │ gzip:  25.20 kB
+artifacts/proptech build: dist/assets/index-DMuc0Zyc.js   1,737.18 kB │ gzip: 441.34 kB
+artifacts/proptech build: (!) Some chunks are larger than 500 kB after minification. Consider:
+artifacts/proptech build: - Using dynamic import() to code-split the application
+artifacts/proptech build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+artifacts/proptech build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+artifacts/proptech build: ✓ built in 13.32s
+artifacts/proptech build: Done
