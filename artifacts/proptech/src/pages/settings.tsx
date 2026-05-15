@@ -73,6 +73,7 @@ export default function Settings() {
   const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "" });
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
   const [showPasswords, setShowPasswords] = useState(false);
+  const [roleForm, setRoleForm] = useState<string>("");
 
   useEffect(() => {
     // Verify user role by checking API directly
@@ -103,6 +104,7 @@ export default function Settings() {
         firstName: (user as any).firstName || "",
         lastName: (user as any).lastName || "",
       });
+      setRoleForm((user as any).role || "staff");
     }
   }, [user]);
 
@@ -120,6 +122,16 @@ export default function Settings() {
     } catch (err: any) {
       toast({ title: "Ошибка", description: err.message, variant: "destructive" });
     } finally { setSavingProfile(false); }
+  };
+
+  const ROLE_LABELS_MAP: Record<string, string> = {
+    super_admin: "Супер-администратор",
+    company_admin: "Администратор компании",
+    admin: "Администратор",
+    sales_manager: "Менеджер продаж",
+    finance: "Финансист",
+    rental_manager: "Менеджер аренды",
+    staff: "Сотрудник",
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -339,6 +351,26 @@ export default function Settings() {
                 </Button>
               </div>
             </form>
+          </div>
+
+          {/* Role section */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-blue-500" />
+              Роль в системе
+            </h3>
+            <p className="text-xs text-gray-400 mb-5">
+              При регистрации компании первый пользователь автоматически получает роль администратора.
+            </p>
+            <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl">
+              <Shield className="h-5 w-5 text-blue-500 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  {ROLE_LABELS_MAP[roleForm] || roleForm || "Загрузка..."}
+                </p>
+                <p className="text-xs text-blue-600 mt-0.5">Текущая роль</p>
+              </div>
+            </div>
           </div>
 
           {/* Change password form */}

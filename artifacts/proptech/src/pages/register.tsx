@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Building2, ArrowLeft, CheckCircle2, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
@@ -273,6 +273,10 @@ export default function Register() {
                   </button>
                   <h2 className="text-2xl font-bold text-gray-900">Данные администратора</h2>
                   <p className="text-gray-500 text-sm mt-1">Шаг 2 из 2 — создание аккаунта администратора</p>
+                  <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl">
+                    <Shield className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <p className="text-xs text-blue-700 font-medium">Вы автоматически станете администратором компании</p>
+                  </div>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">

@@ -303,6 +303,16 @@ export function Layout({ children }: { children: ReactNode }) {
   const ModuleIcon = activeModule.icon;
   const quickActions = MODULE_QUICK_ACTIONS[activeModuleId];
 
+  const ROLE_LABELS: Record<string, string> = {
+    super_admin: "Супер-администратор",
+    company_admin: "Администратор",
+    admin: "Администратор",
+    sales_manager: "Менеджер продаж",
+    finance: "Финансист",
+    rental_manager: "Менеджер аренды",
+    staff: "Сотрудник",
+  };
+
   const initials = user?.firstName && user?.lastName
     ? (user.firstName[0] + user.lastName[0]).toUpperCase()
     : user?.firstName
@@ -313,7 +323,7 @@ export function Layout({ children }: { children: ReactNode }) {
     ? `${user.firstName} ${user.lastName}`
     : user?.firstName || "Загрузка...";
 
-  const displayEmail = user?.email || "...";
+  const roleLabel = user?.role ? (ROLE_LABELS[user.role] || user.role) : "Загрузка...";
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#F7F8FC" }}>
@@ -370,7 +380,7 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-white text-[12px] font-medium truncate leading-none">{displayName}</div>
-              <div className="text-white/40 text-[10px] truncate mt-0.5">{displayEmail}</div>
+              <div className="text-white/40 text-[10px] truncate mt-0.5">{roleLabel}</div>
             </div>
             <button onClick={logout} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <LogOut className="w-3.5 h-3.5 text-white/40 hover:text-white/70" />
