@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, and, SQL, gte, lte, sql } from "drizzle-orm";
+import { eq, and, SQL, gte, lte, sql, inArray } from "drizzle-orm";
 import {
   db, leaseContractsTable, accrualsTable, paymentsTable,
   tenantsTable, propertiesTable, expensesTable, paymentAllocationsTable
@@ -15,7 +15,16 @@ router.get("/reports/debt", requireAuth, async (req: AuthenticatedRequest, res):
   if (cid) conditions.push(eq(accrualsTable.companyId, cid));
   conditions.push(sql`${accrualsTable.balance} > 0`);
 
-  const overdue = await db.select().from(accrualsTable)
+  const rows = await db.select({
+    accrual: accrualsTable,
+    contract: leaseContractsTable,
+    tenant: tenantsTable,
+    prop: propertiesTable,
+  })
+    .from(accrualsTable)
+    .innerJoin(leaseContractsTable, eq(accrualsTable.leaseContractId, leaseContractsTable.id))
+    .leftJoin(tenantsTable, eq(leaseContractsTable.tenantId, tenantsTable.id))
+    .leftJoin(propertiesTable, eq(leaseContractsTable.propertyId, propertiesTable.id))
     .where(and(...conditions))
     .orderBy(accrualsTable.dueDate);
 
@@ -31,13 +40,14 @@ router.get("/reports/debt", requireAuth, async (req: AuthenticatedRequest, res):
 
   const today = new Date().toISOString().split("T")[0];
 
-  for (const a of overdue) {
+  for (const row of rows) {
+    const a = row.accrual;
+    const contract = row.contract;
+    const tenant = row.tenant;
+    const prop = row.prop;
+
     const key = a.leaseContractId;
     if (!byContract.has(key)) {
-      const [contract] = await db.select().from(leaseContractsTable).where(eq(leaseContractsTable.id, key));
-      if (!contract) continue;
-      const [tenant] = await db.select().from(tenantsTable).where(eq(tenantsTable.id, contract.tenantId));
-      const [prop] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, contract.propertyId));
       byContract.set(key, {
         contractId: key,
         tenantName: tenant?.fullName ?? "—",
@@ -182,16 +192,38 @@ router.get("/reports/payments", requireAuth, async (req: AuthenticatedRequest, r
   if (to) conditions.push(sql`${paymentsTable.paymentDate} <= ${to}`);
   if (contractId) conditions.push(eq(paymentsTable.leaseContractId, parseInt(contractId, 10)));
 
-  const payments = await db.select().from(paymentsTable)
+  const rows = await db.select({
+    payment: paymentsTable,
+    contract: leaseContractsTable,
+    tenant: tenantsTable,
+    prop: propertiesTable,
+  })
+    .from(paymentsTable)
+    .leftJoin(leaseContractsTable, eq(paymentsTable.leaseContractId, leaseContractsTable.id))
+    .leftJoin(tenantsTable, eq(leaseContractsTable.tenantId, tenantsTable.id))
+    .leftJoin(propertiesTable, eq(leaseContractsTable.propertyId, propertiesTable.id))
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(paymentsTable.paymentDate);
 
-  const enriched = await Promise.all(payments.map(async (p) => {
-    const [contract] = await db.select().from(leaseContractsTable).where(eq(leaseContractsTable.id, p.leaseContractId));
-    const [tenant] = contract ? await db.select().from(tenantsTable).where(eq(tenantsTable.id, contract.tenantId)) : [];
-    const [prop] = contract ? await db.select().from(propertiesTable).where(eq(propertiesTable.id, contract.propertyId)) : [];
+  if (rows.length === 0) {
+    return void res.json({ total: 0, count: 0, rows: [] });
+  }
 
-    const allocs = await db.select().from(paymentAllocationsTable).where(eq(paymentAllocationsTable.paymentId, p.id));
+  const paymentIds = rows.map(r => r.payment.id);
+  const allAllocs = await db.select().from(paymentAllocationsTable).where(inArray(paymentAllocationsTable.paymentId, paymentIds));
+
+  const allocsByPayment = new Map<number, typeof allAllocs>();
+  for (const a of allAllocs) {
+    if (!allocsByPayment.has(a.paymentId)) allocsByPayment.set(a.paymentId, []);
+    allocsByPayment.get(a.paymentId)!.push(a);
+  }
+
+  const enriched = rows.map((r) => {
+    const p = r.payment;
+    const contract = r.contract;
+    const tenant = r.tenant;
+    const prop = r.prop;
+    const allocs = allocsByPayment.get(p.id) ?? [];
 
     return {
       ...p,
@@ -201,7 +233,7 @@ router.get("/reports/payments", requireAuth, async (req: AuthenticatedRequest, r
       contractNumber: contract?.contractNumber ?? "—",
       allocations: allocs.map(a => ({ ...a, amount: parseFloat(a.amount) })),
     };
-  }));
+  });
 
   const total = enriched.reduce((s, p) => s + p.amount, 0);
   res.json({ total, count: enriched.length, rows: enriched });
@@ -215,16 +247,56 @@ router.get("/reports/counterparties", requireAuth, async (req: AuthenticatedRequ
   if (cid) tenantConditions.push(eq(tenantsTable.companyId, cid));
   const tenants = await db.select().from(tenantsTable).where(tenantConditions.length ? and(...tenantConditions) : undefined);
 
-  const result = await Promise.all(tenants.map(async (t) => {
-    const contractConditions: SQL[] = [eq(leaseContractsTable.tenantId, t.id)];
-    if (cid) contractConditions.push(eq(leaseContractsTable.companyId, cid));
-    const contracts = await db.select().from(leaseContractsTable).where(and(...contractConditions));
-    const contractIds = contracts.map(c => c.id);
+  if (tenants.length === 0) return void res.json([]);
 
+  const tenantIds = tenants.map(t => t.id);
+  const contractConditions: SQL[] = [inArray(leaseContractsTable.tenantId, tenantIds)];
+  if (cid) contractConditions.push(eq(leaseContractsTable.companyId, cid));
+  const allContracts = await db.select().from(leaseContractsTable).where(and(...contractConditions));
+
+  if (allContracts.length === 0) {
+    return void res.json(tenants.map(t => ({
+      id: t.id,
+      fullName: t.fullName,
+      status: t.status,
+      contractsCount: 0,
+      activeContracts: 0,
+      totalPaid: 0,
+      totalBalance: 0,
+    })));
+  }
+
+  const contractIds = allContracts.map(c => c.id);
+  const [allPayments, allAccruals] = await Promise.all([
+    db.select().from(paymentsTable).where(inArray(paymentsTable.leaseContractId, contractIds)),
+    db.select().from(accrualsTable).where(inArray(accrualsTable.leaseContractId, contractIds)),
+  ]);
+
+  const contractsByTenant = new Map<number, typeof allContracts>();
+  for (const c of allContracts) {
+    if (!contractsByTenant.has(c.tenantId)) contractsByTenant.set(c.tenantId, []);
+    contractsByTenant.get(c.tenantId)!.push(c);
+  }
+
+  const paymentsByContract = new Map<number, typeof allPayments>();
+  for (const p of allPayments) {
+    if (!paymentsByContract.has(p.leaseContractId)) paymentsByContract.set(p.leaseContractId, []);
+    paymentsByContract.get(p.leaseContractId)!.push(p);
+  }
+
+  const accrualsByContract = new Map<number, typeof allAccruals>();
+  for (const a of allAccruals) {
+    if (!accrualsByContract.has(a.leaseContractId)) accrualsByContract.set(a.leaseContractId, []);
+    accrualsByContract.get(a.leaseContractId)!.push(a);
+  }
+
+  const result = tenants.map((t) => {
+    const contracts = contractsByTenant.get(t.id) ?? [];
     let totalPaid = 0, totalBalance = 0;
-    for (const cId of contractIds) {
-      const payments = await db.select().from(paymentsTable).where(eq(paymentsTable.leaseContractId, cId));
-      const accruals = await db.select().from(accrualsTable).where(eq(accrualsTable.leaseContractId, cId));
+
+    for (const c of contracts) {
+      const payments = paymentsByContract.get(c.id) ?? [];
+      const accruals = accrualsByContract.get(c.id) ?? [];
       totalPaid += payments.reduce((s, p) => s + parseFloat(p.amount), 0);
       totalBalance += accruals.reduce((s, a) => s + parseFloat(a.balance), 0);
     }
@@ -238,7 +310,7 @@ router.get("/reports/counterparties", requireAuth, async (req: AuthenticatedRequ
       totalPaid,
       totalBalance,
     };
-  }));
+  });
 
   res.json(result);
 });

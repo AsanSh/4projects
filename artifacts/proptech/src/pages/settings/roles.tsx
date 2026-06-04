@@ -251,7 +251,7 @@ function RoleDialog({ open, onClose, role }: RoleDialogProps) {
             <Label className="text-base font-semibold">Права доступа</Label>
             <p className="text-sm text-gray-500 mb-3">Выберите разрешения для этой роли</p>
 
-            <div className="space-y-4 border rounded-lg p-4 max-h-96 overflow-y-auto">
+            <div className="space-y-4 border rounded-xl p-4 max-h-96 overflow-y-auto">
               {PERMISSION_GROUPS.map(group => {
                 const groupPermissions = group.permissions.map(p => p.key);
                 const selectedCount = groupPermissions.filter(p => formData.permissions.includes(p)).length;

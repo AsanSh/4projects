@@ -270,7 +270,7 @@ function PaymentScheduleDialog({ open, onClose, contract }: PaymentScheduleDialo
         </DialogHeader>
         <div className="space-y-4">
           {Array.isArray(contract.paymentSchedule) && contract.paymentSchedule.length > 0 ? (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">

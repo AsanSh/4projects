@@ -96,7 +96,7 @@ export default function RentalOverdue() {
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
+      <div className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>

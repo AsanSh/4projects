@@ -74,7 +74,7 @@ export default function RentalSummary() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Home className="w-4 h-4 text-blue-600" />
             <span className="text-xs text-gray-500">Всего объектов</span>
@@ -82,7 +82,7 @@ export default function RentalSummary() {
           <p className="text-2xl font-bold text-gray-900">{total}</p>
           <p className="text-xs text-gray-400 mt-0.5">{rented} арендуется · {vacant} свободно</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Percent className="w-4 h-4 text-emerald-600" />
             <span className="text-xs text-gray-500">Заполняемость</span>
@@ -92,14 +92,14 @@ export default function RentalSummary() {
             <div className="bg-emerald-700 h-1.5 rounded-full" style={{ width: `${occupancy}%` }} />
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="w-4 h-4 text-blue-600" />
             <span className="text-xs text-gray-500">Доход в этом месяце</span>
           </div>
           <p className="text-2xl font-bold text-blue-600">{fmtFull(thisMonthIncome)}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-4 h-4 text-amber-600" />
             <span className="text-xs text-gray-500">Арендаторов</span>
@@ -110,7 +110,7 @@ export default function RentalSummary() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-white border rounded-lg p-5">
+        <div className="bg-white border rounded-xl p-5">
           <h3 className="font-semibold text-gray-800 mb-4">Ключевые показатели</h3>
           <div className="space-y-3">
             {[
@@ -126,7 +126,7 @@ export default function RentalSummary() {
             ))}
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-5">
+        <div className="bg-white border rounded-xl p-5">
           <h3 className="font-semibold text-gray-800 mb-4">Топ объектов по выручке</h3>
           {topProps.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-6">Нет данных о платежах</p>
@@ -152,7 +152,7 @@ export default function RentalSummary() {
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg p-5">
+      <div className="bg-white border rounded-xl p-5">
         <h3 className="font-semibold text-gray-800 mb-4">Статусы объектов</h3>
         <div className="flex gap-3 flex-wrap">
           {[

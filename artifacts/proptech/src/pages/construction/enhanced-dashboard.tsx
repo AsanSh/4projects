@@ -141,7 +141,7 @@ export default function EnhancedConstructionDashboard() {
         <select
           value={selectedProject}
           onChange={(e) => setSelectedProject(e.target.value)}
-          className="px-4 py-2 border rounded-lg"
+          className="px-4 py-2 border rounded-xl"
         >
           <option value="all">Все проекты</option>
           {projectsArray.map((p: any) => (

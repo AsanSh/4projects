@@ -84,21 +84,21 @@ export default function RentalDebt() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingDown className="w-4 h-4 text-rose-600" />
             <span className="text-sm text-gray-500">Общий долг</span>
           </div>
           <p className="text-xl font-bold text-rose-700">{fmtFull(totalDebt)}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
             <span className="text-sm text-gray-500">Критичных (30+ дн.)</span>
           </div>
           <p className="text-xl font-bold text-amber-600">{critical}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-blue-600" />
             <span className="text-sm text-gray-500">Недавних (до 10 дн.)</span>
@@ -107,7 +107,7 @@ export default function RentalDebt() {
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
+      <div className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>

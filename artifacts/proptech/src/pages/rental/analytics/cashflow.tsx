@@ -74,21 +74,21 @@ export default function RentalCashflow() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <ArrowUpRight className="w-4 h-4 text-emerald-600" />
             <span className="text-sm text-gray-500">Поступления</span>
           </div>
           <p className="text-xl font-bold text-emerald-600">{fmtFull(totalIncome)}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <ArrowDownRight className="w-4 h-4 text-rose-600" />
             <span className="text-sm text-gray-500">Расходы</span>
           </div>
           <p className="text-xl font-bold text-rose-700">{fmtFull(totalExpense)}</p>
         </div>
-        <div className="bg-white border rounded-lg p-4">
+        <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             {net >= 0 ? <TrendingUp className="w-4 h-4 text-blue-600" /> : <TrendingDown className="w-4 h-4 text-amber-600" />}
             <span className="text-sm text-gray-500">Чистый поток</span>
@@ -97,7 +97,7 @@ export default function RentalCashflow() {
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg p-6">
+      <div className="bg-white border rounded-xl p-6">
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-blue-600" /><span className="text-xs text-gray-700">Поступления</span></div>
           <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-rose-600" /><span className="text-xs text-gray-700">Расходы</span></div>
@@ -117,7 +117,7 @@ export default function RentalCashflow() {
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg mt-4 overflow-hidden">
+      <div className="bg-white border rounded-xl mt-4 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>

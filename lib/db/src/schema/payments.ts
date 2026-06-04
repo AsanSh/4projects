@@ -1,6 +1,6 @@
 import { pgTable, text, serial, timestamp, integer, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const paymentsTable = pgTable("payments", {
   id: serial("id").primaryKey(),
@@ -8,7 +8,7 @@ export const paymentsTable = pgTable("payments", {
   leaseContractId: integer("lease_contract_id").notNull(),
   accrualId: integer("accrual_id"),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
-  currency: text("currency").notNull().default("KZT"),
+  currency: text("currency").notNull().default("KGS"),
   paymentDate: text("payment_date").notNull(),
   paymentMethod: text("payment_method"),
   accountId: integer("account_id"),
