@@ -34,14 +34,14 @@ workspace/
 
 | Слой | Технология |
 |------|-----------|
-| База данных | PostgreSQL (Replit managed) |
+| База данных | PostgreSQL (managed PostgreSQL) |
 | ORM | Drizzle ORM с `drizzle-zod` |
 | Backend | Express 5, TypeScript, pino (логи) |
 | API-клиент | Orval-генерация (React Query hooks) |
 | Веб-фронт | React 18, Vite, TailwindCSS, shadcn/ui |
 | Мобайл | Expo SDK, React Native |
 | Аутентификация | Bearer-токен, сессии в БД (PostgreSQL) |
-| Деплой | Replit (dev); production через Replit Deployments |
+| Деплой | Vercel/local dev; production через Vercel |
 
 ### 2.3 Multi-tenancy
 
@@ -495,7 +495,7 @@ workspace/
 | CSRF защита | N/A | SPA + Bearer, не нужен |
 | SQL-инъекции | ✅ | Drizzle ORM с параметрами |
 | XSS | ✅ | React экранирует вывод |
-| HTTPS | ✅ | Через Replit proxy (mTLS) |
+| HTTPS | ✅ | Через production proxy |
 | Секреты в коде | ✅ | `SESSION_SECRET` через env-переменные |
 
 ---
@@ -566,7 +566,7 @@ workspace/
 
 ## 13. Текущее тестовое окружение
 
-- **URL (dev):** `https://<replit-domain>/__replco/workspace_iframe.html?initialPath=/&id=artifacts/proptech`
+- **URL (dev):** `http://localhost:5173`
 - **API:** порт 8080, проксируется через путь `/api`
 - **Тестовый аккаунт:** `asan.kg@mail.ru` / `asankg` — компания ОсОО "СмартСтрой" (companyId=3)
-- **БД:** PostgreSQL (Replit managed), одна база для dev и нет отдельного prod (при деплое нужно разделить)
+- **БД:** PostgreSQL (managed PostgreSQL), одна база для dev и нет отдельного prod (при деплое нужно разделить)

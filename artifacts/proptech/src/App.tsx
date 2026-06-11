@@ -69,6 +69,7 @@ import ConstructionDebt from "@/pages/construction/analytics/debt";
 import ConstructionExpenseAnalysis from "@/pages/construction/analytics/expenses";
 import ConstructionPnL from "@/pages/construction/analytics/pnl";
 import ConstructionBudget from "@/pages/construction/budget";
+import ConstructionBarter from "@/pages/construction/barter";
 import ConstructionCashier from "@/pages/construction/cashier";
 import ConstructionChess from "@/pages/construction/chess";
 import ConstructionContractors from "@/pages/construction/contractors";
@@ -470,6 +471,9 @@ function Router() {
 			</Route>
 			<Route path="/construction/chess">
 				<ProtectedRoute component={ConstructionChess} />
+			</Route>
+			<Route path="/construction/barter">
+				<ProtectedRoute component={ConstructionBarter} />
 			</Route>
 			<Route path="/construction/reports">
 				<ProtectedRoute component={ConstructionReports} />

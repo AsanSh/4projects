@@ -5,6 +5,7 @@ import { db, usersTable, sessionsTable } from "../lib/db";
 export interface AuthenticatedRequest extends Request {
   userId?: number;
   companyId?: number;
+  scopedCompanyId?: number;
   userRole?: string;
 }
 
@@ -74,4 +75,21 @@ export function requireRole(...roles: string[]) {
     }
     next();
   };
+}
+
+/** Platform-only access guard for the admin dashboard. */
+export function requireSuperAdmin(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (req.userRole !== "super_admin") {
+    res.status(403).json({ error: "Доступ только для администратора платформы" });
+    return;
+  }
+  next();
+}
+
+export function isSuperAdmin(role: string | undefined): boolean {
+  return role === "super_admin";
 }

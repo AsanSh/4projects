@@ -122,6 +122,7 @@ const MODULES: Module[] = [
 						icon: Building2,
 					},
 					{ href: "/construction/chess", label: "Шахматка", icon: Grid3X3 },
+					{ href: "/construction/barter", label: "Бартер", icon: ArrowRightLeft },
 					{
 						href: "/construction/contracts-sales",
 						label: "Договоры продаж",

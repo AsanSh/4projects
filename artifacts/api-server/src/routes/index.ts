@@ -16,6 +16,7 @@ import modulesRouter from "./modules";
 import investorsRouter from "./investors";
 import constructionRouter from "./construction";
 import constructionFinanceRouter from "./construction-finance";
+import constructionBarterRouter from "./construction-barter";
 import constructionBudgetRouter from "./construction-budget";
 import constructionReportsRouter from "./construction-reports";
 import notificationsRouter from "./notifications";
@@ -28,6 +29,7 @@ import bankAccountsRouter from "./bank-accounts";
 import rolesRouter from "./roles";
 import warehouseRouter from "./warehouse";
 import crmRouter from "./crm";
+import clientRelationsRouter from "./client-relations";
 
 const router: IRouter = Router();
 
@@ -48,6 +50,7 @@ router.use(modulesRouter);
 router.use("/rental", investorsRouter);
 router.use("/construction", constructionRouter);
 router.use("/construction", constructionFinanceRouter);
+router.use("/construction", constructionBarterRouter);
 router.use("/construction", constructionBudgetRouter);
 router.use("/construction", constructionReportsRouter);
 router.use(notificationsRouter);
@@ -60,6 +63,7 @@ router.use(bankAccountsRouter);
 router.use(rolesRouter);
 router.use(warehouseRouter);
 router.use(crmRouter);
+router.use(clientRelationsRouter);
 
 // NBKR exchange rates proxy
 router.get("/nbkr/rates", async (_req, res): Promise<void> => {
