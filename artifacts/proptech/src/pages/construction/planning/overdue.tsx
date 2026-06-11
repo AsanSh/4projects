@@ -1,109 +1,228 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
+import { DateRangePicker } from "@/components/am/DateRangePicker";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
+import { api } from "@/lib/api";
+import { defaultPeriod, isInPeriod, type PeriodValue } from "@/lib/period-utils";
 
 function fmtFull(n: any) {
-  const v = parseFloat(n || "0");
-  if (isNaN(v)) return "0";
-  return new Intl.NumberFormat("ru-RU").format(v);
+	const v = parseFloat(n || "0");
+	if (Number.isNaN(v)) return "0";
+	return new Intl.NumberFormat("ru-RU").format(v);
 }
 
 export default function ConstructionOverdue() {
-  const qc = useQueryClient();
+	const qc = useQueryClient();
+	const [period, setPeriod] = useState<PeriodValue>(() => defaultPeriod("month"));
 
-  const { data: accruals = [], isLoading } = useQuery({
-    queryKey: ["construction-accruals"],
-    queryFn: () => api.get("/construction/accruals").then(r => r.data),
-  });
-  const { data: contracts = [] } = useQuery({
-    queryKey: ["construction-contracts-sales"],
-    queryFn: () => api.get("/construction/contracts-sales").then(r => r.data),
-  });
+	const { data: accruals = [], isLoading } = useQuery({
+		queryKey: ["construction-accruals"],
+		queryFn: () => api.get("/construction/accruals").then((r) => r.data),
+	});
+	const { data: contracts = [] } = useQuery({
+		queryKey: ["construction-contracts-sales"],
+		queryFn: () => api.get("/construction/contracts-sales").then((r) => r.data),
+	});
 
-  const patchMut = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => api.patch(`/construction/accruals/${id}`, data).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["construction-accruals"] }); toast.success("Статус обновлён"); },
-  });
+	const patchMut = useMutation({
+		mutationFn: ({ id, data }: { id: number; data: any }) =>
+			api.patch(`/construction/accruals/${id}`, data).then((r) => r.data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["construction-accruals"] });
+			toast.success("Статус обновлён");
+		},
+	});
 
-  const overdue = accruals.filter((a: any) => a.status !== "paid" && new Date(a.dueDate) < new Date());
-  const totalOverdue = overdue.reduce((s: number, a: any) => s + parseFloat(a.remainingAmount || "0"), 0);
-  const totalPaid = overdue.reduce((s: number, a: any) => s + parseFloat(a.paidAmount || "0"), 0);
+	const overdue = accruals.filter(
+		(a: any) =>
+			a.status !== "paid" &&
+			new Date(a.dueDate) < new Date() &&
+			isInPeriod(a.dueDate, period),
+	);
+	const totalOverdue = overdue.reduce(
+		(s: number, a: any) => s + parseFloat(a.remainingAmount || "0"),
+		0,
+	);
+	const totalPaid = overdue.reduce(
+		(s: number, a: any) => s + parseFloat(a.paidAmount || "0"),
+		0,
+	);
 
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Просрочки</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Реестр просроченных платежей по договорам</p>
-      </div>
+	const columns = useMemo<ColumnDef<any, unknown>[]>(
+		() => [
+			{
+				id: "contract",
+				header: "Договор",
+				size: 140,
+				accessorFn: (row: any) =>
+					contracts.find((c: any) => c.id === row.contractId)?.contractNumber ||
+					`#${row.contractId}`,
+				meta: { exportLabel: "Договор" },
+				cell: ({ getValue }) => (
+					<span className="font-mono text-xs font-medium text-amber-600">
+						{getValue() as string}
+					</span>
+				),
+			},
+			{
+				id: "buyer",
+				header: "Покупатель",
+				size: 200,
+				accessorFn: (row: any) =>
+					contracts.find((c: any) => c.id === row.contractId)?.buyerName || "—",
+				meta: { exportLabel: "Покупатель" },
+				cell: ({ getValue }) => (
+					<span className="font-medium">{getValue() as string}</span>
+				),
+			},
+			{
+				accessorKey: "dueDate",
+				header: "Срок платежа",
+				size: 130,
+				meta: { exportLabel: "Срок платежа" },
+				cell: ({ row }) => (
+					<span className="text-gray-600">{row.original.dueDate}</span>
+				),
+			},
+			{
+				id: "days",
+				header: "Просрочка",
+				size: 110,
+				accessorFn: (row: any) =>
+					Math.ceil((Date.now() - new Date(row.dueDate).getTime()) / 86400000),
+				meta: { exportLabel: "Просрочка (дн.)" },
+				cell: ({ getValue }) => {
+					const days = getValue() as number;
+					const color =
+						days <= 60
+							? "bg-amber-100 text-amber-700 border-amber-200"
+							: "bg-rose-100 text-rose-700 border-rose-200";
+					return (
+						<Badge variant="outline" className={`${color} text-xs`}>
+							{days} дн.
+						</Badge>
+					);
+				},
+			},
+			{
+				id: "remainingAmount",
+				header: "Долг",
+				size: 130,
+				accessorFn: (row: any) => parseFloat(row.remainingAmount || "0"),
+				meta: { exportLabel: "Долг (сом)", align: "right" },
+				cell: ({ row }) => (
+					<span className="font-mono font-bold text-rose-600">
+						{fmtFull(row.original.remainingAmount)}
+					</span>
+				),
+			},
+			{
+				id: "paidAmount",
+				header: "Оплачено",
+				size: 120,
+				accessorFn: (row: any) => parseFloat(row.paidAmount || "0"),
+				meta: { exportLabel: "Оплачено (сом)", align: "right" },
+				cell: ({ row }) => (
+					<span className="font-mono text-emerald-600">
+						{fmtFull(row.original.paidAmount)}
+					</span>
+				),
+			},
+			{
+				id: "__actions",
+				header: "",
+				size: 100,
+				enableSorting: false,
+				cell: ({ row }) => {
+					const a = row.original;
+					return (
+						<Button
+							size="sm"
+							variant="outline"
+							className="h-7 text-xs"
+							onClick={() =>
+								patchMut.mutate({
+									id: a.id,
+									data: {
+										status: "paid",
+										paidAmount: a.amount,
+										remainingAmount: "0",
+										paidAt: new Date().toISOString().slice(0, 10),
+									},
+								})
+							}
+						>
+							Закрыть
+						</Button>
+					);
+				},
+			},
+		],
+		[contracts, patchMut],
+	);
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-rose-50 rounded-xl p-4 border border-rose-100 shadow-sm">
-          <div className="flex items-center gap-1 text-xs text-rose-600 mb-1"><AlertTriangle className="w-3 h-3" />Сумма просрочки</div>
-          <div className="text-2xl font-bold text-rose-600">{fmtFull(totalOverdue)}</div>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <div className="text-xs text-gray-500 mb-1">Частично оплачено</div>
-          <div className="text-2xl font-bold text-amber-600">{fmtFull(totalPaid)}</div>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <div className="text-xs text-gray-500 mb-1">Просроченных платежей</div>
-          <div className="text-2xl font-bold text-rose-600">{overdue.length} шт.</div>
-        </div>
-      </div>
+	return (
+		<div className="rounded-[28px] bg-gradient-to-br from-slate-50 via-white to-rose-50/40 p-4">
+			<div className="mb-5 rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+				<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+					<div>
+						<p className="text-xs font-bold uppercase tracking-[0.12em] text-rose-700">
+							Контроль платежей
+						</p>
+						<h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Просрочки</h1>
+						<p className="mt-1 text-sm text-slate-500">
+							Реестр просроченных платежей по договорам
+						</p>
+					</div>
+					<DateRangePicker value={period} onChange={setPeriod} />
+				</div>
+			</div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Договор</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Покупатель</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Срок платежа</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Просрочка</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Долг</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Оплачено</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-gray-400">Загрузка...</td></tr>
-            ) : overdue.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-12 text-gray-400">
-                <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-300" />
-                Нет просрочек — все платежи в порядке!
-              </td></tr>
-            ) : overdue.map((a: any) => {
-              const contract = contracts.find((c: any) => c.id === a.contractId);
-              const days = Math.ceil((new Date().getTime() - new Date(a.dueDate).getTime()) / 86400000);
-              const severity = days <= 30 ? "yellow" : days <= 60 ? "orange" : "red";
-              const colorMap = { yellow: "bg-amber-100 text-amber-700 border-amber-200", orange: "bg-amber-100 text-amber-700 border-amber-200", red: "bg-rose-100 text-rose-700 border-rose-200" };
-              return (
-                <tr key={a.id} className="border-b border-gray-50 hover:bg-rose-50/30 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs font-medium text-amber-600">{contract?.contractNumber || `#${a.contractId}`}</td>
-                  <td className="px-4 py-3 font-medium">{contract?.buyerName || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{a.dueDate}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline" className={`${colorMap[severity]} text-xs`}>
-                      {days} дн.
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-rose-600">{fmtFull(a.remainingAmount)}</td>
-                  <td className="px-4 py-3 text-right font-mono text-emerald-600">{fmtFull(a.paidAmount)}</td>
-                  <td className="px-4 py-3">
-                    <Button size="sm" variant="outline" className="h-7 text-xs"
-                      onClick={() => patchMut.mutate({ id: a.id, data: { status: "paid", paidAmount: a.amount, remainingAmount: "0", paidAt: new Date().toISOString().slice(0, 10) } })}>
-                      Закрыть
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+			<div className="mb-5 grid gap-3 md:grid-cols-3">
+				<div className="rounded-lg border border-rose-100 bg-rose-50 p-4 shadow-sm">
+					<div className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-rose-600">
+						<AlertTriangle className="w-3 h-3" />
+						Сумма просрочки
+					</div>
+					<div className="text-2xl font-black text-rose-600">
+						{fmtFull(totalOverdue)}
+					</div>
+				</div>
+				<div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+					<div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Частично оплачено</div>
+					<div className="text-2xl font-black text-amber-600">
+						{fmtFull(totalPaid)}
+					</div>
+				</div>
+				<div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+					<div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+						Просроченных платежей
+					</div>
+					<div className="text-2xl font-black text-rose-600">
+						{overdue.length} шт.
+					</div>
+				</div>
+			</div>
+
+			<DataTable
+				tableId="construction-overdue"
+				columns={columns}
+				data={overdue}
+				isLoading={isLoading}
+				initialSorting={[{ id: "dueDate", desc: false }]}
+				rowClassName={() => "hover:bg-rose-50/30"}
+				emptyState={
+					<div className="flex flex-col items-center gap-2">
+						<CheckCircle2 className="w-10 h-10 text-emerald-300" />
+						<span>Нет просрочек — все платежи в порядке!</span>
+					</div>
+				}
+			/>
+		</div>
+	);
 }

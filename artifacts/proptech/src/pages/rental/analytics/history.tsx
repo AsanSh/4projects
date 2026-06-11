@@ -1,159 +1,268 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+	getListAccrualsQueryKey,
+	getListLeaseContractsQueryKey,
+	getListPaymentsQueryKey,
+	getListRentalPropertiesQueryKey,
+	getListTenantsQueryKey,
+	getRentalAccountsQueryKey,
+	getDistributionsQueryKey,
+	getRentalPaymentsAllQueryKey,
+	getRentalExpensesAllQueryKey,
+	getAccrualsOpenQueryKey,
+} from "@/lib/rental-query-keys";
+import { Download } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { api } from "@/lib/api";
 
 const methodLabels: Record<string, string> = {
-  cash: "Наличные", bank_transfer: "Перевод", card: "Карта", online: "Онлайн", other: "Другое",
+	cash: "Наличные",
+	bank_transfer: "Перевод",
+	card: "Карта",
+	online: "Онлайн",
+	other: "Другое",
 };
 
-function fmtFull(n: any) {
-  const v = parseFloat(n || "0");
-  if (isNaN(v)) return "0 ₸";
-  return new Intl.NumberFormat("ru-KG", { style: "currency", currency: "KGS", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
+function fmtFull(n: unknown) {
+	const v = parseFloat(String(n ?? "0"));
+	if (Number.isNaN(v)) return "0 сом";
+	return `${new Intl.NumberFormat("ru-KG", { maximumFractionDigits: 0 }).format(v)} сом`;
 }
 
 export default function RentalHistory() {
-  const [search, setSearch] = useState("");
-  const [period, setPeriod] = useState("all");
-  const [method, setMethod] = useState("all");
+	const [period, setPeriod] = useState("all");
+	const [method, setMethod] = useState("all");
 
-  const { data: payments = [], isLoading } = useQuery<any[]>({
-    queryKey: ["rental-payments-all"],
-    queryFn: () => api.get("/rental/payments").then(r => r.data),
-  });
-  const { data: contracts = [] } = useQuery<any[]>({
-    queryKey: ["rental-contracts"],
-    queryFn: () => api.get("/rental/contracts").then(r => r.data),
-  });
-  const { data: tenants = [] } = useQuery<any[]>({
-    queryKey: ["rental-tenants"],
-    queryFn: () => api.get("/rental/tenants").then(r => r.data),
-  });
-  const { data: accounts = [] } = useQuery<any[]>({
-    queryKey: ["rental-accounts"],
-    queryFn: () => api.get("/rental/accounts").then(r => r.data),
-  });
+	const { data: payments = [], isLoading } = useQuery<any[]>({
+		queryKey: getRentalPaymentsAllQueryKey(),
+		queryFn: () => api.get("/rental/payments").then((r) => r.data),
+	});
+	const { data: contracts = [] } = useQuery<any[]>({
+		queryKey: getListLeaseContractsQueryKey(),
+		queryFn: () => api.get("/rental/contracts").then((r) => r.data),
+	});
+	const { data: tenants = [] } = useQuery<any[]>({
+		queryKey: getListTenantsQueryKey(),
+		queryFn: () => api.get("/rental/tenants").then((r) => r.data),
+	});
+	const { data: accounts = [] } = useQuery<any[]>({
+		queryKey: getRentalAccountsQueryKey(),
+		queryFn: () => api.get("/rental/accounts").then((r) => r.data),
+	});
 
-  const paymentsArray = Array.isArray(payments) ? payments : [];
-  const contractsArray = Array.isArray(contracts) ? contracts : [];
-  const tenantsArray = Array.isArray(tenants) ? tenants : [];
-  const accountsArray = Array.isArray(accounts) ? accounts : [];
+	const paymentsArray = Array.isArray(payments) ? payments : [];
+	const contractsArray = Array.isArray(contracts) ? contracts : [];
+	const tenantsArray = Array.isArray(tenants) ? tenants : [];
+	const accountsArray = Array.isArray(accounts) ? accounts : [];
 
-  const now = new Date();
-  const filtered = paymentsArray
-    .map((p: any) => {
-      const contract = contractsArray.find((c: any) => c.id === p.leaseContractId);
-      const tenant = contract ? tenantsArray.find((t: any) => t.id === contract.tenantId) : null;
-      const account = accountsArray.find((a: any) => a.id === p.accountId);
-      return { ...p, contract, tenant, account };
-    })
-    .filter((p: any) => {
-      if (method !== "all" && p.paymentMethod !== method) return false;
-      if (period !== "all") {
-        const d = new Date(p.paymentDate);
-        if (period === "month" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())) return false;
-        if (period === "quarter") {
-          const q = Math.floor(now.getMonth() / 3);
-          if (Math.floor(d.getMonth() / 3) !== q || d.getFullYear() !== now.getFullYear()) return false;
-        }
-        if (period === "year" && d.getFullYear() !== now.getFullYear()) return false;
-      }
-      if (search) {
-        const q = search.toLowerCase();
-        if (!p.tenant?.name?.toLowerCase().includes(q) && !p.contract?.propertyAddress?.toLowerCase().includes(q)) return false;
-      }
-      return true;
-    })
-    .sort((a: any, b: any) => (b.paymentDate || "").localeCompare(a.paymentDate || ""));
+	const now = new Date();
+	const filtered = paymentsArray
+		.map((p: any) => {
+			const contract = contractsArray.find(
+				(c: any) => c.id === p.leaseContractId,
+			);
+			const tenant = contract
+				? tenantsArray.find((t: any) => t.id === contract.tenantId)
+				: null;
+			const account = accountsArray.find((a: any) => a.id === p.accountId);
+			return { ...p, contract, tenant, account };
+		})
+		.filter((p: any) => {
+			if (method !== "all" && p.paymentMethod !== method) return false;
+			if (period !== "all") {
+				const d = new Date(p.paymentDate);
+				if (
+					period === "month" &&
+					(d.getMonth() !== now.getMonth() ||
+						d.getFullYear() !== now.getFullYear())
+				)
+					return false;
+				if (period === "quarter") {
+					const q = Math.floor(now.getMonth() / 3);
+					if (
+						Math.floor(d.getMonth() / 3) !== q ||
+						d.getFullYear() !== now.getFullYear()
+					)
+						return false;
+				}
+				if (period === "year" && d.getFullYear() !== now.getFullYear())
+					return false;
+			}
+			return true;
+		})
+		.sort((a: any, b: any) =>
+			(b.paymentDate || "").localeCompare(a.paymentDate || ""),
+		);
 
-  const total = filtered.reduce((s: number, p: any) => s + parseFloat(p.amount || "0"), 0);
+	const total = filtered.reduce(
+		(s: number, p: any) => s + parseFloat(p.amount || "0"),
+		0,
+	);
 
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">История платежей</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Все поступления по договорам аренды</p>
-        </div>
-        <Button variant="outline" size="sm" className="gap-1.5 h-8">
-          <Download className="w-3.5 h-3.5" /> Экспорт
-        </Button>
-      </div>
+	type HistoryRow = (typeof filtered)[number];
 
-      <div className="flex gap-2 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2 w-4 h-4 text-gray-400" />
-          <Input className="pl-8 h-8 text-sm" placeholder="Поиск по арендатору или адресу..."
-            value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-36 h-8 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все периоды</SelectItem>
-            <SelectItem value="month">Этот месяц</SelectItem>
-            <SelectItem value="quarter">Квартал</SelectItem>
-            <SelectItem value="year">Этот год</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={method} onValueChange={setMethod}>
-          <SelectTrigger className="w-36 h-8 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все способы</SelectItem>
-            <SelectItem value="cash">Наличные</SelectItem>
-            <SelectItem value="bank_transfer">Перевод</SelectItem>
-            <SelectItem value="card">Карта</SelectItem>
-            <SelectItem value="online">Онлайн</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+	const columns = useMemo<ColumnDef<HistoryRow, unknown>[]>(
+		() => [
+			{
+				id: "tenant",
+				header: "Арендатор",
+				size: 220,
+				minSize: 160,
+				maxSize: 400,
+				accessorFn: (row) => row.tenant?.name || "",
+				meta: { exportLabel: "Арендатор", grow: true },
+				cell: ({ row }) => (
+					<div className="min-w-0">
+						<p className="font-medium truncate" title={row.original.tenant?.name}>
+							{row.original.tenant?.name || "—"}
+						</p>
+						<p
+							className="text-xs text-am-text-muted truncate"
+							title={
+								row.original.contract?.propertyAddress ||
+								`Дог. #${row.original.leaseContractId}`
+							}
+						>
+							{row.original.contract?.propertyAddress ||
+								`Дог. #${row.original.leaseContractId}`}
+						</p>
+					</div>
+				),
+			},
+			{
+				id: "paymentDate",
+				header: "Дата",
+				size: 110,
+				accessorFn: (row) => row.paymentDate || "",
+				meta: { exportLabel: "Дата" },
+				cell: ({ row }) =>
+					row.original.paymentDate
+						? new Date(row.original.paymentDate).toLocaleDateString("ru-KG")
+						: "—",
+			},
+			{
+				id: "amount",
+				header: "Сумма",
+				size: 120,
+				accessorFn: (row) => parseFloat(row.amount || "0"),
+				meta: { exportLabel: "Сумма", align: "right", financeAmount: true },
+				cell: ({ row }) => (
+					<span className="text-emerald-600 font-semibold tabular-nums">
+						{fmtFull(row.original.amount)}
+					</span>
+				),
+			},
+			{
+				id: "method",
+				header: "Способ",
+				size: 120,
+				accessorFn: (row) =>
+					methodLabels[row.paymentMethod] || row.paymentMethod || "",
+				meta: { exportLabel: "Способ" },
+				cell: ({ row }) => (
+					<Badge className="bg-gray-100 text-gray-700 font-normal">
+						{methodLabels[row.original.paymentMethod] ||
+							row.original.paymentMethod ||
+							"—"}
+					</Badge>
+				),
+			},
+			{
+				id: "account",
+				header: "Счёт",
+				size: 140,
+				accessorFn: (row) => row.account?.name || "",
+				meta: { exportLabel: "Счёт" },
+				cell: ({ row }) => row.original.account?.name || "—",
+			},
+			{
+				id: "note",
+				header: "Примечание",
+				size: 180,
+				minSize: 100,
+				maxSize: 360,
+				accessorFn: (row) => row.note || "",
+				meta: { exportLabel: "Примечание", grow: true },
+				cell: ({ row }) => (
+					<span className="truncate block" title={row.original.note || undefined}>
+						{row.original.note || "—"}
+					</span>
+				),
+			},
+		],
+		[],
+	);
 
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 flex items-center justify-between">
-        <span className="text-sm text-blue-700">Отфильтровано: {filtered.length} записей</span>
-        <span className="text-sm font-semibold text-blue-800">Итого: {fmtFull(total)}</span>
-      </div>
+	return (
+		<div>
+			<div className="flex items-center justify-between mb-6">
+				<div>
+					<h1 className="text-2xl font-bold text-gray-900">История платежей</h1>
+					<p className="text-gray-500 text-sm mt-0.5">
+						Все поступления по договорам аренды
+					</p>
+				</div>
+				<Button variant="outline" size="sm" className="gap-1.5 h-8">
+					<Download className="w-3.5 h-3.5" /> Экспорт
+				</Button>
+			</div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-3 font-medium text-gray-600">Арендатор</th>
-              <th className="text-left p-3 font-medium text-gray-600">Дата</th>
-              <th className="text-right p-3 font-medium text-gray-600">Сумма</th>
-              <th className="text-left p-3 font-medium text-gray-600">Способ</th>
-              <th className="text-left p-3 font-medium text-gray-600">Счёт</th>
-              <th className="text-left p-3 font-medium text-gray-600">Примечание</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr><td colSpan={6} className="p-8 text-center text-gray-400">Загрузка...</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} className="p-10 text-center text-gray-400 text-sm">Нет платежей</td></tr>
-            ) : filtered.map((p: any) => (
-              <tr key={p.id} className="border-t hover:bg-gray-50">
-                <td className="p-3">
-                  <p className="font-medium text-gray-900">{p.tenant?.name || "—"}</p>
-                  <p className="text-xs text-gray-400">{p.contract?.propertyAddress || `Дог. #${p.leaseContractId}`}</p>
-                </td>
-                <td className="p-3 text-gray-600">{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString("ru-KG") : "—"}</td>
-                <td className="p-3 text-right font-semibold text-emerald-600">{fmtFull(p.amount)}</td>
-                <td className="p-3">
-                  <Badge className="bg-gray-100 text-gray-700 font-normal">
-                    {methodLabels[p.paymentMethod] || p.paymentMethod || "—"}
-                  </Badge>
-                </td>
-                <td className="p-3 text-gray-500 text-xs">{p.account?.name || "—"}</td>
-                <td className="p-3 text-gray-400 text-xs max-w-xs truncate">{p.note || "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+			<div className="flex gap-2 mb-4 flex-wrap">
+				<Select value={period} onValueChange={setPeriod}>
+					<SelectTrigger className="w-36 h-8 text-sm">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Все периоды</SelectItem>
+						<SelectItem value="month">Этот месяц</SelectItem>
+						<SelectItem value="quarter">Квартал</SelectItem>
+						<SelectItem value="year">Этот год</SelectItem>
+					</SelectContent>
+				</Select>
+				<Select value={method} onValueChange={setMethod}>
+					<SelectTrigger className="w-36 h-8 text-sm">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Все способы</SelectItem>
+						<SelectItem value="cash">Наличные</SelectItem>
+						<SelectItem value="bank_transfer">Перевод</SelectItem>
+						<SelectItem value="card">Карта</SelectItem>
+						<SelectItem value="online">Онлайн</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
+
+			<div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 flex items-center justify-between">
+				<span className="text-sm text-blue-700">
+					Отфильтровано: {filtered.length} записей
+				</span>
+				<span className="text-sm font-semibold text-blue-800">
+					Итого: {fmtFull(total)}
+				</span>
+			</div>
+
+			<DataTable
+				tableId="rental-payment-history"
+				columns={columns}
+				data={filtered}
+				isLoading={isLoading}
+				enableSearch
+				searchPlaceholder="Поиск по арендатору или адресу…"
+				initialSorting={[{ id: "paymentDate", desc: true }]}
+				emptyState={<p className="py-8 text-center text-am-text-muted">Нет платежей</p>}
+			/>
+		</div>
+	);
 }
